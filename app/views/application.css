@@ -1,0 +1,49 @@
+#root-background {
+    -fx-background-image: url("images/background.png");
+    -fx-background-size: cover;
+    -fx-background-position: center center;
+    -fx-background-repeat: no-repeat;
+}
+.auth-card{
+	-fx-background-color: white;
+	-fx-background-radius: 10;
+	-fx-padding: 10;
+	-fx-opacity: 25;
+}
+#auth-button{
+	-fx-background-color: #24A0ED;
+	-fx-text-fill: white;
+	
+}
+#auth-button:hover{
+	-fx-background-color: #1A85CA;
+}
+
+#red-button{
+	-fx-background-color: #FF1010;
+	-fx-text-fill: white;
+}
+#red-button:hover{
+	-fx-background-color: #DD1010;
+}
+#green-button{
+	-fx-background-color: #10FF10;
+	-fx-text-fill: white;
+}
+#green-button:hover{
+	-fx-background-color: #10DD10;
+}
+
+.home-card{
+	-fx-background-color:#F0F0F0;
+	-fx-border-radius:10;
+	-fx-background-radius: 10;
+	-fx-border-color: black;
+}
+
+.copy-edit-text{
+	-fx-background-color: none; 
+	-fx-background-insets: 0; 
+	-fx-background-radius: 0; 
+	-fx-padding: 0;
+}
