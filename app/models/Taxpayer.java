@@ -2,9 +2,8 @@ package app.models;
 
 public class Taxpayer {
 	private int id;
-	private String tinNum, taxName, tradeName, bussAddress, bussKind, psic, bussLine, taxNformTypes;
-	private boolean vat;
-	public Taxpayer(String tinNum,String taxName, String tradeName, String bussAddress, boolean vat) {
+	private String tinNum, taxName, tradeName, bussAddress, bussKind, psic, bussLine, taxNformTypes, vat;
+	public Taxpayer(String tinNum,String taxName, String tradeName, String bussAddress, String vat) {
 		this.tinNum=tinNum;
 		this.taxName=taxName;
 		this.tradeName=tradeName;
@@ -25,5 +24,5 @@ public class Taxpayer {
 	public String getPsic() {return psic;}
 	public String getBussLine() {return bussLine;}
 	public String getTaxNformTypes() {return taxNformTypes;}
-	public boolean isVat() {return vat;}
+	public String getVat() {return vat;}
 }

@@ -31,7 +31,7 @@ public class Repository {
 			TABLE_TAXPAYER = "Taxpayer",
 			TABLE_PERSONAL_INFO = "PersonalInfo",
 			TABLE_ACCOUNT = "Account",
-			TABLE_ACCOUNTS = "Accounts",
+			TABLE_NAME = "Name",
 			TABLE_SUPPLIER = "Supplier",
 			COLUMN_T_ID="id",
 			COLUMN_T_TIN_NUM="tinNum",
@@ -60,10 +60,12 @@ public class Repository {
 			COLUMN_A_AFS_PASS="afsPass",
 			COLUMN_A_FB_NAME="fbName",
 			COLUMN_A_RECOVERY_EMAIL="recoveryEmail",
-			COLUMN_AS_ID="id",
-			COLUMN_AS_TAX_ID="taxId",
-			COLUMN_AS_EMAIL="email",
-			COLUMN_AS_PASS="pass",
+			COLUMN_N_ID="id",
+			COLUMN_N_TAX_ID="taxId",
+			COLUMN_N_LAST_NAME="lastName",
+			COLUMN_N_FIRST_NAME="firstName",
+			COLUMN_N_MIDDLE_NAME="middleName",
+			COLUMN_N_SUFFIX="suffix",
 			COLUMN_S_ID="id",
 			COLUMN_S_TIN_NUM="tinNum",
 			COLUMN_S_TRADE_NAME="tradeName",
@@ -73,7 +75,7 @@ public class Repository {
 			SELECT_TABLE_TAXPAYERS="SELECT * FROM "+TABLE_TAXPAYER,
 			SELECT_TABLE_PERSONAL_INFO="SELECT * FROM "+TABLE_PERSONAL_INFO,
 			SELECT_TABLE_ACCOUNT="SELECT * FROM "+TABLE_ACCOUNT,
-			SELECT_TABLE_ACCOUNTS="SELECT * FROM "+TABLE_ACCOUNTS,
+			SELECT_TABLE_ACCOUNTS="SELECT * FROM "+TABLE_NAME,
 			SELECT_TABLE_SUPPLIER="SELECT * FROM "+TABLE_SUPPLIER,
 			INSERT_TABLE_TAXPAYER = "INSERT INTO " + TABLE_TAXPAYER + " (" 
 		            + COLUMN_T_TIN_NUM + ", " + COLUMN_T_TAX_NAME + ", " + COLUMN_T_TRADE_NAME + ", " 
@@ -91,9 +93,10 @@ public class Repository {
 		            + COLUMN_A_AFS_NAME + ", " + COLUMN_A_AFS_PASS + ", " + COLUMN_A_FB_NAME +", " 
 		            + COLUMN_A_RECOVERY_EMAIL+") VALUES (?, ?, ?, ?, ?, ?,?)",
 
-		    INSERT_TABLE_ACCOUNTS = "INSERT INTO " + TABLE_ACCOUNTS + " (" 
-		            + COLUMN_AS_TAX_ID + ", " + COLUMN_AS_EMAIL + ", " + COLUMN_AS_PASS 
-		            + ") VALUES (?, ?, ?)",
+		    INSERT_TABLE_ACCOUNTS = "INSERT INTO " + TABLE_NAME + " (" 
+		            + COLUMN_N_TAX_ID + ", " + COLUMN_N_LAST_NAME + ", " + COLUMN_N_FIRST_NAME+ ", " 
+		    		+ COLUMN_N_MIDDLE_NAME+ ", " +COLUMN_N_SUFFIX 
+		            + ") VALUES (?, ?, ?,?,?)",
 
 		    INSERT_TABLE_SUPPLIER = "INSERT INTO " + TABLE_SUPPLIER + " (" 
 		            + COLUMN_S_TIN_NUM + ", " + COLUMN_S_TRADE_NAME + ", " + COLUMN_S_BUSS_ADD 
@@ -101,7 +104,7 @@ public class Repository {
 		    DELETE_TABLE_TAXPAYER = "DELETE FROM " + TABLE_TAXPAYER + " WHERE " + COLUMN_T_ID + " = ?",
 		    DELETE_TABLE_PERSONAL_INFO = "DELETE FROM " + TABLE_PERSONAL_INFO + " WHERE " + COLUMN_P_ID + " = ?",
 		    DELETE_TABLE_ACCOUNT = "DELETE FROM " + TABLE_ACCOUNT + " WHERE " + COLUMN_A_ID + " = ?",
-		    DELETE_TABLE_ACCOUNTS = "DELETE FROM " + TABLE_ACCOUNTS + " WHERE " + COLUMN_AS_ID + " = ?",
+		    DELETE_TABLE_ACCOUNTS = "DELETE FROM " + TABLE_NAME + " WHERE " + COLUMN_N_ID + " = ?",
 		    DELETE_TABLE_SUPPLIER = "DELETE FROM " + TABLE_SUPPLIER + " WHERE " + COLUMN_S_ID + " = ?";
 		
 	}
