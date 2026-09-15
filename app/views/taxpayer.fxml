@@ -3,7 +3,6 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.Cursor?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
@@ -19,8 +18,9 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="720.0" prefWidth="1366.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.views.HomeController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="652.0" prefWidth="1259.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.views.HomeController">
    <top>
       <BorderPane style="-fx-background-color: pink;" BorderPane.alignment="CENTER">
          <left>
@@ -38,6 +38,9 @@
                <font>
                   <Font size="18.0" />
                </font>
+               <graphic>
+                  <FontIcon iconColor="WHITE" iconLiteral="fas-sign-out-alt" />
+               </graphic>
             </Button>
          </right>
          <padding>
@@ -70,17 +73,20 @@
    <center>
       <BorderPane BorderPane.alignment="CENTER">
          <bottom>
-            <BorderPane BorderPane.alignment="CENTER">
+            <BorderPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" BorderPane.alignment="CENTER">
                <left>
                   <HBox prefHeight="69.0" prefWidth="90.0" spacing="10.0" BorderPane.alignment="CENTER">
                      <padding>
                         <Insets top="10.0" />
                      </padding>
                      <children>
-                        <Button fx:id="printBtn" mnemonicParsing="false" text="PRINT">
+                        <Button fx:id="printBtn" mnemonicParsing="false">
                            <font>
                               <Font size="18.0" />
                            </font>
+                           <graphic>
+                              <FontIcon iconLiteral="fas-print" />
+                           </graphic>
                         </Button>
                      </children>
                   </HBox>
@@ -88,29 +94,38 @@
                <right>
                   <HBox alignment="TOP_RIGHT" prefHeight="69.0" prefWidth="515.0" spacing="10.0" BorderPane.alignment="CENTER">
                      <children>
-                        <Button id="red-button" mnemonicParsing="false" stylesheets="@application.css" text="DELETE TAXPAYER">
+                        <Button id="red-button" mnemonicParsing="false" stylesheets="@application.css">
                            <cursor>
                               <Cursor fx:constant="HAND" />
                            </cursor>
                            <font>
                               <Font size="18.0" />
                            </font>
+                           <graphic>
+                              <FontIcon iconColor="WHITE" iconLiteral="fas-trash-alt" />
+                           </graphic>
                         </Button>
-                        <Button mnemonicParsing="false" text="EDIT TAXPAYER">
+                        <Button mnemonicParsing="false">
                            <cursor>
                               <Cursor fx:constant="HAND" />
                            </cursor>
                            <font>
                               <Font size="18.0" />
                            </font>
+                           <graphic>
+                              <FontIcon iconLiteral="fas-edit" />
+                           </graphic>
                         </Button>
-                        <Button id="green-button" mnemonicParsing="false" onAction="#AddTaxpayer" stylesheets="@application.css" text="ADD TAXPAYER">
+                        <Button id="green-button" mnemonicParsing="false" onAction="#AddTaxpayer" stylesheets="@application.css">
                            <cursor>
                               <Cursor fx:constant="HAND" />
                            </cursor>
                            <font>
                               <Font size="18.0" />
                            </font>
+                           <graphic>
+                              <FontIcon iconColor="WHITE" iconLiteral="fas-plus" />
+                           </graphic>
                         </Button>
                      </children>
                      <padding>
@@ -149,358 +164,365 @@
             <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
          </padding>
          <center>
-            <StackPane BorderPane.alignment="CENTER">
+            <StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" BorderPane.alignment="CENTER">
                <children>
-                  <ScrollPane hbarPolicy="NEVER">
+                  <ScrollPane fitToWidth="true" hbarPolicy="NEVER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
                      <content>
-                        <VBox prefHeight="1458.0" prefWidth="949.0" styleClass="home-card" stylesheets="@application.css">
+                        <GridPane fx:id="business" alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="home-card" stylesheets="@application.css">
+                           <columnConstraints>
+                              <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="10.0" percentWidth="40.0" />
+                              <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="10.0" percentWidth="70.0" />
+                              <ColumnConstraints />
+                           </columnConstraints>
+                           <rowConstraints>
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="10.0" vgrow="ALWAYS" />
+                           </rowConstraints>
                            <children>
-                              <GridPane fx:id="business" alignment="CENTER" hgap="20.0" prefHeight="486.0" prefWidth="938.0">
-                                 <columnConstraints>
-                                    <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" maxWidth="100.0" minWidth="10.0" percentWidth="50.0" prefWidth="100.0" />
-                                    <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" maxWidth="100.0" minWidth="10.0" percentWidth="50.0" prefWidth="100.0" />
-                                    <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" maxWidth="100.0" minWidth="10.0" percentWidth="50.0" prefWidth="100.0" />
-                                    <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" maxWidth="100.0" minWidth="10.0" percentWidth="50.0" prefWidth="100.0" />
-                                 </columnConstraints>
-                                 <rowConstraints>
-                                    <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                 </rowConstraints>
-                                 <children>
-                                    <Text mouseTransparent="true" strokeType="OUTSIDE" strokeWidth="0.0" text="TIN NO.:" wrappingWidth="200.66659545898438" GridPane.hgrow="ALWAYS">
-                                       <cursor>
-                                          <Cursor fx:constant="DEFAULT" />
-                                       </cursor>
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <Text layoutX="11.0" layoutY="36.0" strokeType="OUTSIDE" strokeWidth="0.0" text="TAXPAYER NAME:" wrappingWidth="209.99993896484375" GridPane.columnSpan="2147483647" GridPane.rowIndex="1">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <Text layoutX="252.0" layoutY="52.0" strokeType="OUTSIDE" strokeWidth="0.0" text="KIND OF BUSINESS:" wrappingWidth="253.99993896484375" GridPane.columnIndex="2" GridPane.rowIndex="3">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <TextField editable="false" styleClass="copy-edit-text" stylesheets="@application.css" text="123-456-789-012" GridPane.columnIndex="1">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <TextField editable="false" layoutX="228.0" layoutY="120.0" styleClass="copy-edit-text" stylesheets="@application.css" text="Claudio, Julie Christie K." GridPane.columnSpan="2" GridPane.rowIndex="2">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <Text layoutX="31.0" layoutY="146.0" strokeType="OUTSIDE" strokeWidth="0.0" text="TRADE NAME:" wrappingWidth="209.99993896484375" GridPane.rowIndex="3">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <TextField editable="false" layoutX="31.0" layoutY="187.0" styleClass="copy-edit-text" stylesheets="@application.css" text="JCKC Accounting and Bookkeeping Services" GridPane.columnSpan="2" GridPane.rowIndex="4">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <Text layoutX="31.0" layoutY="248.0" strokeType="OUTSIDE" strokeWidth="0.0" text="BUSINESS ADDRESS:" wrappingWidth="417.99993896484375" GridPane.columnSpan="2" GridPane.rowIndex="5">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <TextField editable="false" layoutX="31.0" layoutY="279.0" styleClass="copy-edit-text" stylesheets="@application.css" text="Purok 1, Gajo, Tiwi, Albay" GridPane.columnSpan="2" GridPane.rowIndex="6">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <TextField editable="false" layoutX="228.0" layoutY="45.0" styleClass="copy-edit-text" stylesheets="@application.css" text="Accounting" GridPane.columnIndex="2" GridPane.columnSpan="2" GridPane.rowIndex="4">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <Text layoutX="493.0" layoutY="71.0" strokeType="OUTSIDE" strokeWidth="0.0" text="PSIC:" wrappingWidth="253.99993896484375" GridPane.columnIndex="2" GridPane.rowIndex="1">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <TextField editable="false" layoutX="228.0" layoutY="45.0" styleClass="copy-edit-text" stylesheets="@application.css" text="P1234" GridPane.columnIndex="3" GridPane.rowIndex="1">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <Text layoutX="493.0" layoutY="190.0" strokeType="OUTSIDE" strokeWidth="0.0" text="LINE OF BUSINESS:" wrappingWidth="253.99993896484375" GridPane.columnIndex="2" GridPane.rowIndex="5">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <TextField editable="false" layoutX="493.0" layoutY="106.0" styleClass="copy-edit-text" stylesheets="@application.css" text="Accounting" GridPane.columnIndex="2" GridPane.rowIndex="6">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <Text layoutX="503.0" layoutY="248.0" strokeType="OUTSIDE" strokeWidth="0.0" text="TAX &amp; FORM TYPES:" wrappingWidth="253.99993896484375" GridPane.columnIndex="2" GridPane.rowIndex="2">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <TextField editable="false" styleClass="copy-edit-text" stylesheets="@application.css" text="2551Q" GridPane.columnIndex="3" GridPane.rowIndex="2">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <TextField alignment="CENTER_RIGHT" editable="false" layoutX="740.0" layoutY="49.0" styleClass="copy-edit-text" stylesheets="@application.css" text="NON-VAT" GridPane.columnIndex="3">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                 </children>
-                                 <padding>
-                                    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-                                 </padding>
-                              </GridPane>
-                              <GridPane fx:id="personalInfo" alignment="CENTER" hgap="20.0" prefHeight="500.0" prefWidth="967.0">
-                                 <columnConstraints>
-                                    <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" maxWidth="100.0" minWidth="10.0" percentWidth="50.0" prefWidth="100.0" />
-                                    <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" maxWidth="100.0" minWidth="10.0" percentWidth="50.0" prefWidth="100.0" />
-                                    <ColumnConstraints halignment="LEFT" hgrow="ALWAYS" maxWidth="100.0" minWidth="10.0" percentWidth="50.0" prefWidth="100.0" />
-                                    <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" maxWidth="100.0" minWidth="10.0" percentWidth="50.0" prefWidth="100.0" />
-                                 </columnConstraints>
-                                 <rowConstraints>
-                                    <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                 </rowConstraints>
-                                 <children>
-                                    <Text layoutX="11.0" layoutY="36.0" strokeType="OUTSIDE" strokeWidth="0.0" text="DATE OF BIRTH:" wrappingWidth="209.99993896484375" GridPane.columnSpan="2147483647">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <Text layoutX="252.0" layoutY="52.0" strokeType="OUTSIDE" strokeWidth="0.0" text="TIN OF SPOUSE:" wrappingWidth="253.99993896484375" GridPane.columnIndex="2">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <TextField editable="false" styleClass="copy-edit-text" stylesheets="@application.css" text="January 9, 2026" GridPane.columnIndex="1">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <Text layoutX="31.0" layoutY="146.0" strokeType="OUTSIDE" strokeWidth="0.0" text="RESIDENCE:" wrappingWidth="209.99993896484375" GridPane.rowIndex="3">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <TextField editable="false" layoutX="31.0" layoutY="187.0" styleClass="copy-edit-text" stylesheets="@application.css" text="Pawa, Malinao, Albay" GridPane.columnSpan="2" GridPane.rowIndex="2">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <Text layoutX="31.0" layoutY="248.0" strokeType="OUTSIDE" strokeWidth="0.0" text="CIVIL STATUS:" wrappingWidth="188.6666259765625" GridPane.rowIndex="5">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <TextField editable="false" layoutX="31.0" layoutY="279.0" prefHeight="35.0" prefWidth="444.0" styleClass="copy-edit-text" stylesheets="@application.css" text="Married" GridPane.columnIndex="1" GridPane.rowIndex="5">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <TextField editable="false" layoutX="228.0" layoutY="45.0" styleClass="copy-edit-text" stylesheets="@application.css" text="Vicente R. Claudio Jr." GridPane.columnIndex="2" GridPane.columnSpan="2" GridPane.rowIndex="2">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <Text layoutX="493.0" layoutY="71.0" strokeType="OUTSIDE" strokeWidth="0.0" text="SPOUSE NAME:" wrappingWidth="253.99993896484375" GridPane.columnIndex="2" GridPane.rowIndex="1">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <TextField editable="false" layoutX="228.0" layoutY="45.0" styleClass="copy-edit-text" stylesheets="@application.css" text="987-654-321-098" GridPane.columnIndex="3">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <Text layoutX="493.0" layoutY="190.0" strokeType="OUTSIDE" strokeWidth="0.0" text="MOTHER's MAIDEN NAME:" wrappingWidth="393.99993896484375" GridPane.columnIndex="2" GridPane.columnSpan="2" GridPane.rowIndex="3">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <TextField editable="false" layoutX="493.0" layoutY="106.0" styleClass="copy-edit-text" stylesheets="@application.css" text="Herminia Encarnacion Kallos" GridPane.columnIndex="2" GridPane.columnSpan="2" GridPane.rowIndex="4">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <Text layoutX="503.0" layoutY="248.0" strokeType="OUTSIDE" strokeWidth="0.0" text="FATHER's NAME:" wrappingWidth="253.99993896484375" GridPane.columnIndex="2" GridPane.rowIndex="5">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <TextField editable="false" styleClass="copy-edit-text" stylesheets="@application.css" text="Joseph Kallos" GridPane.columnIndex="2" GridPane.columnSpan="2" GridPane.rowIndex="6">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <Text layoutX="31.0" layoutY="71.0" strokeType="OUTSIDE" strokeWidth="0.0" text="PLACE OF BIRTH:" wrappingWidth="209.99993896484375" GridPane.rowIndex="1">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <TextField editable="false" styleClass="copy-edit-text" stylesheets="@application.css" text="Pawa, Malinao, Albay" GridPane.columnSpan="2" GridPane.rowIndex="4">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <Text strokeType="OUTSIDE" strokeWidth="0.0" text="CONTACT/CP NO.:" wrappingWidth="217.99993896484375" GridPane.rowIndex="6">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <TextField editable="false" prefHeight="35.0" prefWidth="444.0" styleClass="copy-edit-text" stylesheets="@application.css" text="0912-456-789" GridPane.columnIndex="1" GridPane.rowIndex="6">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                 </children>
-                                 <padding>
-                                    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-                                 </padding>
-                              </GridPane>
-                              <GridPane fx:id="account" alignment="CENTER" hgap="20.0" prefHeight="500.0" prefWidth="967.0">
-                                 <columnConstraints>
-                                    <ColumnConstraints hgrow="ALWAYS" maxWidth="100.0" minWidth="10.0" percentWidth="75.0" prefWidth="100.0" />
-                                    <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" maxWidth="100.0" minWidth="10.0" percentWidth="100.0" prefWidth="100.0" />
-                                    <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" maxWidth="100.0" minWidth="10.0" percentWidth="20.0" prefWidth="100.0" />
-                                 </columnConstraints>
-                                 <rowConstraints>
-                                    <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                                 </rowConstraints>
-                                 <children>
-                                    <Text layoutX="11.0" layoutY="36.0" strokeType="OUTSIDE" strokeWidth="0.0" text="E-MAIL ADDRESS:" wrappingWidth="209.99993896484375" GridPane.columnSpan="2147483647">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <Text layoutX="31.0" layoutY="146.0" strokeType="OUTSIDE" strokeWidth="0.0" text="ORUS USERNAME:" wrappingWidth="209.99993896484375" GridPane.rowIndex="2">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <TextField editable="false" layoutX="31.0" layoutY="187.0" styleClass="copy-edit-text" stylesheets="@application.css" text="••••••••" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <Text layoutX="31.0" layoutY="248.0" strokeType="OUTSIDE" strokeWidth="0.0" text="AFS E-SUBMISSION PASSWORD:" wrappingWidth="386.0" GridPane.rowIndex="5">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <Text layoutX="31.0" layoutY="71.0" strokeType="OUTSIDE" strokeWidth="0.0" text="PASSWORD:" wrappingWidth="209.99993896484375" GridPane.rowIndex="1">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <Text strokeType="OUTSIDE" strokeWidth="0.0" text="FACEBOOK ACCOUNT NAME:" wrappingWidth="369.99993896484375" GridPane.rowIndex="6">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <Text strokeType="OUTSIDE" strokeWidth="0.0" text="ORUS PASSWORD:" wrappingWidth="209.99993896484375" GridPane.rowIndex="3">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <Text strokeType="OUTSIDE" strokeWidth="0.0" text="AFS E-SUBMISSION USERNAME:" wrappingWidth="357.99993896484375" GridPane.rowIndex="4">
-                                       <font>
-                                          <Font size="24.0" />
-                                       </font>
-                                    </Text>
-                                    <TextField editable="false" styleClass="copy-edit-text" stylesheets="@application.css" text="••••••••" GridPane.columnIndex="1" GridPane.rowIndex="3">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <TextField editable="false" styleClass="copy-edit-text" stylesheets="@application.css" text="••••••••" GridPane.columnIndex="1" GridPane.rowIndex="5">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <TextField editable="false" prefHeight="35.0" prefWidth="385.0" styleClass="copy-edit-text" stylesheets="@application.css" text="Wow123" GridPane.columnIndex="1" GridPane.rowIndex="2">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <TextField editable="false" styleClass="copy-edit-text" stylesheets="@application.css" text="Mom321" GridPane.columnIndex="1" GridPane.rowIndex="4">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <TextField editable="false" styleClass="copy-edit-text" stylesheets="@application.css" text="Juls JCKC" GridPane.columnIndex="1" GridPane.rowIndex="6">
-                                       <font>
-                                          <Font name="System Bold" size="24.0" />
-                                       </font>
-                                    </TextField>
-                                    <Button id="auth-button" alignment="TOP_CENTER" contentDisplay="CENTER" mnemonicParsing="false" stylesheets="@application.css" text="SHOW" textAlignment="CENTER" wrapText="true" GridPane.columnIndex="2" GridPane.rowIndex="1">
-                                       <font>
-                                          <Font size="18.0" />
-                                       </font>
-                                    </Button>
-                                    <Button id="auth-button" alignment="TOP_CENTER" contentDisplay="CENTER" mnemonicParsing="false" stylesheets="@application.css" text="SHOW" textAlignment="CENTER" wrapText="true" GridPane.columnIndex="2" GridPane.rowIndex="3">
-                                       <font>
-                                          <Font size="18.0" />
-                                       </font>
-                                    </Button>
-                                    <Button id="auth-button" alignment="TOP_CENTER" contentDisplay="CENTER" mnemonicParsing="false" stylesheets="@application.css" text="SHOW" textAlignment="CENTER" wrapText="true" GridPane.columnIndex="2" GridPane.rowIndex="5">
-                                       <font>
-                                          <Font size="18.0" />
-                                       </font>
-                                    </Button>
-                                    <ComboBox prefHeight="29.0" prefWidth="417.0" GridPane.columnIndex="1" />
-                                    <Button alignment="TOP_CENTER" contentDisplay="CENTER" mnemonicParsing="false" text="COPY" textAlignment="CENTER" wrapText="true" GridPane.columnIndex="2">
-                                       <font>
-                                          <Font size="18.0" />
-                                       </font>
-                                    </Button>
-                                    <Button alignment="TOP_CENTER" contentDisplay="CENTER" mnemonicParsing="false" text="COPY" textAlignment="CENTER" wrapText="true" GridPane.columnIndex="2" GridPane.rowIndex="4">
-                                       <font>
-                                          <Font size="18.0" />
-                                       </font>
-                                    </Button>
-                                    <Button alignment="TOP_CENTER" contentDisplay="CENTER" mnemonicParsing="false" text="COPY" textAlignment="CENTER" wrapText="true" GridPane.columnIndex="2" GridPane.rowIndex="2">
-                                       <font>
-                                          <Font size="18.0" />
-                                       </font>
-                                    </Button>
-                                 </children>
-                                 <padding>
-                                    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-                                 </padding>
-                              </GridPane>
+                              <Text mouseTransparent="true" strokeType="OUTSIDE" strokeWidth="0.0" text="TIN NO.:" wrappingWidth="200.66659545898438" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
+                                 <cursor>
+                                    <Cursor fx:constant="DEFAULT" />
+                                 </cursor>
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text layoutX="11.0" layoutY="36.0" strokeType="OUTSIDE" strokeWidth="0.0" text="TAXPAYER NAME:" wrappingWidth="209.99993896484375" GridPane.columnSpan="2147483647" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text layoutX="31.0" layoutY="146.0" strokeType="OUTSIDE" strokeWidth="0.0" text="TRADE NAME:" wrappingWidth="209.99993896484375" GridPane.hgrow="ALWAYS" GridPane.rowIndex="3" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text layoutX="31.0" layoutY="248.0" strokeType="OUTSIDE" strokeWidth="0.0" text="BUSINESS ADDRESS:" wrappingWidth="271.333251953125" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="4" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text layoutX="252.0" layoutY="52.0" strokeType="OUTSIDE" strokeWidth="0.0" text="KIND OF BUSINESS:" wrappingWidth="253.99993896484375" GridPane.hgrow="ALWAYS" GridPane.rowIndex="5" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text layoutX="493.0" layoutY="190.0" strokeType="OUTSIDE" strokeWidth="0.0" text="LINE OF BUSINESS:" wrappingWidth="253.99993896484375" GridPane.hgrow="ALWAYS" GridPane.rowIndex="6" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text layoutX="503.0" layoutY="248.0" strokeType="OUTSIDE" strokeWidth="0.0" text="TAX &amp; FORM TYPES:" wrappingWidth="253.99993896484375" GridPane.hgrow="ALWAYS" GridPane.rowIndex="7" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text layoutX="493.0" layoutY="71.0" strokeType="OUTSIDE" strokeWidth="0.0" text="PSIC:" wrappingWidth="253.99993896484375" GridPane.hgrow="ALWAYS" GridPane.rowIndex="8" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="123-456-789-012" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" layoutX="228.0" layoutY="120.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="Julie Christie K. Claudio" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="JCKC Accounting and Bookkeeping Services" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="3" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" layoutX="31.0" layoutY="279.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="Purok 1, Gajo, Tiwi, Albay" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="4" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" layoutX="228.0" layoutY="45.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="Accounting" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="5" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" layoutX="493.0" layoutY="106.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="Accounting" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="6" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="2551Q (NON-VAT)" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="7" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" layoutX="228.0" layoutY="45.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="P1234" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="8" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="DATE OF BIRTH:" wrappingWidth="209.99993896484375" GridPane.columnSpan="2147483647" GridPane.rowIndex="10">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="PLACE OF BIRTH:" wrappingWidth="209.99993896484375" GridPane.rowIndex="11">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="RESIDENCE:" wrappingWidth="209.99993896484375" GridPane.rowIndex="12">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="CIVIL STATUS:" wrappingWidth="188.6666259765625" GridPane.rowIndex="13">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="CONTACT/CP NO.:" wrappingWidth="252.6666259765625" GridPane.rowIndex="14">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="TIN OF SPOUSE:" wrappingWidth="253.99993896484375" GridPane.rowIndex="15">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="SPOUSE NAME:" wrappingWidth="253.99993896484375" GridPane.rowIndex="16">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="FATHER's NAME:" wrappingWidth="253.99993896484375" GridPane.rowIndex="17">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="MOTHER's MAIDEN NAME:" wrappingWidth="393.99993896484375" GridPane.columnSpan="2" GridPane.rowIndex="18">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="January 9, 2026" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="10" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="Pawa, Malinao, Albay" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="11" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="Pawa, Malinao, Albay" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="12" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="35.0" prefWidth="444.0" styleClass="copy-edit-text" stylesheets="@application.css" text="Married" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="13" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="35.0" prefWidth="444.0" styleClass="copy-edit-text" stylesheets="@application.css" text="0912-456-789" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="14" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="987-654-321-098" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="15" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="Vicente R. Claudio Jr." GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="16" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="Joseph Kallos" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="17" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="Herminia Encarnacion Kallos" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="18" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="GMAIL E-MAIL ADDRESS:" wrappingWidth="321.99993896484375" GridPane.hgrow="ALWAYS" GridPane.rowIndex="20" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="GMAIL PASSWORD:" wrappingWidth="309.99993896484375" GridPane.hgrow="ALWAYS" GridPane.rowIndex="21" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="YAHOO E-MAIL ADDRESS" wrappingWidth="317.99993896484375" GridPane.hgrow="ALWAYS" GridPane.rowIndex="22" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="YAHOO PASSWORD:" wrappingWidth="309.99993896484375" GridPane.rowIndex="23">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="ORUS USERNAME:" wrappingWidth="209.99993896484375" GridPane.hgrow="ALWAYS" GridPane.rowIndex="24" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="ORUS PASSWORD:" wrappingWidth="209.99993896484375" GridPane.hgrow="ALWAYS" GridPane.rowIndex="25" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="AFS E-SUBMISSION USERNAME:" wrappingWidth="357.99993896484375" GridPane.hgrow="ALWAYS" GridPane.rowIndex="26" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font size="20.0" />
+                                 </font>
+                              </Text>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="AFS E-SUBMISSION PASSWORD:" wrappingWidth="386.0" GridPane.hgrow="ALWAYS" GridPane.rowIndex="27" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font size="20.0" />
+                                 </font>
+                              </Text>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="FACEBOOK ACCOUNT NAME:" wrappingWidth="369.99993896484375" GridPane.hgrow="ALWAYS" GridPane.rowIndex="28" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font size="20.0" />
+                                 </font>
+                              </Text>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="RECOVERY E-MAIL:" wrappingWidth="369.99993896484375" GridPane.hgrow="ALWAYS" GridPane.rowIndex="29" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="Wow123" GridPane.columnIndex="1" GridPane.rowIndex="20">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="••••••••" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="21" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="Wow123" GridPane.columnIndex="1" GridPane.rowIndex="22">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="••••••••" GridPane.columnIndex="1" GridPane.rowIndex="23">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="Wow123" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="24" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField accessibleRole="PASSWORD_FIELD" editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="••••••••" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="25" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="Mom321" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="26" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="••••••••" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="27" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="Juls JCKC" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="28" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <TextField editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="Juls@XYZ.nigga" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="29" GridPane.vgrow="ALWAYS">
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                              </TextField>
+                              <Text mouseTransparent="true" strokeType="OUTSIDE" strokeWidth="0.0" text="TAXPAYER" textAlignment="CENTER" wrappingWidth="200.66659545898438" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
+                                 <cursor>
+                                    <Cursor fx:constant="DEFAULT" />
+                                 </cursor>
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                                 <GridPane.margin>
+                                    <Insets bottom="10.0" />
+                                 </GridPane.margin>
+                              </Text>
+                              <Text mouseTransparent="true" strokeType="OUTSIDE" strokeWidth="0.0" text="PERSONAL INFORMATION" textAlignment="CENTER" wrappingWidth="475.333251953125" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="9" GridPane.vgrow="ALWAYS">
+                                 <cursor>
+                                    <Cursor fx:constant="DEFAULT" />
+                                 </cursor>
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                                 <GridPane.margin>
+                                    <Insets bottom="10.0" top="10.0" />
+                                 </GridPane.margin>
+                              </Text>
+                              <Text mouseTransparent="true" strokeType="OUTSIDE" strokeWidth="0.0" text="ACCOUNTS" textAlignment="CENTER" wrappingWidth="200.66659545898438" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="19" GridPane.vgrow="ALWAYS">
+                                 <cursor>
+                                    <Cursor fx:constant="DEFAULT" />
+                                 </cursor>
+                                 <font>
+                                    <Font name="System Bold" size="24.0" />
+                                 </font>
+                                 <GridPane.margin>
+                                    <Insets bottom="10.0" top="10.0" />
+                                 </GridPane.margin>
+                              </Text>
                            </children>
-                        </VBox>
+                           <padding>
+                              <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                           </padding>
+                        </GridPane>
                      </content>
                   </ScrollPane>
-                  <FlowPane alignment="CENTER" orientation="VERTICAL" prefHeight="200.0" prefWidth="200.0" styleClass="home-card" stylesheets="@application.css" visible="false">
+                  <FlowPane alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" orientation="VERTICAL" styleClass="home-card" stylesheets="@application.css" visible="false">
                      <children>
-                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Select a Taxpayer to View Information">
+                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Select a Taxpayer to View Information" textAlignment="CENTER">
                            <font>
                               <Font size="32.0" />
                            </font>

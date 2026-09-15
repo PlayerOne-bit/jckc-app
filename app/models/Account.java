@@ -2,7 +2,7 @@ package app.models;
 
 public class Account {
 	private int id, taxId;
-	private String orusName, orusPass, afsName, afsPass, fbName;
+	private String gmailEmail, gmailPass, yahooEmail, yahooPass, orusName, orusPass, afsName, afsPass, fbName, recoveryEmail;
 	public int getId() {
 		return id;
 	}
@@ -44,5 +44,35 @@ public class Account {
 	}
 	public void setFbName(String fbName) {
 		this.fbName = fbName;
+	}
+	public String getRecoveryEmail() {
+		return recoveryEmail;
+	}
+	public void setRecoveryEmail(String recoveryEmail) {
+		this.recoveryEmail = recoveryEmail;
+	}
+	public String getYahooEmail() {
+		return yahooEmail;
+	}
+	public void setYahooEmail(String yahooEmail) {
+		this.yahooEmail = yahooEmail;
+	}
+	public String getYahooPass() {
+		return yahooPass;
+	}
+	public void setYahooPass(String yahooPass) {
+		this.yahooPass = yahooPass;
+	}
+	public String getGmailEmail() {
+		return gmailEmail;
+	}
+	public void setGmailEmail(String gmailEmail) {
+		this.gmailEmail = gmailEmail;
+	}
+	public String getGmailPass() {
+		return gmailPass;
+	}
+	public void setGmailPass(String gmailPass) {
+		this.gmailPass = gmailPass;
 	}	
 }

@@ -59,6 +59,7 @@ public class Repository {
 			COLUMN_A_AFS_NAME="afsName",
 			COLUMN_A_AFS_PASS="afsPass",
 			COLUMN_A_FB_NAME="fbName",
+			COLUMN_A_RECOVERY_EMAIL="recoveryEmail",
 			COLUMN_AS_ID="id",
 			COLUMN_AS_TAX_ID="taxId",
 			COLUMN_AS_EMAIL="email",
@@ -87,8 +88,8 @@ public class Repository {
 
 		    INSERT_TABLE_ACCOUNT = "INSERT INTO " + TABLE_ACCOUNT + " (" 
 		            + COLUMN_A_TAX_ID + ", " + COLUMN_A_ORUS_NAME + ", " + COLUMN_A_ORUS_PASS + ", " 
-		            + COLUMN_A_AFS_NAME + ", " + COLUMN_A_AFS_PASS + ", " + COLUMN_A_FB_NAME 
-		            + ") VALUES (?, ?, ?, ?, ?, ?)",
+		            + COLUMN_A_AFS_NAME + ", " + COLUMN_A_AFS_PASS + ", " + COLUMN_A_FB_NAME +", " 
+		            + COLUMN_A_RECOVERY_EMAIL+") VALUES (?, ?, ?, ?, ?, ?,?)",
 
 		    INSERT_TABLE_ACCOUNTS = "INSERT INTO " + TABLE_ACCOUNTS + " (" 
 		            + COLUMN_AS_TAX_ID + ", " + COLUMN_AS_EMAIL + ", " + COLUMN_AS_PASS 
