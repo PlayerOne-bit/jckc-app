@@ -9,7 +9,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.text.Text;
 
 public class AuthController {
-	
+	private int errors=0;
 	@FXML 
 	private PasswordField authField;
 	
@@ -21,20 +21,21 @@ public class AuthController {
 	        Login(new ActionEvent(event.getSource(),event.getTarget())); 
 	    }
 	}
-	
 	@FXML
     public void Login(ActionEvent event) {
         errorAuthText.setText("");
         String input = authField.getText();
         if (input == null || input.trim().isEmpty()) {
-            errorAuthText.setText("Password field cannot be empty.");
+        	errors++;
+            errorAuthText.setText("Password field cannot be empty."+(errors>1?" ("+errors+")":""));
             return;
         }
         boolean success = AuthAdmin.isPasswordCorrect(input);
         if (success) {
             Pages.change(event, Pages.HOME);
         } else {
-        	errorAuthText.setText("Incorrect password. Please try again.");
+        	errors++;
+        	errorAuthText.setText("Incorrect password. Please try again."+(errors>1?" ("+errors+")":""));
             authField.clear(); 
         }
 	}

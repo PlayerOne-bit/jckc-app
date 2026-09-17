@@ -3,7 +3,9 @@ package app.views;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 
 public class HomeController {
@@ -14,6 +16,14 @@ public class HomeController {
 	@FXML private GridPane personalInfo;
 	@FXML private GridPane account;
 	@FXML private Button printBtn;
+	@FXML private TextField searchField;
+	@FXML private VBox taxpayerContainer;
+	
+	@FXML private void initialize() {
+		
+	}
+	
+	
 	@FXML
 	public void Logout(ActionEvent event) {
 		Pages.change(event, Pages.AUTH);

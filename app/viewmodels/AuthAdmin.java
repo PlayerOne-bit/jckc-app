@@ -6,6 +6,4 @@ public final class AuthAdmin {
 	public static boolean isPasswordCorrect(String inputPassword) {
 		return BCrypt.checkpw(inputPassword, password);
 	}
-	
-	
 }

@@ -7,7 +7,6 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.FlowPane?>
@@ -51,7 +50,7 @@
    <left>
       <VBox maxHeight="1.7976931348623157E308" BorderPane.alignment="CENTER">
          <children>
-            <TextField prefHeight="47.0" prefWidth="286.0" promptText="Search Taxpayers...">
+            <TextField fx:id="searchField" prefHeight="47.0" prefWidth="286.0" promptText="Search Taxpayers...">
                <font>
                   <Font size="20.0" />
                </font>
@@ -59,10 +58,10 @@
                   <Cursor fx:constant="TEXT" />
                </cursor>
             </TextField>
-            <ScrollPane hbarPolicy="NEVER" maxHeight="1.7976931348623157E308" prefHeight="510.0" prefWidth="339.0">
-              <content>
-                <AnchorPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="495.0" prefWidth="337.0" />
-              </content>
+            <ScrollPane fx:id="taxpayerContainer" hbarPolicy="NEVER" maxHeight="1.7976931348623157E308" prefHeight="510.0" prefWidth="339.0">
+               <content>
+                  <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" />
+               </content>
             </ScrollPane>
          </children>
          <padding>
@@ -255,7 +254,7 @@
                                     <Font name="System Bold" size="24.0" />
                                  </font>
                               </TextField>
-                              <TextField editable="false" layoutX="228.0" layoutY="120.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="Julie Christie K. Claudio" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" GridPane.vgrow="ALWAYS">
+                              <TextField editable="false" layoutX="228.0" layoutY="120.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="copy-edit-text" stylesheets="@application.css" text="Claudio, Julie Christie K." GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" GridPane.vgrow="ALWAYS">
                                  <font>
                                     <Font name="System Bold" size="24.0" />
                                  </font>

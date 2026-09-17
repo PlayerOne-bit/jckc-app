@@ -1,7 +1,11 @@
 package app.views;
 
+import app.models.Account;
+import app.models.Name;
+import app.models.PersonalInfo;
+import app.models.Taxpayer;
+import app.viewmodels.TaxpayerViewModel;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
@@ -11,11 +15,15 @@ import javafx.scene.control.TextFormatter;
 import javafx.scene.input.KeyCode;
 import javafx.scene.text.Text;
 public class AddTaxPayerController {
-	
-	
+	private TaxpayerViewModel viewModel; 
 	
 	@FXML
 	public void initialize(){
+		try {
+			viewModel=new TaxpayerViewModel();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		suffix.setItems(FXCollections.observableArrayList(
 				"Jr.",
 				"Sr.",
@@ -76,13 +84,105 @@ public class AddTaxPayerController {
             }
         });
     }
-	
-	public void back(ActionEvent e) {
+	public void cancel(ActionEvent e) {
 		Pages.change(e,Pages.HOME);
 	}
 	
-	public void save(ActionEvent e) {
+	public void create(ActionEvent e){
+		String tinN1 = tinNum1.getText().trim();
+		String tinN2 = tinNum2.getText().trim();
+		String tinN3 = tinNum3.getText().trim();
+		String tinN4 = tinNum4.getText().trim();
+		String lName=lastName.getText().trim();
+		String fName = firstName.getText().trim();
+		String mName = middleName.getText().trim();
+		String suf = !suffix.getValue().equals("N/A")?suffix.getValue():null;
+		String tName =tradeName.getText().trim();
+		String bAddress = bussAddress.getText().trim();
 		
+		boolean t1=tinN1.isEmpty()||tinN1.length()<3,
+				t2=tinN2.isEmpty()||tinN2.length()<3,
+				t3=tinN3.isEmpty()||tinN3.length()<3,
+				t4=tinN4.isEmpty()||tinN4.length()<3,
+				lNameError=lName.isEmpty(),
+				fNameError=fName.isEmpty(),
+				bussAddressError=bAddress.isEmpty(),
+				tradeNameError=tName.isEmpty();
+		String errors ="";
+		if(t1||t2||t3||t4) errors+="Complete the Tin Number.";
+		if(lNameError || fNameError)errors+=" Last Name and First Name is required.";
+		if(tradeNameError)	errors+="\nTrade Name is required.";
+		if(bussAddressError)errors+=" Business Address is required.";
+		errorTextField(tinNum1,t1);
+		errorTextField(tinNum2,t2);
+		errorTextField(tinNum3,t3);
+		errorTextField(tinNum4,t4);
+		errorTextField(lastName,lNameError);
+		errorTextField(firstName,fNameError);
+		errorTextField(tradeName,tradeNameError);
+		errorTextField(bussAddress,bussAddressError);
+		if(t1||t2||t3||t4||lNameError||fNameError||tradeNameError||bussAddressError) {
+			errorText.setText(errors);
+			return;
+		}
+		Taxpayer taxpayer=new Taxpayer();
+		Name name= new Name();
+		PersonalInfo personalInfo = new PersonalInfo();
+		Account account = new Account();
+		taxpayer.setTinNum(tinN1+"-"+tinN2+"-"+tinN3+"-"+tinN4);
+		name.setLastName(lName);
+		name.setFirstName(fName);
+		name.setMiddleName(mName);
+		name.setSuffix(suf);
+		taxpayer.setTradeName(tName);
+		taxpayer.setBussAddress(bAddress);
+		taxpayer.setBussKind(bussKind.getText().trim());
+		taxpayer.setBussLine( bussLine.getText().trim());
+		taxpayer.setTaxNformTypes(formTypes.getText().trim());
+		taxpayer.setVat(!taxTypes.getValue().equals("N/A")?taxTypes.getValue():null);
+		taxpayer.setPsic(psic.getText().trim());
+		personalInfo.setBirthdate(bday.getValue()!=null? bday.getValue().toString().trim():null);
+		personalInfo.setBirthplace(bplace.getText().trim());
+		personalInfo.setCivilStatus(!civilStatus.getValue().equals("N/A")?civilStatus.getValue():null);
+		personalInfo.setSpouseTin(tinSpouse1.getText()+"-"+tinSpouse2.getText()+"-"+tinSpouse3.getText()+"-"+tinSpouse4.getText());
+		personalInfo.setSpouseName(spouseName.getText().trim());
+		personalInfo.setFatherName(fatherName.getText().trim());
+		personalInfo.setMotherMaidenName(motherName.getText().trim());
+		personalInfo.setCpNum(cpNum.getText());
+		account.setGmailEmail(gmailEmail.getText().trim().toLowerCase());
+		account.setGmailPass(gmailPass.getText());
+		account.setYahooEmail(yahooEmail.getText().trim().toLowerCase());
+		account.setYahooPass(yahooPass.getText());
+		account.setOrusName(orusUser.getText().trim());
+		account.setOrusPass(orusPass.getText());
+		account.setAfsName(afsUser.getText().trim());
+		account.setAfsPass(afsPass.getText());
+		account.setFbName(fbName.getText().trim());
+		account.setRecoveryEmail(recoveryEmail.getText().toLowerCase().trim());
+		taxpayer.setName(name);
+		taxpayer.setPersonalInfo(personalInfo);
+		taxpayer.setAccount(account);
+		try {
+			viewModel.createTaxpayer(taxpayer);
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
+	}
+	
+	private void errorTextField(TextField t,boolean hasError) {
+		if(hasError) {
+		t.setStyle("""
+				-fx-border-color:red;
+				-fx-border-radius:10;
+				-fx-background-radius:10
+				""");
+			return;
+		}
+		t.setStyle("""
+				-fx-border-color:none;
+				-fx-border-radius:10;
+				-fx-background-radius:10
+				""");
 	}
 	
 		@FXML private TextField tinNum1;
