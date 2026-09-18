@@ -1,18 +1,18 @@
 package app.models;
 
 public class Supplier {
-	private int id, tinNum;
-	private String tradeName, bussAddress;
+	private int id, taxId;
+	private String tinNum, tradeName, bussAddress;
 	public int getId() {
 		return id;
 	}
 	public void setId(int id) {
 		this.id = id;
 	}
-	public int getTinNum() {
+	public String getTinNum() {
 		return tinNum;
 	}
-	public void setTinNum(int tinNum) {
+	public void setTinNum(String tinNum) {
 		this.tinNum = tinNum;
 	}
 	public String getTradeName() {
@@ -26,6 +26,12 @@ public class Supplier {
 	}
 	public void setBussAddress(String bussAddress) {
 		this.bussAddress = bussAddress;
+	}
+	public int getTaxId() {
+		return taxId;
+	}
+	public void setTaxId(int taxId) {
+		this.taxId = taxId;
 	}
 	
 	

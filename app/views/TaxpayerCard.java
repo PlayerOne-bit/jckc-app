@@ -12,6 +12,7 @@ public class TaxpayerCard extends FlowPane{
 	@FXML private Text businessAddress;
 	
 	public TaxpayerCard(Taxpayer taxpayer) {
+		Pages.child(Pages.TAXPAYER_CARD, this, TaxpayerCard.class);
 		tinNumber.setText(taxpayer.getTinNum());
 		taxpayerName.setText(taxpayer.getTaxName());
 		tradeName.setText(taxpayer.getTradeName());

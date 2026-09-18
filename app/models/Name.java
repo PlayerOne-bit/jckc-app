@@ -5,11 +5,22 @@ public class Name {
 	private String lastName,firstName, middleName, suffix;
 	
 	public String getFullName(int index) {
+		String suffix=this.suffix!=null?" "+this.suffix:"";
+		String middleName;
 		switch(index) {
-			case 0: return "%s %s. %s %s".formatted(firstName, middleName.charAt(0), lastName, suffix);
-			case 1: return "%s %s %s %s".formatted(firstName, middleName, lastName, suffix);
-			case 2: return "%s%s, %s%s".formatted(lastName," "+suffix, firstName, " y "+middleName);
-			case 3: return "%s%s, %s%s".formatted(lastName," "+suffix,firstName," "+middleName.charAt(0)+".");
+			case 0:
+				middleName=(this.middleName!=null)?" "+this.middleName.charAt(0)+".":"";
+				return "%s%s %s%s".formatted(firstName, middleName, lastName, suffix);
+			case 1:
+				middleName=(this.middleName!=null)?" "+this.middleName:"";
+				return "%s%s %s%s".formatted(firstName, middleName, lastName, suffix);
+			case 2:
+				middleName=(this.middleName!=null)?" "+this.middleName.charAt(0)+".":"";
+				return "%s%s, %s%s".formatted(lastName,suffix,firstName,middleName);
+			case 3:
+				middleName=(this.middleName!=null)?" y "+this.middleName:"";
+				return "%s%s, %s%s".formatted(lastName,suffix, firstName, middleName);
+			
 			default: return null;
 		}
 	}

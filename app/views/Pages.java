@@ -2,21 +2,24 @@ package app.views;
 
 import java.io.IOException;
 import java.util.Stack;
+
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
-import javafx.scene.layout.FlowPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 public class Pages {
     public final static String
-            AUTH = "auth.fxml",
-            HOME = "taxpayer.fxml",
-            ADD_TAXPAYER="add_taxpayer.fxml";
+            AUTH = "fxml/auth.fxml",
+            HOME = "fxml/taxpayer.fxml",
+            ADD_TAXPAYER="fxml/add_taxpayer.fxml",
+            TAXPAYER_CARD="fxml/taxpayer_card.fxml",
+            EDIT_TAXPAYER = "fxml/edit_taxpayer.fxml",
+            DELETE_TAXPAYER = "fxml/delete_taxpayer.fxml";
     
     private static Stack<String> stack = new Stack<>(); 
     private static Stage stage, stage2;
@@ -26,32 +29,31 @@ public class Pages {
     public static void clear() {
         stack.clear();
     }
-
-    public static void popup(ActionEvent e, String pop, String title) {
+    
+    public static void child(String fxml, Object parent, Class<?> contextClass) {
+        FXMLLoader fxmlLoader = new FXMLLoader(contextClass.getResource(fxml));
+        fxmlLoader.setRoot(parent);
+        fxmlLoader.setController(parent);
         try {
-            FXMLLoader loader = new FXMLLoader(Pages.class.getResource(pop));
-            Parent popupRoot = loader.load(); // Using local variable to avoid overriding global root
-            stage2 = new Stage();
-            stage2.getIcons().add(new Image(Pages.class.getResourceAsStream("images/logo.png")));
-            stage2.setTitle(title);
-            stage2.setScene(new Scene(popupRoot));
+            fxmlLoader.load();
+        } catch(IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void popupComponent(Parent componentRoot) {
+        try {
+            Stage stage2 = new Stage();
+            stage2.getIcons().add(new Image(Pages.class.getResourceAsStream("/app/views/fxml/images/logo.png")));
+            stage2.setScene(new Scene(componentRoot));
             stage2.initModality(Modality.APPLICATION_MODAL);
             stage2.setResizable(false);
             stage2.showAndWait();
         } catch(Exception d) {
-            System.out.println(d);
+            d.printStackTrace();
         }
     }
 
-    public static void addComponent(FlowPane parent, String fxml) {
-        try {
-            FXMLLoader loader = new FXMLLoader(Pages.class.getResource(fxml));
-            Node child = loader.load();
-            parent.getChildren().add(child);
-        } catch(Exception e) {
-            System.out.println(e);
-        }
-    }
     
     public static void cancel(ActionEvent e) {
         if (stage2 != null) {

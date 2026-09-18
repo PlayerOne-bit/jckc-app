@@ -1,5 +1,7 @@
 package app.views;
 
+import java.time.LocalDate;
+
 import app.models.Account;
 import app.models.Name;
 import app.models.PersonalInfo;
@@ -14,16 +16,12 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.input.KeyCode;
 import javafx.scene.text.Text;
-public class AddTaxPayerController {
-	private TaxpayerViewModel viewModel; 
-	
+public class EditTaxPayerController {
+	private TaxpayerViewModel vm;
+	private Taxpayer originalTaxpayer;
 	@FXML
 	public void initialize(){
-		try {
-			viewModel=new TaxpayerViewModel();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		
 		suffix.setItems(FXCollections.observableArrayList(
 				"Jr.",
 				"Sr.",
@@ -45,6 +43,64 @@ public class AddTaxPayerController {
 				"Seperated",
 				"N/A"
 				));
+		try {
+			vm=new TaxpayerViewModel();
+			originalTaxpayer=Taxpayer.getTaxpayer();
+			Name name = originalTaxpayer.getName();
+			PersonalInfo person = originalTaxpayer.getPersonalInfo();
+			Account acc = originalTaxpayer.getAccount();
+			String[] tin = new String[4];
+			tin = originalTaxpayer.getTinNum().split("-");
+			tinNum1.setText(tin[0]);
+			tinNum2.setText(tin[1]);
+			tinNum3.setText(tin[2]);
+			tinNum4.setText(tin[3]);
+			lastName.setText(name.getLastName());
+			firstName.setText(name.getFirstName());
+			middleName.setText(name.getMiddleName());
+			suffix.setValue(name.getSuffix()!=null?name.getSuffix():"N/A");
+			tradeName.setText(originalTaxpayer.getTradeName());
+			bussAddress.setText(originalTaxpayer.getBussAddress());
+			bussKind.setText(originalTaxpayer.getBussKind());
+			bussLine.setText(originalTaxpayer.getBussLine());
+			formTypes.setText(originalTaxpayer.getTaxNformTypes());
+			taxTypes.setValue(originalTaxpayer.getVat()!=null?originalTaxpayer.getVat():"N/A");
+			psic.setText(originalTaxpayer.getPsic());
+			bday.setValue(person.getBirthdate() != null && !person.getBirthdate().trim().isEmpty()?LocalDate.parse(person.getBirthdate()):null);
+			bplace.setText(person.getBirthplace());
+			civilStatus.setValue(person.getCivilStatus()!=null?person.getCivilStatus():"N/A");
+			residence.setText(person.getResidence());
+			if (person.getSpouseTin() != null && !person.getSpouseTin().trim().isEmpty()) {
+			    String[] spouseTin = person.getSpouseTin().split("-");
+			    if (spouseTin.length > 0) tinSpouse1.setText(spouseTin[0]);
+			    if (spouseTin.length > 1) tinSpouse2.setText(spouseTin[1]);
+			    if (spouseTin.length > 2) tinSpouse3.setText(spouseTin[2]);
+			    if (spouseTin.length > 3) tinSpouse4.setText(spouseTin[3]);
+			} else {
+			    tinSpouse1.clear();
+			    tinSpouse2.clear();
+			    tinSpouse3.clear();
+			    tinSpouse4.clear();
+			}
+			spouseName.setText(person.getSpouseName());
+			fatherName.setText(person.getFatherName());
+			motherName.setText(person.getMotherMaidenName());
+			cpNum.setText(person.getCpNum());
+			gmailEmail.setText(acc.getGmailEmail());
+			gmailPass.setText(acc.getGmailPass());
+			yahooEmail.setText(acc.getYahooEmail());
+			yahooPass.setText(acc.getYahooPass());
+			orusUser.setText(acc.getOrusName());
+			orusPass.setText(acc.getOrusPass());
+			afsUser.setText(acc.getAfsName());
+			afsPass.setText(acc.getAfsPass());
+			fbName.setText(acc.getFbName());
+			recoveryEmail.setText(acc.getRecoveryEmail());
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
 		setUpSmartField(tinNum1,tinNum2,tinNum3,tinNum4);
 		setUpSmartField(tinSpouse1,tinSpouse2,tinSpouse3,tinSpouse4);
 		cpNum.setTextFormatter(new TextFormatter<>(change -> {
@@ -84,11 +140,12 @@ public class AddTaxPayerController {
             }
         });
     }
+	@FXML
 	public void cancel(ActionEvent e) {
 		Pages.change(e,Pages.HOME);
 	}
-	
-	public void create(ActionEvent e){
+	@FXML
+	public void edit(ActionEvent e){
 		String tinN1 = tinNum1.getText().trim();
 		String tinN2 = tinNum2.getText().trim();
 		String tinN3 = tinNum3.getText().trim();
@@ -129,7 +186,16 @@ public class AddTaxPayerController {
 		Name name= new Name();
 		PersonalInfo personalInfo = new PersonalInfo();
 		Account account = new Account();
-		
+
+		taxpayer.setId(originalTaxpayer.getId());
+		name.setId(originalTaxpayer.getName().getId());
+		name.setTaxId(originalTaxpayer.getId());
+		personalInfo.setId(originalTaxpayer.getPersonalInfo().getId());
+		personalInfo.setTaxId(originalTaxpayer.getId());
+		account.setId(originalTaxpayer.getAccount().getId());
+		account.setTaxId(originalTaxpayer.getId());
+		taxpayer.setSupplier(originalTaxpayer.getSupplier());
+
 		name.setLastName(lName);
 		name.setFirstName(fName);
 		name.setMiddleName(mName);
@@ -166,7 +232,8 @@ public class AddTaxPayerController {
 		taxpayer.setPersonalInfo(personalInfo);
 		taxpayer.setAccount(account);
 		try {
-			viewModel.createTaxpayer(taxpayer);
+			vm.updateTaxpayer(taxpayer);
+			Taxpayer.setTaxpayer(taxpayer);
 			Pages.change(e, Pages.HOME);
 		} catch (Exception e1) {
 			e1.printStackTrace();

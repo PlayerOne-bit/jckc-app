@@ -1,6 +1,5 @@
 package app;
 
-import app.views.Pages;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Rectangle2D;
@@ -13,12 +12,12 @@ public class Main extends Application {
     @Override
     public void start(Stage stage) throws Exception {
 	    try {
-	        Parent root = FXMLLoader.load(getClass().getResource("/app/views/auth.fxml"));
+	        Parent root = FXMLLoader.load(getClass().getResource("/app/views/fxml/auth.fxml"));
 	        Scene scene= new Scene(root);
-	        String css=this.getClass().getResource("/app/views/application.css").toExternalForm();
+	        String css=this.getClass().getResource("/app/views/fxml/application.css").toExternalForm();
 	        scene.getStylesheets().add(css);
 	        stage.setTitle("JCKC Accounting and Bookkeeping Services");
-	        stage.getIcons().add(new Image(getClass().getResourceAsStream("/app/views/images/logo.png")));
+	        stage.getIcons().add(new Image(getClass().getResourceAsStream("/app/views/fxml/images/logo.png")));
 	        Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
 	        stage.setMinWidth(screenBounds.getWidth());
 	        stage.setMinHeight(screenBounds.getHeight());

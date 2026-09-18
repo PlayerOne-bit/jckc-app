@@ -1,7 +1,9 @@
 package app.models;
 
-public class Taxpayer {
+import java.util.List;
 
+public class Taxpayer {
+	private static Taxpayer taxpayer;
     private int id;
 
     private String tinNum;
@@ -17,6 +19,7 @@ public class Taxpayer {
     private PersonalInfo personalInfo;
     private Account account;
     private Name name;
+    private List<Supplier> supplier;
 
     public int getId() {
         return id;
@@ -121,4 +124,20 @@ public class Taxpayer {
     public void setName(Name name) {
         this.name = name;
     }
+
+	public List<Supplier> getSupplier() {
+		return supplier;
+	}
+
+	public void setSupplier(List<Supplier> supplier) {
+		this.supplier = supplier;
+	}
+
+	public static Taxpayer getTaxpayer() {
+		return taxpayer;
+	}
+
+	public static void setTaxpayer(Taxpayer taxpayer) {
+		Taxpayer.taxpayer = taxpayer;
+	}
 }

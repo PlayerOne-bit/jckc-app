@@ -160,6 +160,11 @@ public class Repository {
                     taxId
             );
 
+            deleteChildByTaxId(
+                    DATABASE.DELETE_SUPPLIER_BY_TAX_ID,
+                    taxId
+            );
+
             try (PreparedStatement ps =
                     sql.prepareStatement(DATABASE.DELETE_TABLE_TAXPAYER)) {
 
@@ -544,6 +549,10 @@ public class Repository {
     }
 
 
+    // =========================================================
+    // SUPPLIER CRUD (linked to Taxpayer via taxId FK)
+    // =========================================================
+
     public int addSupplier(Supplier supplier)
             throws SQLException {
 
@@ -572,9 +581,10 @@ public class Repository {
                 DATABASE.INSERT_TABLE_SUPPLIER,
                 Statement.RETURN_GENERATED_KEYS)) {
 
-            ps.setInt(1, supplier.getTinNum());
+            ps.setString(1, supplier.getTinNum());
             ps.setString(2, supplier.getTradeName());
             ps.setString(3, supplier.getBussAddress());
+            ps.setInt(4, supplier.getTaxId());
 
             ps.executeUpdate();
 
@@ -628,6 +638,28 @@ public class Repository {
         return null;
     }
 
+    public List<Supplier> getSuppliersByTaxId(int taxId)
+            throws SQLException {
+
+        List<Supplier> suppliers = new ArrayList<>();
+
+        try (PreparedStatement ps =
+                sql.prepareStatement(
+                        DATABASE.SELECT_SUPPLIER_BY_TAX_ID)) {
+
+            ps.setInt(1, taxId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+
+                while (rs.next()) {
+                    suppliers.add(mapSupplier(rs));
+                }
+            }
+        }
+
+        return suppliers;
+    }
+
     public void updateSupplier(Supplier supplier)
             throws SQLException {
 
@@ -635,10 +667,11 @@ public class Repository {
                 sql.prepareStatement(
                         DATABASE.UPDATE_TABLE_SUPPLIER)) {
 
-            ps.setInt(1, supplier.getTinNum());
+            ps.setString(1, supplier.getTinNum());
             ps.setString(2, supplier.getTradeName());
             ps.setString(3, supplier.getBussAddress());
-            ps.setInt(4, supplier.getId());
+            ps.setInt(4, supplier.getTaxId());
+            ps.setInt(5, supplier.getId());
 
             ps.executeUpdate();
         }
@@ -715,7 +748,7 @@ public class Repository {
         );
 
         supplier.setTinNum(
-                rs.getInt(DATABASE.COLUMN_S_TIN_NUM)
+                rs.getString(DATABASE.COLUMN_S_TIN_NUM)
         );
 
         supplier.setTradeName(
@@ -724,6 +757,10 @@ public class Repository {
 
         supplier.setBussAddress(
                 rs.getString(DATABASE.COLUMN_S_BUSS_ADDRESS)
+        );
+
+        supplier.setTaxId(
+                rs.getInt(DATABASE.COLUMN_S_TAX_ID)
         );
 
         return supplier;
@@ -809,6 +846,7 @@ public class Repository {
         static final String COLUMN_S_TIN_NUM = "tinNum";
         static final String COLUMN_S_TRADE_NAME = "tradeName";
         static final String COLUMN_S_BUSS_ADDRESS = "bussAddress";
+        static final String COLUMN_S_TAX_ID = "taxId";
 
         static final String SELECT_TABLE_TAXPAYER =
                 "SELECT * FROM Taxpayer";
@@ -830,6 +868,9 @@ public class Repository {
 
         static final String SELECT_SUPPLIER_BY_ID =
                 "SELECT * FROM Supplier WHERE id = ?";
+
+        static final String SELECT_SUPPLIER_BY_TAX_ID =
+                "SELECT * FROM Supplier WHERE taxId = ?";
 
         static final String INSERT_TABLE_TAXPAYER =
                 "INSERT INTO Taxpayer " +
@@ -857,8 +898,8 @@ public class Repository {
 
         static final String INSERT_TABLE_SUPPLIER =
                 "INSERT INTO Supplier " +
-                "(tinNum, tradeName, bussAddress) " +
-                "VALUES (?, ?, ?)";
+                "(tinNum, tradeName, bussAddress, taxId) " +
+                "VALUES (?, ?, ?, ?)";
 
         static final String UPDATE_TABLE_TAXPAYER =
                 "UPDATE Taxpayer SET " +
@@ -912,7 +953,8 @@ public class Repository {
                 "UPDATE Supplier SET " +
                 "tinNum = ?, " +
                 "tradeName = ?, " +
-                "bussAddress = ? " +
+                "bussAddress = ?, " +
+                "taxId = ? " +
                 "WHERE id = ?";
 
         static final String DELETE_TABLE_TAXPAYER =
@@ -929,5 +971,8 @@ public class Repository {
 
         static final String DELETE_TABLE_SUPPLIER =
                 "DELETE FROM Supplier WHERE id = ?";
+
+        static final String DELETE_SUPPLIER_BY_TAX_ID =
+                "DELETE FROM Supplier WHERE taxId = ?";
     }
 }
