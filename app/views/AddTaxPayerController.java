@@ -15,12 +15,12 @@ import javafx.scene.control.TextFormatter;
 import javafx.scene.input.KeyCode;
 import javafx.scene.text.Text;
 public class AddTaxPayerController {
-	private TaxpayerViewModel viewModel; 
+	private TaxpayerViewModel vm; 
 	
 	@FXML
 	public void initialize(){
 		try {
-			viewModel=new TaxpayerViewModel();
+			vm=new TaxpayerViewModel();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -47,6 +47,14 @@ public class AddTaxPayerController {
 				));
 		setUpSmartField(tinNum1,tinNum2,tinNum3,tinNum4);
 		setUpSmartField(tinSpouse1,tinSpouse2,tinSpouse3,tinSpouse4);
+		setUpTextOnly(lastName);
+		setUpTextOnly(firstName);
+		setUpTextOnly(middleName);
+		setUpTextOnly(bussKind);
+		setUpTextOnly(bplace);
+		setUpTextOnly(spouseName);
+		setUpTextOnly(fatherName);
+		setUpTextOnly(motherName);
 		cpNum.setTextFormatter(new TextFormatter<>(change -> {
             String newText = change.getControlNewText();
             if (newText.isEmpty())return change;
@@ -56,6 +64,15 @@ public class AddTaxPayerController {
             return null;
         }));
 		
+	}
+	private void setUpTextOnly(TextField t) {
+		t.setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            if (newText.matches("[a-zA-Z,\\.\\- ]*")) {
+                return change;
+            }
+            return null;
+        }));
 	}
 	private void setUpSmartField(TextField txtField1,TextField txtField2,TextField txtField3, TextField txtField4) {
 		setupSmartField(txtField1, txtField2, null);
@@ -88,48 +105,91 @@ public class AddTaxPayerController {
 		Pages.change(e,Pages.HOME);
 	}
 	
+	@FXML
 	public void create(ActionEvent e){
-		String tinN1 = tinNum1.getText().trim();
-		String tinN2 = tinNum2.getText().trim();
-		String tinN3 = tinNum3.getText().trim();
-		String tinN4 = tinNum4.getText().trim();
-		String lName=lastName.getText().trim();
-		String fName = firstName.getText().trim();
-		String mName = middleName.getText().trim();
-		String suf = suffix.getValue()!=null&&!suffix.getValue().equals("N/A")?suffix.getValue():null;
-		String tName =tradeName.getText().trim();
-		String bAddress = bussAddress.getText().trim();
-		
-		boolean t1=tinN1.isEmpty()||tinN1.length()<3,
-				t2=tinN2.isEmpty()||tinN2.length()<3,
-				t3=tinN3.isEmpty()||tinN3.length()<3,
-				t4=tinN4.isEmpty()||tinN4.length()<3,
-				lNameError=lName.isEmpty(),
-				fNameError=fName.isEmpty(),
-				bussAddressError=bAddress.isEmpty(),
-				tradeNameError=tName.isEmpty();
-		String errors ="";
-		if(t1||t2||t3||t4) errors+="Complete the Tin Number.";
-		if(lNameError || fNameError)errors+=" Last Name and First Name is required.";
-		if(tradeNameError)	errors+="\nTrade Name is required.";
-		if(bussAddressError)errors+=" Business Address is required.";
-		errorTextField(tinNum1,t1);
-		errorTextField(tinNum2,t2);
-		errorTextField(tinNum3,t3);
-		errorTextField(tinNum4,t4);
-		errorTextField(lastName,lNameError);
-		errorTextField(firstName,fNameError);
-		errorTextField(tradeName,tradeNameError);
-		errorTextField(bussAddress,bussAddressError);
-		if(t1||t2||t3||t4||lNameError||fNameError||tradeNameError||bussAddressError) {
-			errorText.setText(errors);
-			return;
+		String tinN1 = tinNum1.getText().trim(),
+		        tinN2 = tinNum2.getText().trim(),
+		        tinN3 = tinNum3.getText().trim(),
+		        tinN4 = tinNum4.getText().trim(),
+		        lName = lastName.getText().trim(),
+		        fName = firstName.getText().trim(),
+		        mName = middleName.getText().trim(),
+		        suf = suffix.getValue() != null && !suffix.getValue().equals("N/A") ? suffix.getValue() : null,
+		        tName = tradeName.getText().trim(),
+		        bAddress = bussAddress.getText().trim(),
+		        rEmail = recoveryEmail.getText().toLowerCase().trim(),
+		        sTin1 = tinSpouse1.getText().trim(),
+		        sTin2 = tinSpouse2.getText().trim(),
+		        sTin3 = tinSpouse3.getText().trim(),
+		        sTin4 = tinSpouse4.getText().trim(),
+		        cpNumber = cpNum.getText().trim(),
+		        bdayText = bday.getEditor().getText().trim();
+
+		boolean t1 = tinN1.isEmpty() || tinN1.length() < 3,
+		        t2 = tinN2.isEmpty() || tinN2.length() < 3,
+		        t3 = tinN3.isEmpty() || tinN3.length() < 3,
+		        t4 = tinN4.isEmpty() || tinN4.length() < 3,
+		        lNameError = lName.isEmpty(),
+		        fNameError = fName.isEmpty(),
+		        tradeNameError = tName.isEmpty(),
+		        bussAddressError = bAddress.isEmpty();
+		boolean recEmailError = !rEmail.isEmpty() && !rEmail.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+		boolean spouseTinIsBeingFilled = !sTin1.isEmpty() || !sTin2.isEmpty() || !sTin3.isEmpty() || !sTin4.isEmpty();
+		boolean st1 = spouseTinIsBeingFilled && sTin1.length() < 3,
+		        st2 = spouseTinIsBeingFilled && sTin2.length() < 3,
+		        st3 = spouseTinIsBeingFilled && sTin3.length() < 3,
+		        st4 = spouseTinIsBeingFilled && sTin4.length() < 3,
+		        spouseTinError = st1 || st2 || st3 || st4;
+		boolean cpNumError = false;
+		if (!cpNumber.isEmpty()) {
+		    boolean matchesInternational = cpNumber.matches("^\\+63\\d{10}$");
+		    boolean matchesHyphenated = cpNumber.matches("^\\d{4}-\\d{3}-\\d{4}$");
+		    boolean matchesLocal = cpNumber.matches("^09\\d{9}$") || cpNumber.matches("^\\d{11}$");
+		    
+		    if (!matchesInternational && !matchesHyphenated && !matchesLocal) {
+		        cpNumError = true;
+		    }
 		}
+		boolean bdayError = !bdayText.isEmpty() && !bdayText.matches("^(0[1-9]|1[0-2])/(0[1-9]|[12][0-9]|3[01])/\\d{4}$");
+
+		String errors = "";
+		if (t1 || t2 || t3 || t4) errors += "• Complete the TIN Number.\n";
+		if (lNameError || fNameError) errors += "• Last Name and First Name are required.\n";
+		if (tradeNameError) errors += "• Trade Name is required.\n";
+		if (bussAddressError) errors += "• Business Address is required.\n";
+		if(bdayError) errors += "• Birthday must follow the MM/DD/YYYY format.\n";
+		if (spouseTinError) errors += "• Complete the Spouse TIN Number.\n";
+		if (cpNumError) errors += "• Invalid CP Number format\n";
+		if (recEmailError) errors += "• Invalid email format.\n";
+		
+		errorTextField(tinNum1, t1);
+		errorTextField(tinNum2, t2);
+		errorTextField(tinNum3, t3);
+		errorTextField(tinNum4, t4);
+		errorTextField(lastName, lNameError);
+		errorTextField(firstName, fNameError);
+		errorTextField(tradeName, tradeNameError);
+		errorTextField(bussAddress, bussAddressError);
+		errorTextField(recoveryEmail, recEmailError);
+		errorTextField(tinSpouse1, st1);
+		errorTextField(tinSpouse2, st2);
+		errorTextField(tinSpouse3, st3);
+		errorTextField(tinSpouse4, st4);
+		errorTextField(cpNum, cpNumError);
+		errorTextField(bday,bdayError);
+
+		if (t1 || t2 || t3 || t4 || lNameError || fNameError || tradeNameError || 
+		    bussAddressError || recEmailError || spouseTinError || cpNumError||bdayError) {
+		    errorText.setText(errors.trim());
+		    return;
+		}
+
+
 		Taxpayer taxpayer=new Taxpayer();
 		Name name= new Name();
 		PersonalInfo personalInfo = new PersonalInfo();
 		Account account = new Account();
-		
+
 		name.setLastName(lName);
 		name.setFirstName(fName);
 		name.setMiddleName(mName);
@@ -139,19 +199,18 @@ public class AddTaxPayerController {
 		taxpayer.setTradeName(tName);
 		taxpayer.setBussAddress(bAddress);
 		taxpayer.setBussKind(bussKind.getText().trim());
-		taxpayer.setBussLine( bussLine.getText().trim());
-		taxpayer.setTaxNformTypes(formTypes.getText().trim());
+		taxpayer.setFormTypes(formTypes.getText().trim());
 		taxpayer.setVat(taxTypes.getValue()!=null && !taxTypes.getValue().equals("N/A") ?taxTypes.getValue():null);
 		taxpayer.setPsic(psic.getText().trim());
 		personalInfo.setBirthdate(bday.getValue()!=null? bday.getValue().toString().trim():null);
 		personalInfo.setBirthplace(bplace.getText().trim());
 		personalInfo.setCivilStatus(civilStatus.getValue()!=null && !civilStatus.getValue().equals("N/A") ?civilStatus.getValue():null);
 		personalInfo.setResidence(residence.getText().trim());
-		personalInfo.setSpouseTin(tinSpouse1.getText()+"-"+tinSpouse2.getText()+"-"+tinSpouse3.getText()+"-"+tinSpouse4.getText());
+		personalInfo.setSpouseTin(sTin1+"-"+sTin2+"-"+sTin3+"-"+sTin4);
 		personalInfo.setSpouseName(spouseName.getText().trim());
 		personalInfo.setFatherName(fatherName.getText().trim());
 		personalInfo.setMotherMaidenName(motherName.getText().trim());
-		personalInfo.setCpNum(cpNum.getText());
+		personalInfo.setCpNum(cpNumber);
 		account.setGmailEmail(gmailEmail.getText().trim().toLowerCase());
 		account.setGmailPass(gmailPass.getText());
 		account.setYahooEmail(yahooEmail.getText().trim().toLowerCase());
@@ -161,12 +220,17 @@ public class AddTaxPayerController {
 		account.setAfsName(afsUser.getText().trim());
 		account.setAfsPass(afsPass.getText());
 		account.setFbName(fbName.getText().trim());
-		account.setRecoveryEmail(recoveryEmail.getText().toLowerCase().trim());
+		account.setRecoveryEmail(rEmail);
 		taxpayer.setName(name);
 		taxpayer.setPersonalInfo(personalInfo);
 		taxpayer.setAccount(account);
 		try {
-			viewModel.createTaxpayer(taxpayer);
+			boolean success = vm.createTaxpayer(taxpayer);
+			if(!success) {
+				errorText.setText("No same Tin Number duplicates");
+				return;
+			}
+			Taxpayer.setTaxpayer(taxpayer);
 			Pages.change(e, Pages.HOME);
 		} catch (Exception e1) {
 			e1.printStackTrace();
@@ -174,19 +238,26 @@ public class AddTaxPayerController {
 	}
 	
 	private void errorTextField(TextField t,boolean hasError) {
-		if(hasError) {
-		t.setStyle("""
+		t.setStyle((hasError)?"""
 				-fx-border-color:red;
 				-fx-border-radius:10;
 				-fx-background-radius:10
-				""");
-			return;
-		}
-		t.setStyle("""
-				-fx-border-color:none;
+				""":"""
+					-fx-border-color:none;
+					-fx-border-radius:10;
+					-fx-background-radius:10
+					""");
+	}
+	private void errorTextField(DatePicker t,boolean hasError) {
+		t.setStyle((hasError)?"""
+				-fx-border-color:red;
 				-fx-border-radius:10;
 				-fx-background-radius:10
-				""");
+				""":"""
+					-fx-border-color:none;
+					-fx-border-radius:10;
+					-fx-background-radius:10
+					""");
 	}
 	
 		@FXML private TextField tinNum1;
@@ -200,7 +271,6 @@ public class AddTaxPayerController {
 		@FXML private  TextField tradeName;
 		@FXML private  TextField bussAddress;
 		@FXML private  TextField bussKind;
-		@FXML private  TextField bussLine;
 		@FXML private  TextField formTypes;
 		@FXML private  ComboBox<String> taxTypes;
 		@FXML private  TextField psic;

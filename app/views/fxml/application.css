@@ -53,3 +53,29 @@
 	-fx-background-radius: 0; 
 	-fx-padding: 0;
 }
+.switch-toggle {
+    -fx-background-color: #E0E0E0;
+    -fx-background-radius: 13; 
+    -fx-cursor: hand;
+    -fx-alignment: CENTER_LEFT; 
+    -fx-padding: 10	10	10	10;  
+	-fx-text-fill:black;
+}
+.switch-toggle .thumb {
+    -fx-background-color: white;
+    -fx-background-radius: 10; 
+    -fx-pref-width: 20;
+    -fx-pref-height: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 3, 0, 0, 1);
+}
+.switch-toggle:selected {
+    -fx-background-color: #24A0ED;
+    -fx-alignment: CENTER_RIGHT;
+	-fx-text-fill:white;
+}
+.switch-toggle:hover {
+    -fx-background-color: #D6D6D6;
+}
+.switch-toggle:selected:hover {
+    -fx-background-color: #1A85CA;
+}

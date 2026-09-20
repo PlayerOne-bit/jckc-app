@@ -42,7 +42,7 @@
                         <FontIcon iconLiteral="fas-arrow-circle-left" iconSize="30" selectionEnd="0" wrappingWidth="17.5" />
                      </graphic>
                   </Button>
-                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="SLSP">
+                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Summary List of Sales and Purchases">
                      <font>
                         <Font name="System Bold" size="24.0" />
                      </font>

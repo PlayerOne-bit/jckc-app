@@ -2,18 +2,16 @@ package app.viewmodels;
 
 import java.util.Comparator;
 import java.util.List;
-import app.database.Repository;
+import app.database.TaxpayerRepository;
 import app.models.Account;
 import app.models.PersonalInfo;
 import app.models.Taxpayer;
 
 public class TaxpayerViewModel {
-    
-    private final Repository repo;
+    private final TaxpayerRepository repo;
     private List<Taxpayer> taxpayers;
-
     public TaxpayerViewModel() throws Exception {
-        this.repo = new Repository();
+        this.repo = new TaxpayerRepository();
         refreshTaxpayers(); 
     }
     public void refreshTaxpayers() throws Exception {
@@ -22,8 +20,8 @@ public class TaxpayerViewModel {
         	PersonalInfo person = taxpayer.getPersonalInfo();
         	Account acc = taxpayer.getAccount();
         	taxpayer.setBussKind(safeText(taxpayer.getBussKind()));
-        	taxpayer.setBussLine(safeText(taxpayer.getBussLine()));
-        	taxpayer.setTaxNformTypes(safeText(taxpayer.getTaxNformTypes())+(taxpayer.getVat()!=null?" ("+taxpayer.getVat()+")":""));
+        	taxpayer.setFormTypes(safeText(taxpayer.getFormTypes()));
+        	taxpayer.setVat(safeText(taxpayer.getVat()));;
         	taxpayer.setPsic(safeText(taxpayer.getPsic()));
         	person.setBirthdate(safeText(person.getBirthdate()));
         	person.setBirthplace(safeText(person.getBirthplace()));
@@ -57,15 +55,28 @@ public class TaxpayerViewModel {
     	return text;
     }
     public List<Taxpayer> loadTaxpayers() {
-    	
         return taxpayers;
     }
-
-    public void createTaxpayer(Taxpayer taxpayer) throws Exception {
+    public boolean createTaxpayer(Taxpayer taxpayer) throws Exception {
+        List<Taxpayer> list = taxpayers; 
+        int left = 0;
+        int right = list.size() - 1;
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            Taxpayer midTaxpayer = list.get(mid);
+            int comparison = midTaxpayer.getTinNum().compareTo(taxpayer.getTinNum());
+            if (comparison == 0) {
+                return false; 
+            } else if (comparison < 0) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
         repo.addTaxpayer(taxpayer);
         refreshTaxpayers();
+        return true;
     }
-
     public void updateTaxpayer(Taxpayer taxpayer) throws Exception {
         repo.updateTaxpayer(taxpayer);
         refreshTaxpayers();

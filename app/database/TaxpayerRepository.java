@@ -11,14 +11,13 @@ import java.util.List;
 import app.models.Account;
 import app.models.Name;
 import app.models.PersonalInfo;
-import app.models.Supplier;
 import app.models.Taxpayer;
 
-public class Repository {
+public class TaxpayerRepository {
 
     private final Connection sql;
 
-    public Repository() throws SQLException {
+    public TaxpayerRepository() throws SQLException {
         sql = DatabaseConfig.getConnection();
     }
 
@@ -109,10 +108,9 @@ public class Repository {
                 ps.setString(4, taxpayer.getBussAddress());
                 ps.setString(5, taxpayer.getBussKind());
                 ps.setString(6, taxpayer.getPsic());
-                ps.setString(7, taxpayer.getBussLine());
-                ps.setString(8, taxpayer.getTaxNformTypes());
-                ps.setString(9, taxpayer.getVat());
-                ps.setInt(10, taxpayer.getId());
+                ps.setString(7, taxpayer.getFormTypes());
+                ps.setString(8, taxpayer.getVat());
+                ps.setInt(9, taxpayer.getId());
 
                 ps.executeUpdate();
             }
@@ -196,9 +194,8 @@ public class Repository {
             ps.setString(4, taxpayer.getBussAddress());
             ps.setString(5, taxpayer.getBussKind());
             ps.setString(6, taxpayer.getPsic());
-            ps.setString(7, taxpayer.getBussLine());
-            ps.setString(8, taxpayer.getTaxNformTypes());
-            ps.setString(9, taxpayer.getVat());
+            ps.setString(7, taxpayer.getFormTypes());
+            ps.setString(8, taxpayer.getVat());
 
             ps.executeUpdate();
 
@@ -549,147 +546,6 @@ public class Repository {
     }
 
 
-    // =========================================================
-    // SUPPLIER CRUD (linked to Taxpayer via taxId FK)
-    // =========================================================
-
-    public int addSupplier(Supplier supplier)
-            throws SQLException {
-
-        try {
-            sql.setAutoCommit(false);
-
-            int supplierId = insertSupplierRecord(supplier);
-
-            sql.commit();
-
-            return supplierId;
-
-        } catch (SQLException e) {
-            sql.rollback();
-            throw e;
-
-        } finally {
-            sql.setAutoCommit(true);
-        }
-    }
-
-    private int insertSupplierRecord(Supplier supplier)
-            throws SQLException {
-
-        try (PreparedStatement ps = sql.prepareStatement(
-                DATABASE.INSERT_TABLE_SUPPLIER,
-                Statement.RETURN_GENERATED_KEYS)) {
-
-            ps.setString(1, supplier.getTinNum());
-            ps.setString(2, supplier.getTradeName());
-            ps.setString(3, supplier.getBussAddress());
-            ps.setInt(4, supplier.getTaxId());
-
-            ps.executeUpdate();
-
-            try (ResultSet keys = ps.getGeneratedKeys()) {
-
-                if (keys.next()) {
-                    return keys.getInt(1);
-                }
-            }
-        }
-
-        throw new SQLException(
-                "Failed to insert supplier, no ID obtained."
-        );
-    }
-
-    public List<Supplier> getAllSuppliers()
-            throws SQLException {
-
-        List<Supplier> suppliers = new ArrayList<>();
-
-        try (PreparedStatement ps =
-                sql.prepareStatement(DATABASE.SELECT_TABLE_SUPPLIER);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                suppliers.add(mapSupplier(rs));
-            }
-        }
-
-        return suppliers;
-    }
-
-    public Supplier getSupplierById(int id)
-            throws SQLException {
-
-        try (PreparedStatement ps =
-                sql.prepareStatement(
-                        DATABASE.SELECT_SUPPLIER_BY_ID)) {
-
-            ps.setInt(1, id);
-
-            try (ResultSet rs = ps.executeQuery()) {
-
-                if (rs.next()) {
-                    return mapSupplier(rs);
-                }
-            }
-        }
-
-        return null;
-    }
-
-    public List<Supplier> getSuppliersByTaxId(int taxId)
-            throws SQLException {
-
-        List<Supplier> suppliers = new ArrayList<>();
-
-        try (PreparedStatement ps =
-                sql.prepareStatement(
-                        DATABASE.SELECT_SUPPLIER_BY_TAX_ID)) {
-
-            ps.setInt(1, taxId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-
-                while (rs.next()) {
-                    suppliers.add(mapSupplier(rs));
-                }
-            }
-        }
-
-        return suppliers;
-    }
-
-    public void updateSupplier(Supplier supplier)
-            throws SQLException {
-
-        try (PreparedStatement ps =
-                sql.prepareStatement(
-                        DATABASE.UPDATE_TABLE_SUPPLIER)) {
-
-            ps.setString(1, supplier.getTinNum());
-            ps.setString(2, supplier.getTradeName());
-            ps.setString(3, supplier.getBussAddress());
-            ps.setInt(4, supplier.getTaxId());
-            ps.setInt(5, supplier.getId());
-
-            ps.executeUpdate();
-        }
-    }
-
-    public void deleteSupplier(int id)
-            throws SQLException {
-
-        try (PreparedStatement ps =
-                sql.prepareStatement(
-                        DATABASE.DELETE_TABLE_SUPPLIER)) {
-
-            ps.setInt(1, id);
-            ps.executeUpdate();
-        }
-    }
-
-
     private Taxpayer mapTaxpayer(ResultSet rs)
             throws SQLException {
 
@@ -723,12 +579,8 @@ public class Repository {
                 rs.getString(DATABASE.COLUMN_T_PSIC)
         );
 
-        taxpayer.setBussLine(
-                rs.getString(DATABASE.COLUMN_T_BUSS_LINE)
-        );
-
-        taxpayer.setTaxNformTypes(
-                rs.getString(DATABASE.COLUMN_T_TAX_NFORM_TYPES)
+        taxpayer.setFormTypes(
+                rs.getString(DATABASE.COLUMN_T_FORM_TYPES)
         );
 
         taxpayer.setVat(
@@ -736,34 +588,6 @@ public class Repository {
         );
 
         return taxpayer;
-    }
-
-    private Supplier mapSupplier(ResultSet rs)
-            throws SQLException {
-
-        Supplier supplier = new Supplier();
-
-        supplier.setId(
-                rs.getInt(DATABASE.COLUMN_S_ID)
-        );
-
-        supplier.setTinNum(
-                rs.getString(DATABASE.COLUMN_S_TIN_NUM)
-        );
-
-        supplier.setTradeName(
-                rs.getString(DATABASE.COLUMN_S_TRADE_NAME)
-        );
-
-        supplier.setBussAddress(
-                rs.getString(DATABASE.COLUMN_S_BUSS_ADDRESS)
-        );
-
-        supplier.setTaxId(
-                rs.getInt(DATABASE.COLUMN_S_TAX_ID)
-        );
-
-        return supplier;
     }
 
     private void attachRelations(Taxpayer taxpayer)
@@ -805,8 +629,7 @@ public class Repository {
         static final String COLUMN_T_BUSS_ADDRESS = "bussAddress";
         static final String COLUMN_T_BUSS_KIND = "bussKind";
         static final String COLUMN_T_PSIC = "psic";
-        static final String COLUMN_T_BUSS_LINE = "bussLine";
-        static final String COLUMN_T_TAX_NFORM_TYPES = "taxNformTypes";
+        static final String COLUMN_T_FORM_TYPES = "formTypes";
         static final String COLUMN_T_VAT = "vat";
 
         static final String COLUMN_P_ID = "id";
@@ -842,12 +665,6 @@ public class Repository {
         static final String COLUMN_N_MIDDLE_NAME = "middleName";
         static final String COLUMN_N_SUFFIX = "suffix";
 
-        static final String COLUMN_S_ID = "id";
-        static final String COLUMN_S_TIN_NUM = "tinNum";
-        static final String COLUMN_S_TRADE_NAME = "tradeName";
-        static final String COLUMN_S_BUSS_ADDRESS = "bussAddress";
-        static final String COLUMN_S_TAX_ID = "taxId";
-
         static final String SELECT_TABLE_TAXPAYER =
                 "SELECT * FROM Taxpayer";
 
@@ -860,23 +677,14 @@ public class Repository {
         static final String SELECT_NAME_BY_TAX_ID =
                 "SELECT * FROM Name WHERE taxId = ?";
 
-        static final String SELECT_TABLE_SUPPLIER =
-                "SELECT * FROM Supplier";
-
         static final String SELECT_TAXPAYER_BY_ID =
                 "SELECT * FROM Taxpayer WHERE id = ?";
-
-        static final String SELECT_SUPPLIER_BY_ID =
-                "SELECT * FROM Supplier WHERE id = ?";
-
-        static final String SELECT_SUPPLIER_BY_TAX_ID =
-                "SELECT * FROM Supplier WHERE taxId = ?";
 
         static final String INSERT_TABLE_TAXPAYER =
                 "INSERT INTO Taxpayer " +
                 "(tinNum, taxName, tradeName, bussAddress, bussKind, " +
-                "psic, bussLine, taxNformTypes, vat) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "psic, formTypes, vat) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         static final String INSERT_TABLE_PERSONAL_INFO =
                 "INSERT INTO PersonalInfo " +
@@ -895,12 +703,6 @@ public class Repository {
                 "INSERT INTO Name " +
                 "(taxId, lastName, firstName, middleName, suffix) " +
                 "VALUES (?, ?, ?, ?, ?)";
-
-        static final String INSERT_TABLE_SUPPLIER =
-                "INSERT INTO Supplier " +
-                "(tinNum, tradeName, bussAddress, taxId) " +
-                "VALUES (?, ?, ?, ?)";
-
         static final String UPDATE_TABLE_TAXPAYER =
                 "UPDATE Taxpayer SET " +
                 "tinNum = ?, " +
@@ -909,8 +711,7 @@ public class Repository {
                 "bussAddress = ?, " +
                 "bussKind = ?, " +
                 "psic = ?, " +
-                "bussLine = ?, " +
-                "taxNformTypes = ?, " +
+                "formTypes = ?, " +
                 "vat = ? " +
                 "WHERE id = ?";
 
@@ -949,14 +750,6 @@ public class Repository {
                 "suffix = ? " +
                 "WHERE id = ?";
 
-        static final String UPDATE_TABLE_SUPPLIER =
-                "UPDATE Supplier SET " +
-                "tinNum = ?, " +
-                "tradeName = ?, " +
-                "bussAddress = ?, " +
-                "taxId = ? " +
-                "WHERE id = ?";
-
         static final String DELETE_TABLE_TAXPAYER =
                 "DELETE FROM Taxpayer WHERE id = ?";
 
@@ -969,8 +762,6 @@ public class Repository {
         static final String DELETE_NAME_BY_TAX_ID =
                 "DELETE FROM Name WHERE taxId = ?";
 
-        static final String DELETE_TABLE_SUPPLIER =
-                "DELETE FROM Supplier WHERE id = ?";
 
         static final String DELETE_SUPPLIER_BY_TAX_ID =
                 "DELETE FROM Supplier WHERE taxId = ?";

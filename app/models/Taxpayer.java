@@ -12,8 +12,7 @@ public class Taxpayer {
     private String bussAddress;
     private String bussKind;
     private String psic;
-    private String bussLine;
-    private String taxNformTypes;
+    private String formTypes;
     private String vat;
 
     private PersonalInfo personalInfo;
@@ -77,20 +76,12 @@ public class Taxpayer {
         this.psic = psic;
     }
 
-    public String getBussLine() {
-        return bussLine;
+    public String getFormTypes() {
+        return formTypes;
     }
 
-    public void setBussLine(String bussLine) {
-        this.bussLine = bussLine;
-    }
-
-    public String getTaxNformTypes() {
-        return taxNformTypes;
-    }
-
-    public void setTaxNformTypes(String taxNformTypes) {
-        this.taxNformTypes = taxNformTypes;
+    public void setFormTypes(String formTypes) {
+        this.formTypes = formTypes;
     }
 
     public String getVat() {

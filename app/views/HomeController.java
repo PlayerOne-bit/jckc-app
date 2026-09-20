@@ -1,5 +1,7 @@
 package app.views;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -11,7 +13,9 @@ import app.viewmodels.TaxpayerViewModel;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
@@ -39,7 +43,23 @@ public class HomeController {
 			editBtn.setDisable(defTaxpayer.noSelected);
 			delBtn.setDisable(defTaxpayer.noSelected);
 			if (!defTaxpayer.noSelected) loadTaxpayer(Taxpayer.getTaxpayer());
-
+			togglePassBtn.setSelected(false);
+			gmailPass.setVisible(togglePassBtn.isSelected());
+			yahooPass.setVisible(togglePassBtn.isSelected());
+			orusPass.setVisible(togglePassBtn.isSelected());
+			afsPass.setVisible(togglePassBtn.isSelected());
+			togglePassBtn.setText(togglePassBtn.isSelected()?"SHOW":"HIDE");
+			togglePassBtn.setOnAction(_->{
+				gmailPass.setVisible(togglePassBtn.isSelected());
+				yahooPass.setVisible(togglePassBtn.isSelected());
+				orusPass.setVisible(togglePassBtn.isSelected());
+				afsPass.setVisible(togglePassBtn.isSelected());
+				gmailPassword.setVisible(!togglePassBtn.isSelected());
+				yahooPassword.setVisible(!togglePassBtn.isSelected());
+				orusPassword.setVisible(!togglePassBtn.isSelected());
+				afsPassword.setVisible(!togglePassBtn.isSelected());
+				togglePassBtn.setText(togglePassBtn.isSelected()?"SHOW":"HIDE");
+			});
 			vm = new TaxpayerViewModel();
 			List<Taxpayer> taxpayers = vm.loadTaxpayers();
 			allTaxpayers = taxpayers != null ? taxpayers : new ArrayList<>();
@@ -50,7 +70,6 @@ public class HomeController {
 			e.printStackTrace();
 		}
 	}
-
 	private void renderTaxpayerCards(List<Taxpayer> taxpayers) {
 		taxpayerContainer.getChildren().clear();
 		for (Taxpayer taxpayer : taxpayers) {
@@ -103,11 +122,13 @@ public class HomeController {
 		tradeName.setText(taxpayer.getTradeName());
 		bussAddress.setText(taxpayer.getBussAddress());
 		bussKind.setText(taxpayer.getBussKind());
-		bussLine.setText(taxpayer.getBussLine());
-		taxNformTypes.setText(taxpayer.getTaxNformTypes());
 		psic.setText(taxpayer.getPsic());
-		
-		bday.setText(person.getBirthdate());
+		String forms = taxpayer.getFormTypes() != null ? taxpayer.getFormTypes() : "";
+		String vat = taxpayer.getVat();
+		taxNformTypes.setText(vat == null || vat.isEmpty() ? forms : forms + " (" + vat + ")");
+		String bd = person.getBirthdate();
+		bday.setText(bd != null && !bd.isEmpty()
+				? LocalDate.parse(bd).format(DateTimeFormatter.ofPattern("MMMM dd, yyyy")) : "");
 		bplace.setText(person.getBirthplace());
 		civilStatus.setText(person.getCivilStatus());
 		residence.setText(person.getResidence());
@@ -116,10 +137,9 @@ public class HomeController {
 		fatherName.setText(person.getFatherName());
 		motherName.setText(person.getMotherMaidenName());
 		cpNum.setText(person.getCpNum());
-		
-		gmailEmail.setText(acc.getGmailEmail());
+		gmailEmail.setText(!acc.getGmailEmail().isEmpty()?acc.getGmailEmail()+"@gmail.com":"");
 		gmailPass.setText(acc.getGmailPass());
-		yahooEmail.setText(acc.getYahooEmail());
+		yahooEmail.setText(!acc.getYahooEmail().isEmpty()?acc.getYahooEmail()+"@yahoo.com":"");
 		yahooPass.setText(acc.getYahooPass());
 		orusUser.setText(acc.getOrusName());
 		orusPass.setText(acc.getOrusPass());
@@ -127,6 +147,11 @@ public class HomeController {
 		afsPass.setText(acc.getAfsPass());
 		fbName.setText(acc.getFbName());
 		recoveryEmail.setText(acc.getRecoveryEmail());
+		
+		gmailPassword.setText(acc.getGmailEmail());
+		yahooPassword.setText(acc.getYahooPass());
+		orusPassword.setText(acc.getOrusPass());
+		afsPassword.setText(acc.getAfsPass());
 	}
 	
 	
@@ -158,7 +183,6 @@ public class HomeController {
 	@FXML private TextField tradeName;
 	@FXML private TextField bussAddress;
 	@FXML private TextField bussKind;
-	@FXML private TextField bussLine;
 	@FXML private TextField taxNformTypes;
 	@FXML private TextField psic;
 
@@ -182,4 +206,11 @@ public class HomeController {
 	@FXML private TextField afsPass;
 	@FXML private TextField fbName;
 	@FXML private TextField recoveryEmail;
+	
+	@FXML private PasswordField gmailPassword;
+	@FXML private PasswordField yahooPassword;
+	@FXML private PasswordField orusPassword;
+	@FXML private PasswordField afsPassword;
+	
+	@FXML private ToggleButton togglePassBtn;
 }
