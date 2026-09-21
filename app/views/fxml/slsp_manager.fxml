@@ -50,14 +50,19 @@
                         <FontIcon iconLiteral="fas-arrow-circle-left" iconSize="30" selectionEnd="0" wrappingWidth="17.5" />
                      </graphic>
                   </Button>
-                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="SLSP : Trade Name">
+                  <Text fx:id="tradeNameText" strokeType="OUTSIDE" strokeWidth="0.0" text="SLSP : Trade Name">
                      <font>
                         <Font name="System Bold" size="24.0" />
                      </font>
                   </Text>
                   <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" spacing="5.0" HBox.hgrow="ALWAYS">
                      <children>
-                        <Button id="red-button" layoutX="543.0" layoutY="17.0" mnemonicParsing="false" onAction="#DeleteSlsp" stylesheets="@application.css">
+                        <Button fx:id="printBtn" layoutX="522.0" layoutY="15.0" mnemonicParsing="false" onAction="#DeleteSlsp" stylesheets="@application.css">
+                           <graphic>
+                              <FontIcon iconLiteral="fas-print" iconSize="20" />
+                           </graphic>
+                        </Button>
+                        <Button id="red-button" fx:id="delBtn" layoutX="543.0" layoutY="17.0" mnemonicParsing="false" onAction="#DeleteSlsp" stylesheets="@application.css">
                            <graphic>
                               <FontIcon iconColor="WHITE" iconLiteral="far-trash-alt" iconSize="20" />
                            </graphic>
@@ -125,19 +130,32 @@
                   <Insets left="2.0" />
                </padding>
                <children>
-                  <ScrollPane hbarPolicy="NEVER" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="SUM CALCULATOR">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                  </Text>
+                  <ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
                      <content>
-                        <VBox alignment="BOTTOM_CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
-                           <children>
-                              <TextField VBox.vgrow="ALWAYS" />
-                              <TextField layoutX="10.0" layoutY="10.0" />
-                              <TextField layoutX="10.0" layoutY="35.0" />
-                           </children>
-                        </VBox>
+                        <VBox fx:id="sumContainer" alignment="BOTTOM_CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="376.0" prefWidth="149.0" />
                      </content>
                   </ScrollPane>
-                  <TextField editable="false" promptText="TOTAL" styleClass="copy-edit-text" stylesheets="@application.css" text="TOTAL: 1485454468541351" VBox.vgrow="ALWAYS" />
-                  <TextField alignment="CENTER" />
+                  <TextField fx:id="totalSum" editable="false" promptText="TOTAL" styleClass="copy-edit-text" stylesheets="@application.css" text="Total: 0" VBox.vgrow="ALWAYS" />
+                  <TextField fx:id="sumInput" alignment="CENTER" promptText="XX.XX" />
+                  <HBox alignment="CENTER">
+                     <children>
+                        <Button id="red-button" layoutX="10.0" layoutY="10.0" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#clearSumInput" stylesheets="@application.css" HBox.hgrow="ALWAYS">
+                           <graphic>
+                              <FontIcon iconLiteral="fas-trash" />
+                           </graphic>
+                        </Button>
+                        <Button id="green-button" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#sumInput" stylesheets="@application.css" HBox.hgrow="ALWAYS">
+                           <graphic>
+                              <FontIcon iconLiteral="fas-plus" />
+                           </graphic>
+                        </Button>
+                     </children>
+                  </HBox>
                </children>
             </VBox>
          </right>

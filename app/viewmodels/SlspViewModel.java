@@ -9,6 +9,7 @@ import app.models.SLSP;
 
 public class SlspViewModel {
 	private SlspRepository repo;
+	private static boolean isNew;
 	private List<SLSP> SLSPs= new ArrayList<>();
 	private static final Comparator<String> NULL_SAFE = Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER);
 	private static final Comparator<SLSP> SLSP_ORDER = Comparator.comparing(
@@ -57,5 +58,11 @@ public class SlspViewModel {
 	}
 	public SLSP getSlspById(int id) throws Exception{
 		return repo.getSLSPById(id);
+	}
+	public static boolean isNew() {
+		return isNew;
+	}
+	public static void setNew(boolean isNew) {
+		SlspViewModel.isNew = isNew;
 	}
 }

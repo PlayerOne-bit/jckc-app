@@ -1,6 +1,7 @@
 package app.views;
 
 import app.models.Taxpayer;
+import app.viewmodels.SlspViewModel;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -30,6 +31,7 @@ public class SlspController {
 	
 	@FXML
 	public void AddSlsp(ActionEvent e) {
+		SlspViewModel.setNew(true);
 		Pages.change(e, Pages.SLSP_MANAGER);
 	}
 }
