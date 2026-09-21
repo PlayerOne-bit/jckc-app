@@ -5,24 +5,27 @@ public class Name {
 	private String lastName,firstName, middleName, suffix;
 	
 	public String getFullName(int index) {
-		String suffix=this.suffix!=null?" "+this.suffix:"";
+		String suffix = isBlank(this.suffix) ? "" : " " + this.suffix.trim();
 		String middleName;
 		switch(index) {
 			case 0:
-				middleName=(this.middleName!=null)?" "+this.middleName.charAt(0)+".":"";
+				middleName = isBlank(this.middleName) ? "" : " " + this.middleName.trim().charAt(0) + ".";
 				return "%s%s %s%s".formatted(firstName, middleName, lastName, suffix);
 			case 1:
-				middleName=(this.middleName!=null)?" "+this.middleName:"";
+				middleName = isBlank(this.middleName) ? "" : " " + this.middleName.trim();
 				return "%s%s %s%s".formatted(firstName, middleName, lastName, suffix);
 			case 2:
-				middleName=(this.middleName!=null)?" "+this.middleName.charAt(0)+".":"";
-				return "%s%s, %s%s".formatted(lastName,suffix,firstName,middleName);
+				middleName = isBlank(this.middleName) ? "" : " " + this.middleName.trim().charAt(0) + ".";
+				return "%s%s, %s%s".formatted(lastName, suffix, firstName, middleName);
 			case 3:
-				middleName=(this.middleName!=null)?" y "+this.middleName:"";
-				return "%s%s, %s%s".formatted(lastName,suffix, firstName, middleName);
-			
+				middleName = isBlank(this.middleName) ? "" : " y " + this.middleName.trim();
+				return "%s%s, %s%s".formatted(lastName, suffix, firstName, middleName);
 			default: return null;
 		}
+	}
+
+	private static boolean isBlank(String s) {
+		return s == null || s.isBlank();
 	}
 
 	public int getId() {

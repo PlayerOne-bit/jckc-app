@@ -31,7 +31,7 @@
                   <Region prefHeight="20.0" />
                   <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Enter your password:" wrappingWidth="244.0" />
                   <Region layoutX="20.0" layoutY="183.0" prefHeight="10.0" />
-                  <PasswordField fx:id="authField" alignment="CENTER" maxWidth="1.7976931348623157E308" minWidth="-Infinity" onKeyPressed="#handleAuthField" prefHeight="31.0" prefWidth="247.0" promptText="PASSWORD" style="-fx-alignment: center;">
+                  <PasswordField fx:id="authField" alignment="CENTER" maxWidth="1.7976931348623157E308" minWidth="-Infinity" prefHeight="31.0" prefWidth="247.0" promptText="PASSWORD" style="-fx-alignment: center;">
                      <cursor>
                         <Cursor fx:constant="TEXT" />
                      </cursor></PasswordField>

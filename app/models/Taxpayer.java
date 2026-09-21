@@ -1,5 +1,6 @@
 package app.models;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Taxpayer {
@@ -7,7 +8,6 @@ public class Taxpayer {
     private int id;
 
     private String tinNum;
-    private String taxName;
     private String tradeName;
     private String bussAddress;
     private String bussKind;
@@ -18,7 +18,7 @@ public class Taxpayer {
     private PersonalInfo personalInfo;
     private Account account;
     private Name name;
-    private List<Supplier> supplier;
+    private List<Supplier> suppliers=new ArrayList<>();
 
     public int getId() {
         return id;
@@ -34,14 +34,6 @@ public class Taxpayer {
 
     public void setTinNum(String tinNum) {
         this.tinNum = tinNum;
-    }
-
-    public String getTaxName() {
-        return taxName;
-    }
-
-    public void setTaxName(String taxName) {
-        this.taxName = taxName;
     }
 
     public String getTradeName() {
@@ -116,12 +108,12 @@ public class Taxpayer {
         this.name = name;
     }
 
-	public List<Supplier> getSupplier() {
-		return supplier;
+	public List<Supplier> getSuppliers() {
+		return suppliers;
 	}
 
-	public void setSupplier(List<Supplier> supplier) {
-		this.supplier = supplier;
+	public void setSuppliers(List<Supplier> suppliers) {
+		this.suppliers = suppliers;
 	}
 
 	public static Taxpayer getTaxpayer() {

@@ -21,10 +21,6 @@ public class Main extends Application {
 	        Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
 	        stage.setMinWidth(screenBounds.getWidth());
 	        stage.setMinHeight(screenBounds.getHeight());
-	        System.out.printf("""
-	        		width: %f
-	        		height: %f
-	        		""",screenBounds.getWidth(), screenBounds.getHeight());
 	        stage.setScene(scene);
 	        stage.setMaximized(true);
 	        stage.show();

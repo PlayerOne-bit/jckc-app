@@ -1,14 +1,17 @@
 package app.views;
 
 import java.io.IOException;
-import java.util.Stack;
+import java.util.function.Consumer;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.TextInputControl;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCombination;
+import javafx.scene.input.KeyEvent;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -19,17 +22,45 @@ public class Pages {
             ADD_TAXPAYER="fxml/add_taxpayer.fxml",
             TAXPAYER_CARD="fxml/taxpayer_card.fxml",
             EDIT_TAXPAYER = "fxml/edit_taxpayer.fxml",
-            DELETE_TAXPAYER = "fxml/delete_taxpayer.fxml";
+            DELETE_TAXPAYER = "fxml/delete_taxpayer.fxml",
+            SLSP="fxml/slsp.fxml",
+            SLSP_CARD = "fxml/slsp_card.fxml",
+            SLSP_MANAGER="fxml/slsp_manager.fxml";
     
-    private static Stack<String> stack = new Stack<>(); 
-    private static Stage stage, stage2;
+    private static Stage stage;
     private static Scene scene;
     private static Parent root;
-
-    public static void clear() {
-        stack.clear();
+    public static void bindShortcut(Node target, String shortcutStr, Consumer<ActionEvent> action) {
+        KeyCombination combination = KeyCombination.valueOf(shortcutStr);
+        target.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+            if (combination.match(event)) {
+                action.accept(new ActionEvent(target, event.getTarget()));
+                event.consume();
+            }
+        });
     }
-    
+    public static void bindShortcut(Parent target, String shortcutStr, Consumer<ActionEvent> action) {
+    	KeyCombination combination = KeyCombination.valueOf(shortcutStr);
+        
+        target.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (combination.match(event)) { 
+                action.accept(new ActionEvent(target, event.getTarget()));
+                event.consume();
+            }
+        });
+    }
+    public static void bindShortcut(Parent target, String shortcutStr, Node node) {
+    	KeyCombination combination = KeyCombination.valueOf(shortcutStr);
+        target.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (combination.match(event)) { 
+                node.requestFocus();
+                if(node instanceof TextInputControl) {
+                	((TextInputControl) node).selectAll();
+                }
+                event.consume();
+            }
+        });
+    }
     public static void child(String fxml, Object parent, Class<?> contextClass) {
         FXMLLoader fxmlLoader = new FXMLLoader(contextClass.getResource(fxml));
         fxmlLoader.setRoot(parent);
@@ -53,34 +84,7 @@ public class Pages {
             d.printStackTrace();
         }
     }
-
     
-    public static void cancel(ActionEvent e) {
-        if (stage2 != null) {
-            stage2.close();
-        }
-    }
-
-    public static void main_menu(ActionEvent e) {
-        cancel(e);
-        try {
-            root = FXMLLoader.load(Pages.class.getResource(AUTH));
-            if (scene != null) {
-                scene.setRoot(root);
-            } else {
-                scene = new Scene(root);
-                stage.setScene(scene);
-            }
-            stage.centerOnScreen();
-        } catch (IOException e1) {
-            System.out.println(e1);
-        }
-    }
-    
-    public static void change(ActionEvent e, String prev, String next){
-        Pages.stack.push(prev);
-        change(e, next);
-    }
 
     public static void change(ActionEvent e, String next) {
         try {
@@ -98,28 +102,6 @@ public class Pages {
             stage.show();
         } catch(Exception error) {
             System.out.println(error);
-        }
-    }
-    
-    public static void back(ActionEvent e) {
-        try {
-            if (!stack.isEmpty()) {
-                String pages = stack.pop();
-                root = FXMLLoader.load(Pages.class.getResource(pages));
-                stage = (Stage) ((Node) e.getSource()).getScene().getWindow();
-                if (stage.getScene() != null) {
-                    scene = stage.getScene();
-                    scene.setRoot(root);
-                } else {
-                    scene = new Scene(root);
-                    stage.setScene(scene);
-                }
-                
-                stage.centerOnScreen();
-                stage.show();
-            }
-        } catch(Exception d) {
-            System.out.println(d);
         }
     }
 }

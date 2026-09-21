@@ -103,14 +103,13 @@ public class TaxpayerRepository {
                     sql.prepareStatement(DATABASE.UPDATE_TABLE_TAXPAYER)) {
 
                 ps.setString(1, taxpayer.getTinNum());
-                ps.setString(2, taxpayer.getTaxName());
-                ps.setString(3, taxpayer.getTradeName());
-                ps.setString(4, taxpayer.getBussAddress());
-                ps.setString(5, taxpayer.getBussKind());
-                ps.setString(6, taxpayer.getPsic());
-                ps.setString(7, taxpayer.getFormTypes());
-                ps.setString(8, taxpayer.getVat());
-                ps.setInt(9, taxpayer.getId());
+                ps.setString(2, taxpayer.getTradeName());
+                ps.setString(3, taxpayer.getBussAddress());
+                ps.setString(4, taxpayer.getBussKind());
+                ps.setString(5, taxpayer.getPsic());
+                ps.setString(6, taxpayer.getFormTypes());
+                ps.setString(7, taxpayer.getVat());
+                ps.setInt(8, taxpayer.getId());
 
                 ps.executeUpdate();
             }
@@ -189,13 +188,12 @@ public class TaxpayerRepository {
                 Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, taxpayer.getTinNum());
-            ps.setString(2, taxpayer.getTaxName());
-            ps.setString(3, taxpayer.getTradeName());
-            ps.setString(4, taxpayer.getBussAddress());
-            ps.setString(5, taxpayer.getBussKind());
-            ps.setString(6, taxpayer.getPsic());
-            ps.setString(7, taxpayer.getFormTypes());
-            ps.setString(8, taxpayer.getVat());
+            ps.setString(2, taxpayer.getTradeName());
+            ps.setString(3, taxpayer.getBussAddress());
+            ps.setString(4, taxpayer.getBussKind());
+            ps.setString(5, taxpayer.getPsic());
+            ps.setString(6, taxpayer.getFormTypes());
+            ps.setString(7, taxpayer.getVat());
 
             ps.executeUpdate();
 
@@ -559,10 +557,6 @@ public class TaxpayerRepository {
                 rs.getString(DATABASE.COLUMN_T_TIN_NUM)
         );
 
-        taxpayer.setTaxName(
-                rs.getString(DATABASE.COLUMN_T_TAX_NAME)
-        );
-
         taxpayer.setTradeName(
                 rs.getString(DATABASE.COLUMN_T_TRADE_NAME)
         );
@@ -624,7 +618,6 @@ public class TaxpayerRepository {
 
         static final String COLUMN_T_ID = "id";
         static final String COLUMN_T_TIN_NUM = "tinNum";
-        static final String COLUMN_T_TAX_NAME = "taxName";
         static final String COLUMN_T_TRADE_NAME = "tradeName";
         static final String COLUMN_T_BUSS_ADDRESS = "bussAddress";
         static final String COLUMN_T_BUSS_KIND = "bussKind";
@@ -682,9 +675,9 @@ public class TaxpayerRepository {
 
         static final String INSERT_TABLE_TAXPAYER =
                 "INSERT INTO Taxpayer " +
-                "(tinNum, taxName, tradeName, bussAddress, bussKind, " +
+                "(tinNum, tradeName, bussAddress, bussKind, " +
                 "psic, formTypes, vat) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         static final String INSERT_TABLE_PERSONAL_INFO =
                 "INSERT INTO PersonalInfo " +
@@ -706,7 +699,6 @@ public class TaxpayerRepository {
         static final String UPDATE_TABLE_TAXPAYER =
                 "UPDATE Taxpayer SET " +
                 "tinNum = ?, " +
-                "taxName = ?, " +
                 "tradeName = ?, " +
                 "bussAddress = ?, " +
                 "bussKind = ?, " +

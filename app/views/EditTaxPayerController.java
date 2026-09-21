@@ -15,12 +15,16 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.text.Text;
 public class EditTaxPayerController {
 	private TaxpayerViewModel vm;
 	private Taxpayer originalTaxpayer;
+	@FXML private BorderPane root;
 	@FXML
 	public void initialize(){
+		Pages.bindShortcut(root,"ESC",this::cancel);
+		Pages.bindShortcut(root,"Ctrl+Enter",this::edit);
 		
 		suffix.setItems(FXCollections.observableArrayList(
 				"Jr.",
@@ -254,14 +258,13 @@ public class EditTaxPayerController {
 		personalInfo.setTaxId(originalTaxpayer.getId());
 		account.setId(originalTaxpayer.getAccount().getId());
 		account.setTaxId(originalTaxpayer.getId());
-		taxpayer.setSupplier(originalTaxpayer.getSupplier());
+		taxpayer.setSuppliers(originalTaxpayer.getSuppliers());
 
 		name.setLastName(lName);
 		name.setFirstName(fName);
 		name.setMiddleName(mName);
 		name.setSuffix(suf);
 		taxpayer.setTinNum(tinN1+"-"+tinN2+"-"+tinN3+"-"+tinN4);
-		taxpayer.setTaxName(name.getFullName(3));
 		taxpayer.setTradeName(tName);
 		taxpayer.setBussAddress(bAddress);
 		taxpayer.setBussKind(bussKind.getText().trim());

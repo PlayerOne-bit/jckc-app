@@ -13,13 +13,17 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.text.Text;
 public class AddTaxPayerController {
 	private TaxpayerViewModel vm; 
-	
+	@FXML private BorderPane root;
 	@FXML
 	public void initialize(){
 		try {
+			Pages.bindShortcut(root,"ESC",this::cancel);
+			Pages.bindShortcut(root,"Ctrl+Enter",this::create);
+			
 			vm=new TaxpayerViewModel();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -195,7 +199,6 @@ public class AddTaxPayerController {
 		name.setMiddleName(mName);
 		name.setSuffix(suf);
 		taxpayer.setTinNum(tinN1+"-"+tinN2+"-"+tinN3+"-"+tinN4);
-		taxpayer.setTaxName(name.getFullName(3));
 		taxpayer.setTradeName(tName);
 		taxpayer.setBussAddress(bAddress);
 		taxpayer.setBussKind(bussKind.getText().trim());
@@ -230,7 +233,12 @@ public class AddTaxPayerController {
 				errorText.setText("No same Tin Number duplicates");
 				return;
 			}
-			Taxpayer.setTaxpayer(taxpayer);
+			String tin = taxpayer.getTinNum();
+			Taxpayer created = vm.loadTaxpayers().stream()
+					.filter(t -> tin.equals(t.getTinNum()))
+					.findFirst()
+					.orElse(taxpayer);
+			Taxpayer.setTaxpayer(created);
 			Pages.change(e, Pages.HOME);
 		} catch (Exception e1) {
 			e1.printStackTrace();

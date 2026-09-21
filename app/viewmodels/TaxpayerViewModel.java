@@ -1,5 +1,6 @@
 package app.viewmodels;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import app.database.TaxpayerRepository;
@@ -10,6 +11,16 @@ import app.models.Taxpayer;
 public class TaxpayerViewModel {
     private final TaxpayerRepository repo;
     private List<Taxpayer> taxpayers;
+    private static final Comparator<String> NULL_SAFE = Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER);
+
+    private static final Comparator<Taxpayer> TAXPAYER_ORDER = Comparator
+    		.comparing((Taxpayer t) -> t.getName() != null ? t.getName().getLastName() : null, NULL_SAFE)
+    		.thenComparing((Taxpayer t) -> t.getName() != null ? t.getName().getFirstName() : null, NULL_SAFE)
+    		.thenComparing((Taxpayer t) -> t.getName() != null ? t.getName().getMiddleName() : null, NULL_SAFE)
+    		.thenComparing(Taxpayer::getTinNum, NULL_SAFE)
+    		.thenComparing(Taxpayer::getTradeName, NULL_SAFE)
+    		.thenComparing(Taxpayer::getBussAddress, NULL_SAFE);
+    
     public TaxpayerViewModel() throws Exception {
         this.repo = new TaxpayerRepository();
         refreshTaxpayers(); 
@@ -46,8 +57,6 @@ public class TaxpayerViewModel {
         	taxpayer.setAccount(acc);
         	taxpayer.setPersonalInfo(person);
         }
-        taxpayers.sort(Comparator.comparing(Taxpayer::getTaxName)
-                .thenComparing(Taxpayer::getTinNum));
     }
     private String safeText(String text) {
     	if(text==null||text.trim().isEmpty()||text.equalsIgnoreCase("null"))
@@ -55,7 +64,9 @@ public class TaxpayerViewModel {
     	return text;
     }
     public List<Taxpayer> loadTaxpayers() {
-        return taxpayers;
+    	List<Taxpayer> sorted = taxpayers != null ? new ArrayList<>(taxpayers) : new ArrayList<>();
+    	sorted.sort(TAXPAYER_ORDER);
+    	return sorted;
     }
     public boolean createTaxpayer(Taxpayer taxpayer) throws Exception {
         List<Taxpayer> list = taxpayers; 
