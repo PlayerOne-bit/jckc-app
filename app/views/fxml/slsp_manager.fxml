@@ -57,21 +57,26 @@
                   </Text>
                   <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" spacing="5.0" HBox.hgrow="ALWAYS">
                      <children>
-                        <Button fx:id="printBtn" layoutX="522.0" layoutY="15.0" mnemonicParsing="false" onAction="#DeleteSlsp" stylesheets="@application.css">
+                        <Button layoutX="481.0" layoutY="15.0" mnemonicParsing="false" onAction="#Supplier" stylesheets="@application.css" text="Supplier">
+                           <graphic>
+                              <FontIcon iconLiteral="fas-cubes" iconSize="20" />
+                           </graphic>
+                        </Button>
+                        <Button fx:id="printBtn" layoutX="522.0" layoutY="15.0" mnemonicParsing="false" onAction="#DeleteSlsp" stylesheets="@application.css" text="Print">
                            <graphic>
                               <FontIcon iconLiteral="fas-print" iconSize="20" />
                            </graphic>
                         </Button>
-                        <Button id="red-button" fx:id="delBtn" layoutX="543.0" layoutY="17.0" mnemonicParsing="false" onAction="#DeleteSlsp" stylesheets="@application.css">
+                        <Button id="red-button" fx:id="delBtn" layoutX="543.0" layoutY="17.0" mnemonicParsing="false" onAction="#DeleteSlsp" stylesheets="@application.css" text="SLSP">
                            <graphic>
                               <FontIcon iconColor="WHITE" iconLiteral="far-trash-alt" iconSize="20" />
                            </graphic>
                         </Button>
                         <ComboBox fx:id="months" prefHeight="34.0" prefWidth="125.0" promptText="00 - Months*" visibleRowCount="12" />
                         <ComboBox fx:id="years" layoutX="527.0" layoutY="12.0" prefHeight="34.0" prefWidth="72.0" promptText="Year*" visibleRowCount="3" />
-                        <Button id="auth-button" mnemonicParsing="false" onAction="#SaveSlsp" stylesheets="@application.css">
+                        <Button id="auth-button" mnemonicParsing="false" onAction="#SaveSlsp" stylesheets="@application.css" text="Save">
                            <graphic>
-                              <FontIcon iconLiteral="far-save" iconSize="20" />
+                              <FontIcon fill="WHITE" iconLiteral="far-save" iconSize="20" />
                            </graphic>
                         </Button>
                      </children>
@@ -90,34 +95,40 @@
               <tabs>
                 <Tab closable="false" text="SALE     ">
                      <content>
-                        <TableView prefHeight="200.0" prefWidth="200.0">
+                        <TableView fixedCellSize="1.0">
                           <columns>
-                            <TableColumn prefWidth="35.0" text="#" />
-                            <TableColumn prefWidth="167.0" text="Date" />
-                              <TableColumn prefWidth="154.0" text="Sales Invoice No." />
-                              <TableColumn prefWidth="116.0" text="Exempt" />
-                              <TableColumn prefWidth="129.0" text="Zero-rated" />
-                              <TableColumn prefWidth="141.0" text="Taxable" />
-                              <TableColumn prefWidth="183.0" text="Output VAT" />
-                              <TableColumn prefWidth="60.0" text="Gross" />
+                            <TableColumn editable="false" prefWidth="35.0" resizable="false" sortable="false" text="#" />
+                            <TableColumn editable="false" prefWidth="167.0" resizable="false" sortable="false" text="Date" />
+                              <TableColumn editable="false" prefWidth="154.0" resizable="false" sortable="false" text="Sales Invoice No." />
+                              <TableColumn editable="false" prefWidth="116.0" resizable="false" sortable="false" text="Exempt" />
+                              <TableColumn editable="false" prefWidth="129.0" resizable="false" sortable="false" text="Zero-rated" />
+                              <TableColumn editable="false" prefWidth="141.0" resizable="false" sortable="false" text="Taxable" />
+                              <TableColumn editable="false" prefWidth="135.0" resizable="false" sortable="false" text="Output VAT" />
+                              <TableColumn editable="false" prefWidth="108.0" resizable="false" sortable="false" text="Gross" />
                           </columns>
+                           <columnResizePolicy>
+                              <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                           </columnResizePolicy>
                         </TableView>
                      </content>
                 </Tab>
                 <Tab closable="false" text="PURCHASE">
                      <content>
-                        <TableView prefHeight="200.0" prefWidth="200.0">
+                        <TableView>
                            <columns>
-                              <TableColumn prefWidth="35.0" text="#" />
-                              <TableColumn maxWidth="80.0" minWidth="-1.0" text="Date" />
-                              <TableColumn prefWidth="128.0" text="Supplier" />
-                              <TableColumn prefWidth="110.0" text="Invoice No." />
-                              <TableColumn prefWidth="124.0" text="Exempt" />
-                              <TableColumn prefWidth="149.0" text="Zero-rated" />
-                              <TableColumn prefWidth="141.0" text="Taxable" />
-                              <TableColumn prefWidth="168.0" text="Input VAT" />
-                              <TableColumn prefWidth="51.0" text="Gross" />
+                              <TableColumn editable="false" prefWidth="35.0" resizable="false" sortable="false" text="#" />
+                              <TableColumn editable="false" maxWidth="80.0" minWidth="-1.0" resizable="false" sortable="false" text="Date" />
+                              <TableColumn editable="false" prefWidth="128.0" resizable="false" sortable="false" text="Supplier" />
+                              <TableColumn editable="false" prefWidth="110.0" resizable="false" sortable="false" text="Invoice No." />
+                              <TableColumn editable="false" prefWidth="124.0" resizable="false" sortable="false" text="Exempt" />
+                              <TableColumn editable="false" prefWidth="149.0" resizable="false" sortable="false" text="Zero-rated" />
+                              <TableColumn editable="false" prefWidth="141.0" resizable="false" sortable="false" text="Taxable" />
+                              <TableColumn editable="false" prefWidth="125.0" resizable="false" sortable="false" text="Input VAT" />
+                              <TableColumn editable="false" prefWidth="93.0" resizable="false" sortable="false" text="Gross" />
                            </columns>
+                           <columnResizePolicy>
+                              <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                           </columnResizePolicy>
                         </TableView>
                      </content>
                 </Tab>

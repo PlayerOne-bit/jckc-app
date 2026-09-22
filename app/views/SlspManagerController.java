@@ -123,4 +123,8 @@ public class SlspManagerController {
 	public void DeleteSlsp(ActionEvent e) {
 		Pages.change(e,Pages.SLSP);
 	}
+	@FXML
+	public void Supplier(ActionEvent e) {
+		Pages.change(e,Pages.SUPPLIER);
+	}
 }

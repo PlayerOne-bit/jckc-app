@@ -25,7 +25,9 @@ public class Pages {
             DELETE_TAXPAYER = "fxml/delete_taxpayer.fxml",
             SLSP="fxml/slsp.fxml",
             SLSP_CARD = "fxml/slsp_card.fxml",
-            SLSP_MANAGER="fxml/slsp_manager.fxml";
+            SLSP_MANAGER="fxml/slsp_manager.fxml",
+            SUPPLIER = "fxml/supplier.fxml",
+            SUPPLIER_CARD = "fxml/supplier_card.fxml";
     
     private static Stage stage;
     private static Scene scene;
