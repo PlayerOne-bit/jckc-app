@@ -60,7 +60,10 @@
             <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
          </padding>
          <center>
-            <ScrollPane prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER" />
+            <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+               <content>
+                  <VBox fx:id="supplierContainer" prefHeight="200.0" prefWidth="100.0" />
+               </content></ScrollPane>
          </center>
          <bottom>
             <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="20.0" BorderPane.alignment="CENTER">
@@ -96,6 +99,11 @@
                               </TextField>
                            </children>
                         </HBox>
+                        <Text fx:id="tinNumErrorText" fill="RED" strokeType="OUTSIDE" strokeWidth="0.0">
+                           <font>
+                              <Font name="System Bold" size="14.0" />
+                           </font>
+                        </Text>
                      </children>
                      <padding>
                         <Insets top="10.0" />
@@ -113,6 +121,11 @@
                               <Font size="18.0" />
                            </font>
                         </TextField>
+                        <Text fx:id="tradeNameErrorText" fill="RED" strokeType="OUTSIDE" strokeWidth="0.0">
+                           <font>
+                              <Font name="System Bold" size="14.0" />
+                           </font>
+                        </Text>
                      </children>
                      <padding>
                         <Insets top="10.0" />
@@ -130,6 +143,11 @@
                               <Font size="18.0" />
                            </font>
                         </TextField>
+                        <Text fx:id="businessAddressErrorText" fill="RED" strokeType="OUTSIDE" strokeWidth="0.0">
+                           <font>
+                              <Font name="System Bold" size="14.0" />
+                           </font>
+                        </Text>
                      </children>
                      <padding>
                         <Insets top="10.0" />
