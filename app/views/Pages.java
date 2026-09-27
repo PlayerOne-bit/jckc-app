@@ -103,7 +103,7 @@ public class Pages {
             stage.centerOnScreen();
             stage.show();
         } catch(Exception error) {
-            System.out.println(error);
+            error.printStackTrace();;
         }
     }
 }

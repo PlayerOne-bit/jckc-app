@@ -21,10 +21,11 @@ public class SlspViewModel {
 		refreshSLSPs();
 	}
 	public void refreshSLSPs() throws Exception{
-		SLSPs=repo.getAllSLSPs();
+		List<SLSP> result = repo.getAllSLSPs();
+	    SLSPs = result != null ? result : new ArrayList<>();
 	}
 	public List<SLSP> loadSLSPs() {
-		List<SLSP> sorted = SLSPs!=null?new ArrayList<>(SLSPs):null;
+		List<SLSP> sorted = SLSPs!=null?new ArrayList<>(SLSPs):new ArrayList<>();
 		sorted.sort(SLSP_ORDER);
 		return sorted;
 	}
