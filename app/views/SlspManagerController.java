@@ -5,12 +5,14 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 import app.models.Supplier;
 import app.models.Taxpayer;
 import app.viewmodels.SlspViewModel;
 import app.viewmodels.SupplierViewModel;
+import javafx.beans.Observable;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.Property;
 import javafx.collections.FXCollections;
@@ -63,8 +65,16 @@ public class SlspManagerController {
     @FXML private TableColumn<PurchaseRow, BigDecimal> pColGross;
     @FXML private Button pAddBtn;
 
-    private final ObservableList<SaleRow> saleRows = FXCollections.observableArrayList();
-    private final ObservableList<PurchaseRow> purchaseRows = FXCollections.observableArrayList();
+    private final ObservableList<SaleRow> saleRows = FXCollections.observableArrayList(
+            r -> new Observable[] { r.dayProperty(), r.invoiceNoProperty(),
+                    r.exemptProperty(), r.zeroRatedProperty(), r.taxableProperty() });
+
+    private final ObservableList<PurchaseRow> purchaseRows = FXCollections.observableArrayList(
+            r -> new Observable[] { r.dayProperty(), r.supplierProperty(), r.invoiceNoProperty(),
+                    r.exemptProperty(), r.zeroRatedProperty(), r.taxableProperty() });
+
+    private boolean dirty = false;
+    private String baseTitle;
     private final ObservableList<Integer> dayOptions = FXCollections.observableArrayList();
     private ObservableList<Supplier> suppliers = FXCollections.observableArrayList();
 
@@ -80,7 +90,8 @@ public class SlspManagerController {
         Pages.bindShortcut(root, "Ctrl+E", sumInput);
         Pages.bindShortcut(root, "Ctrl+B", this::Supplier);
 
-        tradeNameText.setText("SLSP : " + Taxpayer.getTaxpayer().getTradeName()+"*");
+        baseTitle = "SLSP : " + Taxpayer.getTaxpayer().getTradeName();
+        tradeNameText.setText(baseTitle);
         years.setValue(LocalDate.now().getYear());
         years.setItems(FXCollections.observableArrayList(LocalDate.now().getYear(), LocalDate.now().getYear() - 1));
         months.setItems(FXCollections.observableArrayList(
@@ -328,13 +339,20 @@ public class SlspManagerController {
 
     @FXML
     public void back(ActionEvent e) {
+    	if (!confirmLeave()) return;
         Pages.change(e, Pages.SLSP);
     }
 
     @FXML
     public void SaveSlsp(ActionEvent e) {
-        // TODO: persist saleRows / purchaseRows
+    	persistSlsp();
+        markClean();
         Pages.change(e, Pages.SLSP);
+    }
+    @FXML
+    public void PrintSlsp(ActionEvent e) {
+        if (!confirmLeave()) return;
+        // TODO: print
     }
 
     @FXML
@@ -345,6 +363,44 @@ public class SlspManagerController {
 
     @FXML
     public void Supplier(ActionEvent e) {
+    	if (!confirmLeave()) return;
         Pages.change(e, Pages.SUPPLIER);
+    }
+    private void markDirty() {
+        if (dirty) return;
+        dirty = true;
+        tradeNameText.setText(baseTitle + "*");
+    }
+
+    private void markClean() {
+        dirty = false;
+        tradeNameText.setText(baseTitle);
+    }
+
+    private void persistSlsp() {
+        // TODO: persist saleRows / purchaseRows / month / year
+    }
+
+    /** Returns true if the caller may proceed (nothing to save, saved, or discarded). */
+    private boolean confirmLeave() {
+        if (!dirty) return true;
+
+        ButtonType save = new ButtonType("Save", ButtonBar.ButtonData.YES);
+        ButtonType discard = new ButtonType("Don't Save", ButtonBar.ButtonData.NO);
+        ButtonType cancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, null, save, discard, cancel);
+        alert.setTitle("Unsaved changes");
+        alert.setHeaderText("This SLSP has unsaved changes.");
+        alert.setContentText("Do you want to save before continuing?");
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isEmpty() || result.get() == cancel) return false;
+
+        if (result.get() == save) {
+            persistSlsp();
+            markClean();
+        }
+        return true; // "Don't Save" just proceeds
     }
 }
