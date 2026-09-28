@@ -79,9 +79,8 @@ public class SlspManagerController {
         Pages.bindShortcut(sumInput, "Ctrl+Delete", this::clearSumInput);
         Pages.bindShortcut(root, "Ctrl+E", sumInput);
         Pages.bindShortcut(root, "Ctrl+B", this::Supplier);
-        Pages.bindShortcut(root, "Enter", this::onAddRowShortcut);
 
-        tradeNameText.setText("SLSP : " + Taxpayer.getTaxpayer().getTradeName());
+        tradeNameText.setText("SLSP : " + Taxpayer.getTaxpayer().getTradeName()+"*");
         years.setValue(LocalDate.now().getYear());
         years.setItems(FXCollections.observableArrayList(LocalDate.now().getYear(), LocalDate.now().getYear() - 1));
         months.setItems(FXCollections.observableArrayList(
@@ -259,7 +258,7 @@ public class SlspManagerController {
         if (isSale) {
             if (!saleRows.isEmpty() && saleRows.get(saleRows.size() - 1).isEmpty()) {
                 sTable.getSelectionModel().select(saleRows.size() - 1);
-                return; // current last row is still blank — don't create another
+                return;
             }
             saleRows.add(new SaleRow());
             sTable.getSelectionModel().select(saleRows.size() - 1);

@@ -97,7 +97,7 @@
 			      <content>
 			        <VBox>
 			          <children>
-			            <TableView fx:id="sTable" editable="true" fixedCellSize="1.0" VBox.vgrow="ALWAYS">
+			            <TableView fx:id="sTable" editable="true" fixedCellSize="28.0" VBox.vgrow="ALWAYS">
 			              <columns>
 			                <TableColumn fx:id="sColNum" editable="false" reorderable="false" resizable="false" sortable="false" text="#" />
 			                <TableColumn fx:id="sColDate" editable="false" reorderable="false" resizable="false" sortable="false" text="Date" />
@@ -128,7 +128,7 @@
 			      <content>
 			        <VBox>
 			          <children>
-			            <TableView fx:id="pTable" editable="true" fixedCellSize="1.0" VBox.vgrow="ALWAYS">
+			            <TableView fx:id="pTable" editable="true" fixedCellSize="28.0" VBox.vgrow="ALWAYS">
 			              <columns>
 			                <TableColumn fx:id="pColNum" editable="false" reorderable="false" resizable="false" sortable="false" text="#" />
 			                <TableColumn fx:id="pColDate" editable="false" reorderable="false" resizable="false" sortable="false" text="Date" />
