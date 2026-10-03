@@ -22,7 +22,50 @@ public class SlspRepository {
         sql = DatabaseConfig.getConnection();
     }
 
+    /** Direct lookup for one taxpayer+period, with sales/purchases attached. */
+    public SLSP getSLSPByTaxIdAndPeriod(int taxId, String period) throws SQLException {
+        try (PreparedStatement ps = sql.prepareStatement(DATABASE.SELECT_SLSP_BY_TAX_ID_AND_PERIOD)) {
+            ps.setInt(1, taxId);
+            ps.setString(2, period);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    SLSP slsp = mapSLSP(rs);
+                    attachRows(slsp);
+                    return slsp;
+                }
+            }
+        }
+        return null;
+    }
 
+    /**
+     * Atomically replaces every Sale/Purchase row belonging to this SLSP with
+     * the given lists. Mirrors the transaction pattern in deleteSLSP().
+     */
+    public void saveSlspRows(SLSP slsp, List<Sale> sales, List<Purchase> purchases) throws SQLException {
+        try {
+            sql.setAutoCommit(false);
+
+            executeDelete(DATABASE.DELETE_SALES_BY_SLSP_ID, slsp.getId());
+            executeDelete(DATABASE.DELETE_PURCHASES_BY_SLSP_ID, slsp.getId());
+
+            for (Sale sale : sales) {
+                sale.setSlspId(slsp.getId());
+                addSale(sale);
+            }
+            for (Purchase purchase : purchases) {
+                purchase.setSlspId(slsp.getId());
+                addPurchase(purchase);
+            }
+
+            sql.commit();
+        } catch (SQLException e) {
+            sql.rollback();
+            throw e;
+        } finally {
+            sql.setAutoCommit(true);
+        }
+    }
     public int addSLSP(SLSP slsp) throws SQLException {
         String now = now();
         slsp.setDateCreated(now);
@@ -384,6 +427,8 @@ public class SlspRepository {
 
         static final String SELECT_SALES_BY_SLSP_ID =
                 "SELECT * FROM Sale WHERE slspId = ? ORDER BY id";
+        static final String SELECT_SLSP_BY_TAX_ID_AND_PERIOD =
+                "SELECT * FROM SLSP WHERE taxId = ? AND period = ?";
         static final String INSERT_SALE =
                 "INSERT INTO Sale " +
                 "(slspId, siNum, saleDate, exemptAmount, zeroRatedAmount, taxableAmount) " +
@@ -421,5 +466,6 @@ public class SlspRepository {
                 "DELETE FROM Purchase WHERE id = ?";
         static final String DELETE_PURCHASES_BY_SLSP_ID =
                 "DELETE FROM Purchase WHERE slspId = ?";
+        
     }
 }

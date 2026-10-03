@@ -1,20 +1,23 @@
 package app.views;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import app.models.Purchase;
+import app.models.SLSP;
+import app.models.Sale;
 import app.models.Supplier;
 import app.models.Taxpayer;
-import app.viewmodels.SlspViewModel;
+import app.viewmodels.SlspManagerViewModel;
 import app.viewmodels.SupplierViewModel;
 import javafx.beans.Observable;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.Property;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -30,6 +33,15 @@ import javafx.scene.text.Text;
 import javafx.util.StringConverter;
 
 public class SlspManagerController {
+
+    /**
+     * ASSUMPTION: set by the SLSP list page before navigating here.
+     * null  -> creating a brand-new SLSP for whatever month/year is selected.
+     * non-null -> editing this existing SLSP; its period and rows are loaded on init.
+     * Replace with your actual navigation-data mechanism if different.
+     */
+    public static SLSP editingSlsp;
+
     @FXML private ComboBox<Integer> years;
     @FXML private ComboBox<String> months;
     @FXML private BorderPane root;
@@ -73,12 +85,15 @@ public class SlspManagerController {
             r -> new Observable[] { r.dayProperty(), r.supplierProperty(), r.invoiceNoProperty(),
                     r.exemptProperty(), r.zeroRatedProperty(), r.taxableProperty() });
 
-    private boolean dirty = false;
-    private String baseTitle;
     private final ObservableList<Integer> dayOptions = FXCollections.observableArrayList();
     private ObservableList<Supplier> suppliers = FXCollections.observableArrayList();
 
     private List<BigDecimal> total = new java.util.ArrayList<>();
+
+    private SlspManagerViewModel vm;
+    private boolean dirty = false;
+    private boolean loading = false; // true while populating fields from DB, to suppress dirty-marking
+    private String baseTitle;
 
     @FXML
     private void initialize() throws Exception {
@@ -89,46 +104,93 @@ public class SlspManagerController {
         Pages.bindShortcut(sumInput, "Ctrl+Delete", this::clearSumInput);
         Pages.bindShortcut(root, "Ctrl+E", sumInput);
         Pages.bindShortcut(root, "Ctrl+B", this::Supplier);
+        Pages.bindShortcut(root, "Alt+N", this::onAddRowShortcut);
 
         baseTitle = "SLSP : " + Taxpayer.getTaxpayer().getTradeName();
         tradeNameText.setText(baseTitle);
-        years.setValue(LocalDate.now().getYear());
+
+        vm = new SlspManagerViewModel();
+
         years.setItems(FXCollections.observableArrayList(LocalDate.now().getYear(), LocalDate.now().getYear() - 1));
         months.setItems(FXCollections.observableArrayList(
                 "01 - January", "02 - February", "03 - March", "04 - April",
                 "05 - May", "06 - June", "07 - July", "08 - August",
                 "09 - September", "10 - October", "11 - November", "12 - December"));
-        months.getSelectionModel().selectFirst();
-
-        years.valueProperty().addListener((_, _, _) -> updateDayOptions());
-        months.valueProperty().addListener((_, _, _) -> updateDayOptions());
-        updateDayOptions();
 
         suppliers.setAll(new SupplierViewModel().loadSuppliers());
 
-        delBtn.setVisible(!SlspViewModel.isNew());
         setUpNumberTextField(sumInput);
-
         setupSaleTable();
         setupPurchaseTable();
 
         sAddBtn.setOnAction(_ -> addPurchaseOrSaleRow(true));
         pAddBtn.setOnAction(_ -> addPurchaseOrSaleRow(false));
+
+        loading = true;
+        if (editingSlsp != null) {
+            loadExisting(editingSlsp);
+        } else {
+            YearMonth now = YearMonth.now();
+            years.setValue(now.getYear());
+            months.getSelectionModel().select(now.getMonthValue() - 1);
+            delBtn.setVisible(false);
+        }
+        updateDayOptions();
+        loading = false;
+
+        // Dirty-tracking listeners go LAST so the loading above doesn't flag dirty=true
+        saleRows.addListener((javafx.collections.ListChangeListener<SaleRow>) _ -> markDirty());
+        purchaseRows.addListener((javafx.collections.ListChangeListener<PurchaseRow>) _ -> markDirty());
+        years.valueProperty().addListener((_, _, _) -> { updateDayOptions(); markDirty(); });
+        months.valueProperty().addListener((_, _, _) -> { updateDayOptions(); markDirty(); });
+    }
+
+    // ---------- Loading an existing SLSP ----------
+
+    private void loadExisting(SLSP slsp) throws Exception {
+        vm.loadForPeriod(slsp.getPeriod());
+        YearMonth ym = slsp.getYearMonth();
+        years.setValue(ym.getYear());
+        months.getSelectionModel().select(ym.getMonthValue() - 1);
+        delBtn.setVisible(true);
+
+        for (Sale sale : vm.getSales()) {
+            SaleRow row = new SaleRow();
+            row.dayProperty().set(LocalDate.parse(sale.getSaleDate()).getDayOfMonth());
+            row.invoiceNoProperty().set(sale.getSiNum());
+            row.exemptProperty().set(sale.getExemptAmount());
+            row.zeroRatedProperty().set(sale.getZeroRatedAmount());
+            row.taxableProperty().set(sale.getTaxableAmount());
+            saleRows.add(row);
+        }
+
+        for (Purchase purchase : vm.getPurchases()) {
+            PurchaseRow row = new PurchaseRow();
+            row.dayProperty().set(LocalDate.parse(purchase.getPurchaseDate()).getDayOfMonth());
+            Supplier matchingSupplier = suppliers.stream()
+                    .filter(s -> s.getId() == purchase.getSupplierId())
+                    .findFirst().orElse(null);
+            row.supplierProperty().set(matchingSupplier);
+            row.invoiceNoProperty().set(purchase.getInvoiceNum());
+            row.exemptProperty().set(purchase.getExemptAmount());
+            row.zeroRatedProperty().set(purchase.getZeroRatedAmount());
+            row.taxableProperty().set(purchase.getTaxableAmount());
+            purchaseRows.add(row);
+        }
     }
 
     // ---------- Day-of-month restriction ----------
 
     private void updateDayOptions() {
-        int year = years.getValue() != null ? years.getValue() : LocalDate.now().getYear();
-        int monthIndex = months.getSelectionModel().getSelectedIndex();
-        int month = monthIndex >= 0 ? monthIndex + 1 : LocalDate.now().getMonthValue();
+        if (years.getValue() == null || months.getSelectionModel().getSelectedIndex() < 0) return;
+        int year = years.getValue();
+        int month = months.getSelectionModel().getSelectedIndex() + 1;
         int max = YearMonth.of(year, month).lengthOfMonth();
 
         List<Integer> days = new java.util.ArrayList<>();
         for (int d = 1; d <= max; d++) days.add(d);
         dayOptions.setAll(days);
 
-        // clamp any already-entered days that no longer fit (e.g. switching from a 31-day to Feb)
         for (SaleRow r : saleRows) if (r.dayProperty().get() > max) r.dayProperty().set(max);
         for (PurchaseRow r : purchaseRows) if (r.dayProperty().get() > max) r.dayProperty().set(max);
     }
@@ -141,16 +203,16 @@ public class SlspManagerController {
         }
     }
 
-    // ---------- Numeric editable column helper ----------
+    // ---------- Column wiring helpers ----------
 
     private static final StringConverter<BigDecimal> MONEY_CONVERTER = new StringConverter<>() {
         @Override public String toString(BigDecimal v) {
-            return v == null ? "0.00" : v.setScale(2, RoundingMode.HALF_UP).toString();
+            return v == null ? "0.00" : v.setScale(2, java.math.RoundingMode.HALF_UP).toString();
         }
         @Override public BigDecimal fromString(String s) {
             try {
                 if (s == null || s.isBlank()) return BigDecimal.ZERO;
-                return new BigDecimal(s).setScale(2, RoundingMode.HALF_UP);
+                return new BigDecimal(s).setScale(2, java.math.RoundingMode.HALF_UP);
             } catch (NumberFormatException e) {
                 return BigDecimal.ZERO;
             }
@@ -169,12 +231,13 @@ public class SlspManagerController {
         col.setCellFactory(_ -> new TableCell<>() {
             @Override protected void updateItem(BigDecimal v, boolean empty) {
                 super.updateItem(v, empty);
-                setText(empty || v == null ? null : v.setScale(2, RoundingMode.HALF_UP).toString());
+                setText(empty || v == null ? null : v.setScale(2, java.math.RoundingMode.HALF_UP).toString());
             }
         });
     }
 
     private <T> void wireRowNumberColumn(TableColumn<T, Integer> col) {
+        col.setCellValueFactory(_ -> new ReadOnlyObjectWrapper<>(0));
         col.setCellFactory(_ -> new TableCell<>() {
             @Override protected void updateItem(Integer v, boolean empty) {
                 super.updateItem(v, empty);
@@ -197,7 +260,7 @@ public class SlspManagerController {
         setupEvenColumns(sTable, 8);
 
         wireRowNumberColumn(sColNum);
-        wireDayColumn(sColDate, SaleRow::dayProperty);//The type SaleRow does not define dayProperty(T) that is applicable here
+        wireDayColumn(sColDate, SaleRow::dayProperty);
 
         sColInvoice.setEditable(true);
         sColInvoice.setCellValueFactory(cd -> cd.getValue().invoiceNoProperty());
@@ -220,7 +283,7 @@ public class SlspManagerController {
         setupEvenColumns(pTable, 9);
 
         wireRowNumberColumn(pColNum);
-        wireDayColumn(pColDate, PurchaseRow::dayProperty);//he type PurchaseRow does not define dayProperty(T) that is applicable here
+        wireDayColumn(pColDate, PurchaseRow::dayProperty);
 
         pColSupplier.setEditable(true);
         pColSupplier.setCellValueFactory(cd -> cd.getValue().supplierProperty());
@@ -228,7 +291,7 @@ public class SlspManagerController {
             @Override public String toString(Supplier s) {
                 return s == null ? "" : s.getTinNum() + " - " + s.getTradeName();
             }
-            @Override public Supplier fromString(String s) { return null; } 
+            @Override public Supplier fromString(String s) { return null; }
         }, suppliers));
         pColSupplier.setOnEditCommit(ev -> ev.getRowValue().supplierProperty().set(ev.getNewValue()));
 
@@ -285,7 +348,113 @@ public class SlspManagerController {
         }
     }
 
-    // ---------- existing sum calculator / nav / save / delete (unchanged) ----------
+    // ---------- Unsaved-changes tracking ----------
+
+    private void markDirty() {
+        if (loading || dirty) return;
+        dirty = true;
+        tradeNameText.setText(baseTitle + "*");
+    }
+
+    private void markClean() {
+        dirty = false;
+        tradeNameText.setText(baseTitle);
+    }
+
+    private boolean confirmLeave() {
+        if (!dirty) return true;
+
+        ButtonType save = new ButtonType("Save", ButtonBar.ButtonData.YES);
+        ButtonType discard = new ButtonType("Don't Save", ButtonBar.ButtonData.NO);
+        ButtonType cancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, null, save, discard, cancel);
+        alert.setTitle("Unsaved changes");
+        alert.setHeaderText("This SLSP has unsaved changes.");
+        alert.setContentText("Do you want to save before continuing?");
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isEmpty() || result.get() == cancel) return false;
+
+        if (result.get() == save) {
+            if (!persistSlsp()) return false;
+            markClean();
+        }
+        return true;
+    }
+
+    // ---------- Persistence ----------
+
+    private String buildPeriod() {
+        int year = years.getValue();
+        int monthIndex = months.getSelectionModel().getSelectedIndex();
+        return String.format("%04d-%02d", year, monthIndex + 1);
+    }
+
+    private boolean persistSlsp() {
+        if (years.getValue() == null || months.getSelectionModel().getSelectedIndex() < 0) {
+            showAlert("Cannot save", "Please select both a month and a year.");
+            return false;
+        }
+
+        try {
+            String period = buildPeriod();
+            YearMonth ym = YearMonth.parse(period);
+
+            List<Sale> sales = new java.util.ArrayList<>();
+            for (SaleRow row : saleRows) {
+                if (row.isEmpty()) continue;
+                Sale sale = new Sale();
+                sale.setSaleDate(ym.atDay(row.dayProperty().get()).toString());
+                sale.setSiNum(row.invoiceNoProperty().get());
+                sale.setExemptAmount(row.exemptProperty().get());
+                sale.setZeroRatedAmount(row.zeroRatedProperty().get());
+                sale.setTaxableAmount(row.taxableProperty().get());
+                sales.add(sale);
+            }
+
+            List<Purchase> purchases = new java.util.ArrayList<>();
+            for (PurchaseRow row : purchaseRows) {
+                if (row.isEmpty()) continue;
+                Purchase purchase = new Purchase();
+                purchase.setPurchaseDate(ym.atDay(row.dayProperty().get()).toString());
+                Supplier s = row.supplierProperty().get();
+                if (s == null) {
+                    showAlert("Cannot save", "Every purchase row needs a supplier selected.");
+                    return false;
+                }
+                purchase.setSupplierId(s.getId());
+                purchase.setInvoiceNum(row.invoiceNoProperty().get());
+                purchase.setExemptAmount(row.exemptProperty().get());
+                purchase.setZeroRatedAmount(row.zeroRatedProperty().get());
+                purchase.setTaxableAmount(row.taxableProperty().get());
+                purchases.add(purchase);
+            }
+
+            boolean saved = vm.save(period, sales, purchases);
+            if (!saved) {
+                showAlert("Cannot save", "An SLSP for this month and year already exists.");
+                return false;
+            }
+
+            delBtn.setVisible(true);
+            return true;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            showAlert("Save failed", "An error occurred while saving: " + ex.getMessage());
+            return false;
+        }
+    }
+
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    // ---------- sum calculator (unchanged) ----------
 
     private void setUpNumberTextField(TextField t) {
         t.textProperty().addListener((_, old, newVal) -> {
@@ -337,18 +506,48 @@ public class SlspManagerController {
         totalSum.setText("Total: 0");
     }
 
+    // ---------- navigation ----------
+
     @FXML
     public void back(ActionEvent e) {
-    	if (!confirmLeave()) return;
+        if (!confirmLeave()) return;
+        editingSlsp = null;
         Pages.change(e, Pages.SLSP);
     }
 
     @FXML
     public void SaveSlsp(ActionEvent e) {
-    	persistSlsp();
-        markClean();
-        Pages.change(e, Pages.SLSP);
+        if (persistSlsp()) {
+            markClean();
+            editingSlsp = null;
+            Pages.change(e, Pages.SLSP);
+        }
     }
+
+    @FXML
+    public void DeleteSlsp(ActionEvent e) {
+        if (!vm.isExisting()) return;
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
+                "Delete this SLSP and all its sales/purchases? This cannot be undone.",
+                ButtonType.YES, ButtonType.NO);
+        confirm.setTitle("Delete SLSP");
+        confirm.setHeaderText(null);
+
+        Optional<ButtonType> result = confirm.showAndWait();
+        if (result.isEmpty() || result.get() != ButtonType.YES) return;
+
+        try {
+            vm.deleteCurrentSlsp();
+            dirty = false;
+            editingSlsp = null;
+            Pages.change(e, Pages.SLSP);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            showAlert("Delete failed", "An error occurred while deleting: " + ex.getMessage());
+        }
+    }
+
     @FXML
     public void PrintSlsp(ActionEvent e) {
         if (!confirmLeave()) return;
@@ -356,51 +555,8 @@ public class SlspManagerController {
     }
 
     @FXML
-    public void DeleteSlsp(ActionEvent e) {
-        // TODO
-        Pages.change(e, Pages.SLSP);
-    }
-
-    @FXML
     public void Supplier(ActionEvent e) {
-    	if (!confirmLeave()) return;
+        if (!confirmLeave()) return;
         Pages.change(e, Pages.SUPPLIER);
-    }
-    private void markDirty() {
-        if (dirty) return;
-        dirty = true;
-        tradeNameText.setText(baseTitle + "*");
-    }
-
-    private void markClean() {
-        dirty = false;
-        tradeNameText.setText(baseTitle);
-    }
-
-    private void persistSlsp() {
-        // TODO: persist saleRows / purchaseRows / month / year
-    }
-
-    /** Returns true if the caller may proceed (nothing to save, saved, or discarded). */
-    private boolean confirmLeave() {
-        if (!dirty) return true;
-
-        ButtonType save = new ButtonType("Save", ButtonBar.ButtonData.YES);
-        ButtonType discard = new ButtonType("Don't Save", ButtonBar.ButtonData.NO);
-        ButtonType cancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
-
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, null, save, discard, cancel);
-        alert.setTitle("Unsaved changes");
-        alert.setHeaderText("This SLSP has unsaved changes.");
-        alert.setContentText("Do you want to save before continuing?");
-
-        Optional<ButtonType> result = alert.showAndWait();
-        if (result.isEmpty() || result.get() == cancel) return false;
-
-        if (result.get() == save) {
-            persistSlsp();
-            markClean();
-        }
-        return true; // "Don't Save" just proceeds
     }
 }

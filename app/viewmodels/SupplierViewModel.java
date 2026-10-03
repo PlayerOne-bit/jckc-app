@@ -26,6 +26,7 @@ public class SupplierViewModel {
         suppliers = db.getSuppliersByTaxId(taxpayer.getId());
     }
 
+    // true = deleted, false = blocked because it's used by a Purchase
     public boolean deleteSupplier(int id) throws Exception {
         boolean deleted = db.deleteSupplier(id);
         if (deleted) {
@@ -34,6 +35,7 @@ public class SupplierViewModel {
         return deleted;
     }
 
+    // returns null if creation succeeded, or an error message if the TIN is already taken
     public String createSupplier(Supplier supplier) throws Exception {
         Supplier existing = db.findByTin(supplier.getTaxId(), supplier.getTinNum());
         if (existing != null) {
