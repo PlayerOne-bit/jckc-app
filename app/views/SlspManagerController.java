@@ -144,6 +144,26 @@ public class SlspManagerController {
         years.valueProperty().addListener((_, _, _) -> { updateDayOptions(); markDirty(); });
         months.valueProperty().addListener((_, _, _) -> { updateDayOptions(); markDirty(); });
     }
+    private StringConverter<Integer> buildDayConverter() {
+        return new StringConverter<>() {
+            @Override public String toString(Integer day) {
+                if (day == null) return "";
+                Integer year = years.getValue();
+                int monthIndex = months.getSelectionModel().getSelectedIndex();
+                if (year == null || monthIndex < 0) return String.valueOf(day);
+                return String.format("%02d/%02d/%04d", monthIndex + 1, day, year);
+            }
+            @Override public Integer fromString(String s) {
+                if (s == null || s.isBlank()) return null;
+                String[] parts = s.split("/");
+                try {
+                    return Integer.parseInt(parts[1]); // middle segment is the day
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+        };
+    }
 
     // ---------- Loading an existing SLSP ----------
 
@@ -249,7 +269,7 @@ public class SlspManagerController {
     private <T> void wireDayColumn(TableColumn<T, Integer> col, Function<T, IntegerProperty> extractor) {
         col.setEditable(true);
         col.setCellValueFactory(cd -> extractor.apply(cd.getValue()).asObject());
-        col.setCellFactory(ComboBoxTableCell.forTableColumn(dayOptions));
+        col.setCellFactory(ComboBoxTableCell.forTableColumn(buildDayConverter(), dayOptions));
         col.setOnEditCommit(ev -> extractor.apply(ev.getRowValue()).set(ev.getNewValue()));
     }
 

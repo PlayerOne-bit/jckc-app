@@ -8,7 +8,7 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<fx:root maxWidth="Infinity" spacing="4.0" styleClass="home-card" stylesheets="@application.css" type="VBox" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root maxWidth="Infinity" spacing="2.0" style="-fx-border-radius: 10; -fx-background-radius: 10; -fx-border-color: gray;" type="VBox" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <GridPane hgap="10.0" maxWidth="Infinity">
          <columnConstraints>
@@ -18,26 +18,23 @@
             <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" minWidth="0.0" percentWidth="20.0" />
             <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" minWidth="0.0" percentWidth="20.0" />
          </columnConstraints>
-         <children>
-            <Text fx:id="period" strokeType="OUTSIDE" strokeWidth="0.0" text="YYYY-MM" GridPane.columnIndex="0">
-               <font>
-                  <Font name="System Bold" size="12.0" />
-               </font></Text>
-            <Text fx:id="salesRows" strokeType="OUTSIDE" strokeWidth="0.0" text="X" GridPane.columnIndex="1" />
-            <Text fx:id="purchasesRow" strokeType="OUTSIDE" strokeWidth="0.0" text="X" GridPane.columnIndex="2" />
-            <Text fx:id="outputVat" strokeType="OUTSIDE" strokeWidth="0.0" text="₱ X,XXX.XX" GridPane.columnIndex="3" />
-            <Text fx:id="inputVat" strokeType="OUTSIDE" strokeWidth="0.0" text="₱ X,XXX.XX" GridPane.columnIndex="4" />
-         </children>
          <rowConstraints>
             <RowConstraints />
          </rowConstraints>
-      </GridPane>
-      <VBox alignment="TOP_RIGHT">
          <children>
-            <Text fx:id="dateModified" strokeType="OUTSIDE" strokeWidth="0.0" text="Date Modified: MM/DD/YYYY - XX:XX XM" />
-            <Text fx:id="dateCreated" strokeType="OUTSIDE" strokeWidth="0.0" text="Date Created: MM/DD/YYYY - XX:XX XM" />
+            <Text fx:id="period" strokeType="OUTSIDE" strokeWidth="0.0" text="January 2026" GridPane.columnIndex="0">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </Text>
+            <Text fx:id="salesRow" strokeType="OUTSIDE" strokeWidth="0.0" text="0" GridPane.columnIndex="1" />
+            <Text fx:id="purchasesRow" strokeType="OUTSIDE" strokeWidth="0.0" text="0" GridPane.columnIndex="2" />
+            <Text fx:id="outputVat" strokeType="OUTSIDE" strokeWidth="0.0" text="₱ 0" GridPane.columnIndex="3" />
+            <Text fx:id="inputVat" strokeType="OUTSIDE" strokeWidth="0.0" text="₱ 0" GridPane.columnIndex="4" />
          </children>
-      </VBox>
+      </GridPane>
+      <Text fx:id="dateCreated" strokeType="OUTSIDE" strokeWidth="0.0" text="Date Created: " />
+      <Text fx:id="dateModified" strokeType="OUTSIDE" strokeWidth="0.0" text="Date Modified: " />
    </children>
    <padding>
       <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
