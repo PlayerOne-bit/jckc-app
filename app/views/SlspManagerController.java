@@ -1,8 +1,10 @@
 package app.views;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -20,6 +22,7 @@ import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.SortedList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -34,12 +37,6 @@ import javafx.util.StringConverter;
 
 public class SlspManagerController {
 
-    /**
-     * ASSUMPTION: set by the SLSP list page before navigating here.
-     * null  -> creating a brand-new SLSP for whatever month/year is selected.
-     * non-null -> editing this existing SLSP; its period and rows are loaded on init.
-     * Replace with your actual navigation-data mechanism if different.
-     */
     public static SLSP editingSlsp;
 
     @FXML private ComboBox<Integer> years;
@@ -63,6 +60,12 @@ public class SlspManagerController {
     @FXML private TableColumn<SaleRow, BigDecimal> sColOutputVat;
     @FXML private TableColumn<SaleRow, BigDecimal> sColGross;
     @FXML private Button sAddBtn;
+    @FXML private Text saleTotalRows;
+    @FXML private TextField saleExempt;
+    @FXML private TextField saleZeroRated;
+    @FXML private TextField saleTaxable;
+    @FXML private TextField outputVat;
+    @FXML private TextField saleGross;
 
     // Purchase table
     @FXML private TableView<PurchaseRow> pTable;
@@ -76,6 +79,12 @@ public class SlspManagerController {
     @FXML private TableColumn<PurchaseRow, BigDecimal> pColInputVat;
     @FXML private TableColumn<PurchaseRow, BigDecimal> pColGross;
     @FXML private Button pAddBtn;
+    @FXML private Text purchaseTotalRows;
+    @FXML private TextField purchaseExempt;
+    @FXML private TextField purchaseZeroRated;
+    @FXML private TextField purchaseTaxable;
+    @FXML private TextField inputVat;
+    @FXML private TextField purchaseGross;
 
     private final ObservableList<SaleRow> saleRows = FXCollections.observableArrayList(
             r -> new Observable[] { r.dayProperty(), r.invoiceNoProperty(),
@@ -85,14 +94,27 @@ public class SlspManagerController {
             r -> new Observable[] { r.dayProperty(), r.supplierProperty(), r.invoiceNoProperty(),
                     r.exemptProperty(), r.zeroRatedProperty(), r.taxableProperty() });
 
+    private static final Comparator<SaleRow> SALE_ORDER = Comparator
+            .comparingInt((SaleRow r) -> r.dayProperty().get())
+            .thenComparing(r -> r.invoiceNoProperty().get(), Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
+
+    private static final Comparator<PurchaseRow> PURCHASE_ORDER = Comparator
+            .comparingInt((PurchaseRow r) -> r.dayProperty().get())
+            .thenComparing(r -> r.invoiceNoProperty().get(), Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
+
+    private SortedList<SaleRow> sortedSaleRows;
+    private SortedList<PurchaseRow> sortedPurchaseRows;
+
     private final ObservableList<Integer> dayOptions = FXCollections.observableArrayList();
     private ObservableList<Supplier> suppliers = FXCollections.observableArrayList();
 
     private List<BigDecimal> total = new java.util.ArrayList<>();
 
+    private static final DecimalFormat MONEY_FORMAT = new DecimalFormat("#,##0.00");
+
     private SlspManagerViewModel vm;
     private boolean dirty = false;
-    private boolean loading = false; // true while populating fields from DB, to suppress dirty-marking
+    private boolean loading = false;
     private String baseTitle;
 
     @FXML
@@ -136,14 +158,22 @@ public class SlspManagerController {
             delBtn.setVisible(false);
         }
         updateDayOptions();
+        updateSaleTotals();
+        updatePurchaseTotals();
         loading = false;
 
-        // Dirty-tracking listeners go LAST so the loading above doesn't flag dirty=true
-        saleRows.addListener((javafx.collections.ListChangeListener<SaleRow>) _ -> markDirty());
-        purchaseRows.addListener((javafx.collections.ListChangeListener<PurchaseRow>) _ -> markDirty());
-        years.valueProperty().addListener((_, _, _) -> { updateDayOptions(); markDirty(); });
-        months.valueProperty().addListener((_, _, _) -> { updateDayOptions(); markDirty(); });
+        saleRows.addListener((javafx.collections.ListChangeListener<SaleRow>) _ -> {
+            markDirty();
+            updateSaleTotals();
+        });
+        purchaseRows.addListener((javafx.collections.ListChangeListener<PurchaseRow>) _ -> {
+            markDirty();
+            updatePurchaseTotals();
+        });
+        years.valueProperty().addListener((_, _, _) -> { updateDayOptions(); markDirty(); sTable.refresh(); pTable.refresh(); });
+        months.valueProperty().addListener((_, _, _) -> { updateDayOptions(); markDirty(); sTable.refresh(); pTable.refresh(); });
     }
+
     private StringConverter<Integer> buildDayConverter() {
         return new StringConverter<>() {
             @Override public String toString(Integer day) {
@@ -157,7 +187,7 @@ public class SlspManagerController {
                 if (s == null || s.isBlank()) return null;
                 String[] parts = s.split("/");
                 try {
-                    return Integer.parseInt(parts[1]); // middle segment is the day
+                    return Integer.parseInt(parts[1]);
                 } catch (Exception e) {
                     return null;
                 }
@@ -213,6 +243,58 @@ public class SlspManagerController {
 
         for (SaleRow r : saleRows) if (r.dayProperty().get() > max) r.dayProperty().set(max);
         for (PurchaseRow r : purchaseRows) if (r.dayProperty().get() > max) r.dayProperty().set(max);
+    }
+
+    // ---------- Totals ----------
+
+    private static BigDecimal nz(BigDecimal v) {
+        return v == null ? BigDecimal.ZERO : v;
+    }
+
+    private String formatMoney(BigDecimal v) {
+        return "\u20B1 " + MONEY_FORMAT.format(nz(v));
+    }
+
+    private void updateSaleTotals() {
+        BigDecimal exempt = BigDecimal.ZERO, zeroRated = BigDecimal.ZERO,
+                taxable = BigDecimal.ZERO, vat = BigDecimal.ZERO, gross = BigDecimal.ZERO;
+        int count = 0;
+        for (SaleRow r : saleRows) {
+            if (r.isEmpty()) continue;
+            count++;
+            exempt = exempt.add(nz(r.exemptProperty().get()));
+            zeroRated = zeroRated.add(nz(r.zeroRatedProperty().get()));
+            taxable = taxable.add(nz(r.taxableProperty().get()));
+            vat = vat.add(r.getOutputVat());
+            gross = gross.add(r.getGross());
+        }
+        if (saleTotalRows != null) saleTotalRows.setText("Total for " + count + " row" + (count == 1 ? "" : "s"));
+        if (saleExempt != null) saleExempt.setText(formatMoney(exempt));
+        if (saleZeroRated != null) saleZeroRated.setText(formatMoney(zeroRated));
+        if (saleTaxable != null) saleTaxable.setText(formatMoney(taxable));
+        if (outputVat != null) outputVat.setText(formatMoney(vat));
+        if (saleGross != null) saleGross.setText(formatMoney(gross));
+    }
+
+    private void updatePurchaseTotals() {
+        BigDecimal exempt = BigDecimal.ZERO, zeroRated = BigDecimal.ZERO,
+                taxable = BigDecimal.ZERO, vat = BigDecimal.ZERO, gross = BigDecimal.ZERO;
+        int count = 0;
+        for (PurchaseRow r : purchaseRows) {
+            if (r.isEmpty()) continue;
+            count++;
+            exempt = exempt.add(nz(r.exemptProperty().get()));
+            zeroRated = zeroRated.add(nz(r.zeroRatedProperty().get()));
+            taxable = taxable.add(nz(r.taxableProperty().get()));
+            vat = vat.add(r.getInputVat());
+            gross = gross.add(r.getGross());
+        }
+        if (purchaseTotalRows != null) purchaseTotalRows.setText("Total for " + count + " row" + (count == 1 ? "" : "s"));
+        if (purchaseExempt != null) purchaseExempt.setText(formatMoney(exempt));
+        if (purchaseZeroRated != null) purchaseZeroRated.setText(formatMoney(zeroRated));
+        if (purchaseTaxable != null) purchaseTaxable.setText(formatMoney(taxable));
+        if (inputVat != null) inputVat.setText(formatMoney(vat));
+        if (purchaseGross != null) purchaseGross.setText(formatMoney(gross));
     }
 
     // ---------- Even, locked column widths ----------
@@ -276,7 +358,8 @@ public class SlspManagerController {
     // ---------- Sale table setup ----------
 
     private void setupSaleTable() {
-        sTable.setItems(saleRows);
+        sortedSaleRows = new SortedList<>(saleRows, SALE_ORDER);
+        sTable.setItems(sortedSaleRows);
         setupEvenColumns(sTable, 8);
 
         wireRowNumberColumn(sColNum);
@@ -293,13 +376,14 @@ public class SlspManagerController {
         wireComputedColumn(sColOutputVat, SaleRow::getOutputVat);
         wireComputedColumn(sColGross, SaleRow::getGross);
 
-        setupRowNavigation(sTable, saleRows, () -> addPurchaseOrSaleRow(true));
+        setupRowNavigation(sTable, () -> addPurchaseOrSaleRow(true));
     }
 
     // ---------- Purchase table setup ----------
 
     private void setupPurchaseTable() {
-        pTable.setItems(purchaseRows);
+        sortedPurchaseRows = new SortedList<>(purchaseRows, PURCHASE_ORDER);
+        pTable.setItems(sortedPurchaseRows);
         setupEvenColumns(pTable, 9);
 
         wireRowNumberColumn(pColNum);
@@ -326,16 +410,16 @@ public class SlspManagerController {
         wireComputedColumn(pColInputVat, PurchaseRow::getInputVat);
         wireComputedColumn(pColGross, PurchaseRow::getGross);
 
-        setupRowNavigation(pTable, purchaseRows, () -> addPurchaseOrSaleRow(false));
+        setupRowNavigation(pTable, () -> addPurchaseOrSaleRow(false));
     }
 
-    // ---------- Row creation: guarded, no duplicate blank rows ----------
+    // ---------- Row creation: guarded, no duplicate blank rows, sort-aware ----------
 
-    private <T> void setupRowNavigation(TableView<T> table, ObservableList<T> rows, Runnable addRow) {
+    private <T> void setupRowNavigation(TableView<T> table, Runnable addRow) {
         table.setOnKeyPressed(ev -> {
             if (ev.getCode() == KeyCode.DOWN) {
                 int selected = table.getSelectionModel().getSelectedIndex();
-                if (selected == rows.size() - 1) {
+                if (selected == table.getItems().size() - 1) {
                     addRow.run();
                     ev.consume();
                 }
@@ -350,22 +434,36 @@ public class SlspManagerController {
 
     private void addPurchaseOrSaleRow(boolean isSale) {
         if (isSale) {
-            if (!saleRows.isEmpty() && saleRows.get(saleRows.size() - 1).isEmpty()) {
-                sTable.getSelectionModel().select(saleRows.size() - 1);
+            SaleRow existingBlank = saleRows.stream().filter(SaleRow::isEmpty).findFirst().orElse(null);
+            if (existingBlank != null) {
+                selectSaleRow(existingBlank);
                 return;
             }
-            saleRows.add(new SaleRow());
-            sTable.getSelectionModel().select(saleRows.size() - 1);
-            sTable.scrollTo(saleRows.size() - 1);
+            SaleRow row = new SaleRow();
+            saleRows.add(row);
+            selectSaleRow(row);
         } else {
-            if (!purchaseRows.isEmpty() && purchaseRows.get(purchaseRows.size() - 1).isEmpty()) {
-                pTable.getSelectionModel().select(purchaseRows.size() - 1);
+            PurchaseRow existingBlank = purchaseRows.stream().filter(PurchaseRow::isEmpty).findFirst().orElse(null);
+            if (existingBlank != null) {
+                selectPurchaseRow(existingBlank);
                 return;
             }
-            purchaseRows.add(new PurchaseRow());
-            pTable.getSelectionModel().select(purchaseRows.size() - 1);
-            pTable.scrollTo(purchaseRows.size() - 1);
+            PurchaseRow row = new PurchaseRow();
+            purchaseRows.add(row);
+            selectPurchaseRow(row);
         }
+    }
+
+    private void selectSaleRow(SaleRow row) {
+        sTable.getSelectionModel().select(row);
+        int idx = sortedSaleRows.indexOf(row);
+        if (idx >= 0) sTable.scrollTo(idx);
+    }
+
+    private void selectPurchaseRow(PurchaseRow row) {
+        pTable.getSelectionModel().select(row);
+        int idx = sortedPurchaseRows.indexOf(row);
+        if (idx >= 0) pTable.scrollTo(idx);
     }
 
     // ---------- Unsaved-changes tracking ----------

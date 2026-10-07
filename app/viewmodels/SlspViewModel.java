@@ -6,6 +6,7 @@ import java.util.List;
 
 import app.database.SlspRepository;
 import app.models.SLSP;
+import app.models.Taxpayer;
 
 public class SlspViewModel {
 	private SlspRepository repo;
@@ -21,7 +22,7 @@ public class SlspViewModel {
 		refreshSLSPs();
 	}
 	public void refreshSLSPs() throws Exception{
-		List<SLSP> result = repo.getAllSLSPs();
+		List<SLSP> result = repo.getSLSPsByTaxId(Taxpayer.getTaxpayer().getId());
 	    SLSPs = result != null ? result : new ArrayList<>();
 	}
 	public List<SLSP> loadSLSPs() {
