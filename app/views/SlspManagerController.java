@@ -16,19 +16,20 @@ import app.models.Supplier;
 import app.models.Taxpayer;
 import app.viewmodels.SlspManagerViewModel;
 import app.viewmodels.SupplierViewModel;
+import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.SortedList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
@@ -94,6 +95,7 @@ public class SlspManagerController {
             r -> new Observable[] { r.dayProperty(), r.supplierProperty(), r.invoiceNoProperty(),
                     r.exemptProperty(), r.zeroRatedProperty(), r.taxableProperty() });
 
+    // Used once when loading an existing SLSP (no live sorting, so new rows stay at the bottom)
     private static final Comparator<SaleRow> SALE_ORDER = Comparator
             .comparingInt((SaleRow r) -> r.dayProperty().get())
             .thenComparing(r -> r.invoiceNoProperty().get(), Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
@@ -101,9 +103,6 @@ public class SlspManagerController {
     private static final Comparator<PurchaseRow> PURCHASE_ORDER = Comparator
             .comparingInt((PurchaseRow r) -> r.dayProperty().get())
             .thenComparing(r -> r.invoiceNoProperty().get(), Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
-
-    private SortedList<SaleRow> sortedSaleRows;
-    private SortedList<PurchaseRow> sortedPurchaseRows;
 
     private final ObservableList<Integer> dayOptions = FXCollections.observableArrayList();
     private ObservableList<Supplier> suppliers = FXCollections.observableArrayList();
@@ -227,6 +226,10 @@ public class SlspManagerController {
             row.taxableProperty().set(purchase.getTaxableAmount());
             purchaseRows.add(row);
         }
+
+        // Sort once on load; after this, rows stay in insertion order
+        FXCollections.sort(saleRows, SALE_ORDER);
+        FXCollections.sort(purchaseRows, PURCHASE_ORDER);
     }
 
     // ---------- Day-of-month restriction ----------
@@ -268,7 +271,7 @@ public class SlspManagerController {
             vat = vat.add(r.getOutputVat());
             gross = gross.add(r.getGross());
         }
-        if (saleTotalRows != null) saleTotalRows.setText("Total for " + count + " row" + (count == 1 ? "" : "s"));
+        if (saleTotalRows != null) saleTotalRows.setText("Total for " + count + " sale row" + (count == 1 ? ":" : "s:"));
         if (saleExempt != null) saleExempt.setText(formatMoney(exempt));
         if (saleZeroRated != null) saleZeroRated.setText(formatMoney(zeroRated));
         if (saleTaxable != null) saleTaxable.setText(formatMoney(taxable));
@@ -289,7 +292,7 @@ public class SlspManagerController {
             vat = vat.add(r.getInputVat());
             gross = gross.add(r.getGross());
         }
-        if (purchaseTotalRows != null) purchaseTotalRows.setText("Total for " + count + " row" + (count == 1 ? "" : "s"));
+        if (purchaseTotalRows != null) purchaseTotalRows.setText("Total for " + count + "purchase row" + (count == 1 ? ":" : "s:"));
         if (purchaseExempt != null) purchaseExempt.setText(formatMoney(exempt));
         if (purchaseZeroRated != null) purchaseZeroRated.setText(formatMoney(zeroRated));
         if (purchaseTaxable != null) purchaseTaxable.setText(formatMoney(taxable));
@@ -358,8 +361,7 @@ public class SlspManagerController {
     // ---------- Sale table setup ----------
 
     private void setupSaleTable() {
-        sortedSaleRows = new SortedList<>(saleRows, SALE_ORDER);
-        sTable.setItems(sortedSaleRows);
+        sTable.setItems(saleRows);
         setupEvenColumns(sTable, 8);
 
         wireRowNumberColumn(sColNum);
@@ -376,14 +378,15 @@ public class SlspManagerController {
         wireComputedColumn(sColOutputVat, SaleRow::getOutputVat);
         wireComputedColumn(sColGross, SaleRow::getGross);
 
-        setupRowNavigation(sTable, () -> addPurchaseOrSaleRow(true));
+        setupCellNavigation(sTable,
+                List.<TableColumn<SaleRow, ?>>of(sColDate, sColInvoice, sColExempt, sColZeroRated, sColTaxable),
+                () -> addPurchaseOrSaleRow(true));
     }
 
     // ---------- Purchase table setup ----------
 
     private void setupPurchaseTable() {
-        sortedPurchaseRows = new SortedList<>(purchaseRows, PURCHASE_ORDER);
-        pTable.setItems(sortedPurchaseRows);
+        pTable.setItems(purchaseRows);
         setupEvenColumns(pTable, 9);
 
         wireRowNumberColumn(pColNum);
@@ -410,22 +413,89 @@ public class SlspManagerController {
         wireComputedColumn(pColInputVat, PurchaseRow::getInputVat);
         wireComputedColumn(pColGross, PurchaseRow::getGross);
 
-        setupRowNavigation(pTable, () -> addPurchaseOrSaleRow(false));
+        setupCellNavigation(pTable,
+                List.<TableColumn<PurchaseRow, ?>>of(pColDate, pColSupplier, pColInvoice, pColExempt, pColZeroRated, pColTaxable),
+                () -> addPurchaseOrSaleRow(false));
     }
 
-    // ---------- Row creation: guarded, no duplicate blank rows, sort-aware ----------
+    // ---------- Keyboard navigation: Enter = new bottom row, Tab / Shift+Tab = next / previous cell ----------
 
-    private <T> void setupRowNavigation(TableView<T> table, Runnable addRow) {
-        table.setOnKeyPressed(ev -> {
-            if (ev.getCode() == KeyCode.DOWN) {
-                int selected = table.getSelectionModel().getSelectedIndex();
-                if (selected == table.getItems().size() - 1) {
+    private <T> void setupCellNavigation(TableView<T> table,
+                                         List<TableColumn<T, ?>> editableCols,
+                                         Runnable addRow) {
+        table.setEditable(true);
+
+        // Event filter runs before the cell's TextField/ComboBox sees the key
+        table.addEventFilter(KeyEvent.KEY_PRESSED, ev -> {
+            KeyCode code = ev.getCode();
+
+            // DOWN on the last row adds a row (only when not editing)
+            if (code == KeyCode.DOWN && table.getEditingCell() == null) {
+                if (table.getSelectionModel().getSelectedIndex() == table.getItems().size() - 1) {
                     addRow.run();
                     ev.consume();
                 }
+                return;
             }
+
+            if (code != KeyCode.TAB && code != KeyCode.ENTER) return;
+            if (ev.isControlDown() || ev.isAltDown()) return;
+
+            // Where are we now?
+            TablePosition<T, ?> editing = table.getEditingCell();
+            int row = editing != null ? editing.getRow()
+                                      : table.getSelectionModel().getSelectedIndex();
+            int colIdx = editing != null ? editableCols.indexOf(editing.getTableColumn()) : -1;
+
+            // Commit whatever is being typed (fires the cell's onAction -> commitEdit)
+            if (ev.getTarget() instanceof TextField tf) {
+                tf.fireEvent(new ActionEvent(tf, tf));
+            }
+
+            int n = editableCols.size();
+            int targetRow = row;
+            int targetCol;
+
+            if (code == KeyCode.ENTER) {
+                // New row at the bottom, start editing its first column
+                addRow.run();
+                targetRow = table.getSelectionModel().getSelectedIndex();
+                targetCol = 0;
+            } else {
+                int step = ev.isShiftDown() ? -1 : 1;
+                targetCol = colIdx < 0 ? (step > 0 ? 0 : n - 1) : colIdx + step;
+
+                if (targetCol >= n) {            // past last column -> next row
+                    targetCol = 0;
+                    targetRow++;
+                } else if (targetCol < 0) {      // before first column -> previous row
+                    targetCol = n - 1;
+                    targetRow--;
+                }
+
+                if (targetRow < 0) { targetRow = 0; targetCol = 0; }
+
+                if (targetRow >= table.getItems().size()) {   // Tab off the end -> new row
+                    addRow.run();
+                    targetRow = table.getSelectionModel().getSelectedIndex();
+                    targetCol = 0;
+                }
+            }
+
+            final int r = Math.max(targetRow, 0);
+            final int c = targetCol;
+            ev.consume();
+
+            // Wait for the commit to finish before starting the next edit
+            Platform.runLater(() -> {
+                table.getSelectionModel().clearAndSelect(r);
+                table.scrollTo(r);
+                table.edit(r, editableCols.get(c));
+            });
         });
     }
+
+    // ---------- Row creation: guarded, no duplicate blank rows, always at the bottom ----------
 
     private void onAddRowShortcut(ActionEvent e) {
         boolean isSaleTab = tabPane.getSelectionModel().getSelectedIndex() == 0;
@@ -456,13 +526,13 @@ public class SlspManagerController {
 
     private void selectSaleRow(SaleRow row) {
         sTable.getSelectionModel().select(row);
-        int idx = sortedSaleRows.indexOf(row);
+        int idx = saleRows.indexOf(row);
         if (idx >= 0) sTable.scrollTo(idx);
     }
 
     private void selectPurchaseRow(PurchaseRow row) {
         pTable.getSelectionModel().select(row);
-        int idx = sortedPurchaseRows.indexOf(row);
+        int idx = purchaseRows.indexOf(row);
         if (idx >= 0) pTable.scrollTo(idx);
     }
 
