@@ -4,7 +4,9 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayDeque;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -25,10 +27,12 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
@@ -116,6 +120,13 @@ public class SlspManagerController {
     private boolean loading = false;
     private String baseTitle;
 
+    // Undo history
+    private static final int MAX_HISTORY = 200;
+    private final Deque<Snapshot> undoStack = new ArrayDeque<>();
+    private final Deque<Snapshot> redoStack = new ArrayDeque<>();
+    private Snapshot lastSnapshot;          // the current state, as of the last recorded change
+    private boolean historyPaused = false;  // true while restoring / making programmatic changes
+
     @FXML
     private void initialize() throws Exception {
         Pages.bindShortcut(root, "Ctrl+S", this::SaveSlsp);
@@ -126,6 +137,7 @@ public class SlspManagerController {
         Pages.bindShortcut(root, "Ctrl+E", sumInput);
         Pages.bindShortcut(root, "Ctrl+B", this::Supplier);
         Pages.bindShortcut(root, "Alt+N", this::onAddRowShortcut);
+        bindUndoShortcut();
 
         baseTitle = "SLSP : " + Taxpayer.getTaxpayer().getTradeName();
         tradeNameText.setText(baseTitle);
@@ -161,16 +173,20 @@ public class SlspManagerController {
         updatePurchaseTotals();
         loading = false;
 
+        lastSnapshot = captureSnapshot();   // baseline for undo
+
         saleRows.addListener((javafx.collections.ListChangeListener<SaleRow>) _ -> {
             markDirty();
             updateSaleTotals();
+            recordHistory();
         });
         purchaseRows.addListener((javafx.collections.ListChangeListener<PurchaseRow>) _ -> {
             markDirty();
             updatePurchaseTotals();
+            recordHistory();
         });
-        years.valueProperty().addListener((_, _, _) -> { updateDayOptions(); markDirty(); sTable.refresh(); pTable.refresh(); });
-        months.valueProperty().addListener((_, _, _) -> { updateDayOptions(); markDirty(); sTable.refresh(); pTable.refresh(); });
+        years.valueProperty().addListener((_, _, _) -> onPeriodChanged());
+        months.valueProperty().addListener((_, _, _) -> onPeriodChanged());
     }
 
     private StringConverter<Integer> buildDayConverter() {
@@ -534,6 +550,130 @@ public class SlspManagerController {
         pTable.getSelectionModel().select(row);
         int idx = purchaseRows.indexOf(row);
         if (idx >= 0) pTable.scrollTo(idx);
+    }
+
+    // ---------- Undo (Ctrl+Z) ----------
+
+    private record SaleState(int day, String invoice, BigDecimal exempt,
+                             BigDecimal zeroRated, BigDecimal taxable) {}
+
+    private record PurchaseState(int day, Supplier supplier, String invoice, BigDecimal exempt,
+                                 BigDecimal zeroRated, BigDecimal taxable) {}
+
+    private record Snapshot(Integer year, int monthIndex,
+                            List<SaleState> sales, List<PurchaseState> purchases) {}
+
+    private void bindUndoShortcut() {
+        KeyCombination undoKeys = KeyCombination.valueOf("Ctrl+Z");
+        KeyCombination redoKeys = KeyCombination.valueOf("Ctrl+Y");
+        KeyCombination redoAltKeys = KeyCombination.valueOf("Ctrl+Shift+Z");
+        root.addEventFilter(KeyEvent.KEY_PRESSED, ev -> {
+            boolean isUndo = undoKeys.match(ev);
+            boolean isRedo = redoKeys.match(ev) || redoAltKeys.match(ev);
+            if (!isUndo && !isRedo) return;
+            Node focused = root.getScene() == null ? null : root.getScene().getFocusOwner();
+            // While typing in a text field, let it undo/redo its own text
+            if (focused instanceof TextInputControl) return;
+            if (isUndo) undo(); else redo();
+            ev.consume();
+        });
+    }
+
+    private Snapshot captureSnapshot() {
+        List<SaleState> sales = new java.util.ArrayList<>();
+        for (SaleRow r : saleRows) {
+            sales.add(new SaleState(r.dayProperty().get(), r.invoiceNoProperty().get(),
+                    r.exemptProperty().get(), r.zeroRatedProperty().get(), r.taxableProperty().get()));
+        }
+        List<PurchaseState> purchases = new java.util.ArrayList<>();
+        for (PurchaseRow r : purchaseRows) {
+            purchases.add(new PurchaseState(r.dayProperty().get(), r.supplierProperty().get(),
+                    r.invoiceNoProperty().get(), r.exemptProperty().get(),
+                    r.zeroRatedProperty().get(), r.taxableProperty().get()));
+        }
+        return new Snapshot(years.getValue(), months.getSelectionModel().getSelectedIndex(), sales, purchases);
+    }
+
+    /** Called after every change: pushes the previous state onto the undo stack. */
+    private void recordHistory() {
+        if (loading || historyPaused || lastSnapshot == null) return;
+        Snapshot now = captureSnapshot();
+        if (now.equals(lastSnapshot)) return;   // nothing actually changed
+        undoStack.push(lastSnapshot);
+        if (undoStack.size() > MAX_HISTORY) undoStack.removeLast();
+        redoStack.clear();      // a new change invalidates the redo history
+        lastSnapshot = now;
+    }
+
+    private void onPeriodChanged() {
+        boolean wasPaused = historyPaused;
+        historyPaused = true;   // day clamping shouldn't create its own history entries
+        try {
+            updateDayOptions();
+        } finally {
+            historyPaused = wasPaused;
+        }
+        markDirty();
+        sTable.refresh();
+        pTable.refresh();
+        recordHistory();        // year/month change + any clamped days = one undo step
+    }
+
+    private void undo() {
+        if (undoStack.isEmpty()) return;
+        sTable.edit(-1, null);  // cancel any in-progress cell edit
+        pTable.edit(-1, null);
+        redoStack.push(lastSnapshot);
+        restoreSnapshot(undoStack.pop());
+    }
+
+    private void redo() {
+        if (redoStack.isEmpty()) return;
+        sTable.edit(-1, null);
+        pTable.edit(-1, null);
+        undoStack.push(lastSnapshot);
+        restoreSnapshot(redoStack.pop());
+    }
+
+    private void restoreSnapshot(Snapshot s) {
+        historyPaused = true;
+        try {
+            if (s.year() != null) years.setValue(s.year());
+            if (s.monthIndex() >= 0) months.getSelectionModel().select(s.monthIndex());
+            updateDayOptions();
+
+            List<SaleRow> sales = new java.util.ArrayList<>();
+            for (SaleState st : s.sales()) {
+                SaleRow r = new SaleRow();
+                r.dayProperty().set(st.day());
+                r.invoiceNoProperty().set(st.invoice());
+                r.exemptProperty().set(st.exempt());
+                r.zeroRatedProperty().set(st.zeroRated());
+                r.taxableProperty().set(st.taxable());
+                sales.add(r);
+            }
+            List<PurchaseRow> purchases = new java.util.ArrayList<>();
+            for (PurchaseState st : s.purchases()) {
+                PurchaseRow r = new PurchaseRow();
+                r.dayProperty().set(st.day());
+                r.supplierProperty().set(st.supplier());
+                r.invoiceNoProperty().set(st.invoice());
+                r.exemptProperty().set(st.exempt());
+                r.zeroRatedProperty().set(st.zeroRated());
+                r.taxableProperty().set(st.taxable());
+                purchases.add(r);
+            }
+            saleRows.setAll(sales);
+            purchaseRows.setAll(purchases);
+
+            sTable.getSelectionModel().clearSelection();
+            pTable.getSelectionModel().clearSelection();
+            sTable.refresh();
+            pTable.refresh();
+        } finally {
+            historyPaused = false;
+        }
+        lastSnapshot = s;
     }
 
     // ---------- Unsaved-changes tracking ----------
