@@ -1,6 +1,9 @@
 package app.views;
 
 import java.math.BigDecimal;
+import javafx.geometry.Pos;
+import javafx.scene.paint.Color;
+import org.kordamp.ikonli.javafx.FontIcon;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -64,6 +67,7 @@ public class SlspManagerController {
     @FXML private TableColumn<SaleRow, BigDecimal> sColTaxable;
     @FXML private TableColumn<SaleRow, BigDecimal> sColOutputVat;
     @FXML private TableColumn<SaleRow, BigDecimal> sColGross;
+    @FXML private TableColumn<SaleRow, BigDecimal> sColDelete;
     @FXML private Button sAddBtn;
     @FXML private Text saleTotalRows;
     @FXML private TextField saleExempt;
@@ -83,6 +87,8 @@ public class SlspManagerController {
     @FXML private TableColumn<PurchaseRow, BigDecimal> pColTaxable;
     @FXML private TableColumn<PurchaseRow, BigDecimal> pColInputVat;
     @FXML private TableColumn<PurchaseRow, BigDecimal> pColGross;
+    @FXML private TableColumn<PurchaseRow, BigDecimal> pColDelete;
+    
     @FXML private Button pAddBtn;
     @FXML private Text purchaseTotalRows;
     @FXML private TextField purchaseExempt;
@@ -308,7 +314,7 @@ public class SlspManagerController {
             vat = vat.add(r.getInputVat());
             gross = gross.add(r.getGross());
         }
-        if (purchaseTotalRows != null) purchaseTotalRows.setText("Total for " + count + "purchase row" + (count == 1 ? ":" : "s:"));
+        if (purchaseTotalRows != null) purchaseTotalRows.setText("Total for " + count + " purchase row" + (count == 1 ? ":" : "s:"));
         if (purchaseExempt != null) purchaseExempt.setText(formatMoney(exempt));
         if (purchaseZeroRated != null) purchaseZeroRated.setText(formatMoney(zeroRated));
         if (purchaseTaxable != null) purchaseTaxable.setText(formatMoney(taxable));
@@ -318,14 +324,41 @@ public class SlspManagerController {
 
     // ---------- Even, locked column widths ----------
 
-    private void setupEvenColumns(TableView<?> table, int columnCount) {
-        for (TableColumn<?, ?> col : table.getColumns()) {
-            col.prefWidthProperty().bind(table.widthProperty().subtract(2).divide(columnCount));
-        }
+    private <T, S> void wireDeleteColumn(TableColumn<T, S> col, TableView<T> table, ObservableList<T> rows) {
+        col.setCellValueFactory(_ -> new ReadOnlyObjectWrapper<S>(null));
+        col.setCellFactory(_ -> new TableCell<T, S>() {
+            private final Button btn = new Button();
+            {
+                btn.setId("red-button");
+                btn.getStylesheets().add(Pages.class.getResource("fxml/application.css").toExternalForm());
+                FontIcon icon = new FontIcon("fas-trash");
+                icon.setIconColor(Color.WHITE);
+                btn.setGraphic(icon);
+                btn.setFocusTraversable(false);
+                btn.setOnAction(_ -> {
+                    int i = getIndex();
+                    if (i >= 0 && i < rows.size()) {
+                        table.edit(-1, null);
+                        rows.remove(i);
+                    }
+                });
+                setAlignment(Pos.CENTER);
+            }
+            @Override protected void updateItem(S item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : btn);
+            }
+        });
     }
 
     // ---------- Column wiring helpers ----------
-
+    private void setupColumnWidths(TableView<?> table, TableColumn<?, ?> numCol, TableColumn<?, ?> deleteCol) {
+        int others = table.getColumns().size() - 2;
+        for (TableColumn<?, ?> col : table.getColumns()) {
+            double share = (col == numCol || col == deleteCol) ? 0.10 : 0.80 / others;
+            col.prefWidthProperty().bind(table.widthProperty().subtract(2).multiply(share));
+        }
+    }
     private static final StringConverter<BigDecimal> MONEY_CONVERTER = new StringConverter<>() {
         @Override public String toString(BigDecimal v) {
             return v == null ? "0.00" : v.setScale(2, java.math.RoundingMode.HALF_UP).toString();
@@ -378,8 +411,8 @@ public class SlspManagerController {
 
     private void setupSaleTable() {
         sTable.setItems(saleRows);
-        setupEvenColumns(sTable, 8);
-
+        setupColumnWidths(sTable, sColNum, sColDelete);  
+        wireDeleteColumn(sColDelete, sTable, saleRows);
         wireRowNumberColumn(sColNum);
         wireDayColumn(sColDate, SaleRow::dayProperty);
 
@@ -396,6 +429,7 @@ public class SlspManagerController {
 
         setupCellNavigation(sTable,
                 List.<TableColumn<SaleRow, ?>>of(sColDate, sColInvoice, sColExempt, sColZeroRated, sColTaxable),
+                saleRows,
                 () -> addPurchaseOrSaleRow(true));
     }
 
@@ -403,8 +437,8 @@ public class SlspManagerController {
 
     private void setupPurchaseTable() {
         pTable.setItems(purchaseRows);
-        setupEvenColumns(pTable, 9);
-
+        setupColumnWidths(pTable, pColNum, pColDelete);   
+        wireDeleteColumn(pColDelete, pTable, purchaseRows);
         wireRowNumberColumn(pColNum);
         wireDayColumn(pColDate, PurchaseRow::dayProperty);
 
@@ -431,85 +465,127 @@ public class SlspManagerController {
 
         setupCellNavigation(pTable,
                 List.<TableColumn<PurchaseRow, ?>>of(pColDate, pColSupplier, pColInvoice, pColExempt, pColZeroRated, pColTaxable),
+                purchaseRows,
                 () -> addPurchaseOrSaleRow(false));
     }
 
     // ---------- Keyboard navigation: Enter = new bottom row, Tab / Shift+Tab = next / previous cell ----------
 
     private <T> void setupCellNavigation(TableView<T> table,
-                                         List<TableColumn<T, ?>> editableCols,
-                                         Runnable addRow) {
-        table.setEditable(true);
-
-        // Event filter runs before the cell's TextField/ComboBox sees the key
-        table.addEventFilter(KeyEvent.KEY_PRESSED, ev -> {
-            KeyCode code = ev.getCode();
-
-            // DOWN on the last row adds a row (only when not editing)
-            if (code == KeyCode.DOWN && table.getEditingCell() == null) {
-                if (table.getSelectionModel().getSelectedIndex() == table.getItems().size() - 1) {
-                    addRow.run();
-                    ev.consume();
-                }
-                return;
-            }
-
-            if (code != KeyCode.TAB && code != KeyCode.ENTER) return;
-            if (ev.isControlDown() || ev.isAltDown()) return;
-
-            // Where are we now?
-            TablePosition<T, ?> editing = table.getEditingCell();
-            int row = editing != null ? editing.getRow()
-                                      : table.getSelectionModel().getSelectedIndex();
-            int colIdx = editing != null ? editableCols.indexOf(editing.getTableColumn()) : -1;
-
-            // Commit whatever is being typed (fires the cell's onAction -> commitEdit)
-            if (ev.getTarget() instanceof TextField tf) {
-                tf.fireEvent(new ActionEvent(tf, tf));
-            }
-
-            int n = editableCols.size();
-            int targetRow = row;
-            int targetCol;
-
-            if (code == KeyCode.ENTER) {
-                // New row at the bottom, start editing its first column
-                addRow.run();
-                targetRow = table.getSelectionModel().getSelectedIndex();
-                targetCol = 0;
-            } else {
-                int step = ev.isShiftDown() ? -1 : 1;
-                targetCol = colIdx < 0 ? (step > 0 ? 0 : n - 1) : colIdx + step;
-
-                if (targetCol >= n) {            // past last column -> next row
-                    targetCol = 0;
-                    targetRow++;
-                } else if (targetCol < 0) {      // before first column -> previous row
-                    targetCol = n - 1;
-                    targetRow--;
-                }
-
-                if (targetRow < 0) { targetRow = 0; targetCol = 0; }
-
-                if (targetRow >= table.getItems().size()) {   // Tab off the end -> new row
-                    addRow.run();
-                    targetRow = table.getSelectionModel().getSelectedIndex();
-                    targetCol = 0;
-                }
-            }
-
-            final int r = Math.max(targetRow, 0);
-            final int c = targetCol;
-            ev.consume();
-
-            // Wait for the commit to finish before starting the next edit
-            Platform.runLater(() -> {
-                table.getSelectionModel().clearAndSelect(r);
-                table.scrollTo(r);
-                table.edit(r, editableCols.get(c));
-            });
-        });
-    }
+            List<TableColumn<T, ?>> editableCols,
+            ObservableList<T> rows,
+            Runnable addRow) {
+			table.setEditable(true);
+			
+			// Event filter runs before the cell's TextField/ComboBox sees the key
+			table.addEventFilter(KeyEvent.KEY_PRESSED, ev -> {
+				KeyCode code = ev.getCode();
+				
+				// DELETE removes the selected row (only when not typing in a cell)
+				if (code == KeyCode.DELETE && table.getEditingCell() == null) {
+					int sel = table.getSelectionModel().getSelectedIndex();
+					if (sel >= 0 && sel < rows.size()) {
+						rows.remove(sel);
+						if (!rows.isEmpty()) {
+							table.getSelectionModel().select(Math.min(sel, rows.size() - 1));
+						}
+					}
+					ev.consume();
+					return;
+				}
+			
+			// UP / DOWN while editing a text cell: move to the same column in the row above / below
+			if ((code == KeyCode.UP || code == KeyCode.DOWN)
+			&& table.getEditingCell() != null
+			&& ev.getTarget() instanceof TextField tf) {
+				TablePosition<T, ?> editing = table.getEditingCell();
+				int colIdx = editableCols.indexOf(editing.getTableColumn());
+				if (colIdx >= 0) {
+					tf.fireEvent(new ActionEvent(tf, tf));   // commit the current cell
+			
+					int targetRow = editing.getRow() + (code == KeyCode.DOWN ? 1 : -1);
+					if (targetRow < 0) targetRow = 0;
+					if (targetRow >= table.getItems().size()) {
+						addRow.run();                         // DOWN on the last row creates a new one
+						targetRow = table.getSelectionModel().getSelectedIndex();
+					}
+					final int r = Math.max(targetRow, 0);
+					final int c = colIdx;
+					ev.consume();
+					Platform.runLater(() -> {
+						table.getSelectionModel().clearAndSelect(r);
+						table.scrollTo(r);
+						table.edit(r, editableCols.get(c));
+					});
+					return;
+				}
+			}
+			
+			// DOWN on the last row adds a row (only when not editing)
+			if (code == KeyCode.DOWN && table.getEditingCell() == null) {
+				if (table.getSelectionModel().getSelectedIndex() == table.getItems().size() - 1) {
+					addRow.run();
+					ev.consume();
+				}
+				return;
+			}
+			
+			if (code != KeyCode.TAB && code != KeyCode.ENTER) return;
+			if (ev.isControlDown() || ev.isAltDown()) return;
+			
+			// Where are we now?
+			TablePosition<T, ?> editing = table.getEditingCell();
+			int row = editing != null ? editing.getRow()
+			         : table.getSelectionModel().getSelectedIndex();
+			int colIdx = editing != null ? editableCols.indexOf(editing.getTableColumn()) : -1;
+			
+			// Commit whatever is being typed (fires the cell's onAction -> commitEdit)
+			if (ev.getTarget() instanceof TextField tf) {
+				tf.fireEvent(new ActionEvent(tf, tf));
+			}
+			
+			int n = editableCols.size();
+			int targetRow = row;
+			int targetCol;
+			
+			if (code == KeyCode.ENTER) {
+			// New row at the bottom, start editing its first column
+				addRow.run();
+				targetRow = table.getSelectionModel().getSelectedIndex();
+				targetCol = 0;
+			} else {
+				int step = ev.isShiftDown() ? -1 : 1;
+				targetCol = colIdx < 0 ? (step > 0 ? 0 : n - 1) : colIdx + step;
+			
+				if (targetCol >= n) {            // past last column -> next row
+					targetCol = 0;
+					targetRow++;
+				} else if (targetCol < 0) {      // before first column -> previous row
+					targetCol = n - 1;
+					targetRow--;
+			}
+			
+			if (targetRow < 0) { targetRow = 0; targetCol = 0; }
+			
+			if (targetRow >= table.getItems().size()) {   // Tab off the end -> new row
+				addRow.run();
+				targetRow = table.getSelectionModel().getSelectedIndex();
+				targetCol = 0;
+				}
+			}
+			
+			final int r = Math.max(targetRow, 0);
+			final int c = targetCol;
+			ev.consume();
+			
+			// Wait for the commit to finish before starting the next edit
+				Platform.runLater(() -> {
+					table.getSelectionModel().clearAndSelect(r);
+					table.scrollTo(r);
+					table.edit(r, editableCols.get(c));
+				});
+			});
+		}
 
     // ---------- Row creation: guarded, no duplicate blank rows, always at the bottom ----------
 
@@ -724,7 +800,6 @@ public class SlspManagerController {
             showAlert("Cannot save", "Please select both a month and a year.");
             return false;
         }
-
         try {
             String period = buildPeriod();
             YearMonth ym = YearMonth.parse(period);
@@ -766,6 +841,7 @@ public class SlspManagerController {
             }
 
             delBtn.setVisible(true);
+            SlspController.lastSelectedPeriod = period;
             return true;
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -845,13 +921,28 @@ public class SlspManagerController {
 
     @FXML
     public void SaveSlsp(ActionEvent e) {
-        if (persistSlsp()) {
-            markClean();
-            editingSlsp = null;
-            Pages.change(e, Pages.SLSP);
-        }
+        if (!persistSlsp()) return;
+        sortRows();
+        markClean();
+        editingSlsp = null;
     }
+    private void sortRows() {
+        // Commit/cancel any in-progress cell edit so the sort doesn't fight it
+        sTable.edit(-1, null);
+        pTable.edit(-1, null);
 
+        historyPaused = true;   // reordering isn't an undoable user edit
+        try {
+            FXCollections.sort(saleRows, SALE_ORDER);
+            FXCollections.sort(purchaseRows, PURCHASE_ORDER);
+        } finally {
+            historyPaused = false;
+        }
+
+        lastSnapshot = captureSnapshot();   // new baseline, so the next undo doesn't jump back to the unsorted order
+        sTable.refresh();                   // refreshes the # column
+        pTable.refresh();
+    }
     @FXML
     public void DeleteSlsp(ActionEvent e) {
         if (!vm.isExisting()) return;
@@ -879,7 +970,7 @@ public class SlspManagerController {
     @FXML
     public void PrintSlsp(ActionEvent e) {
         if (!confirmLeave()) return;
-        // TODO: print
+        Pages.change(e,Pages.SLSP_PRINT);
     }
 
     @FXML
