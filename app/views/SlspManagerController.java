@@ -137,12 +137,13 @@ public class SlspManagerController {
     private void initialize() throws Exception {
         Pages.bindShortcut(root, "Ctrl+S", this::SaveSlsp);
         Pages.bindShortcut(root, "Ctrl+D", this::DeleteSlsp);
+        Pages.bindShortcut(root, "Ctrl+P", this::PrintSlsp);
         Pages.bindShortcut(root, "ESC", this::back);
         Pages.bindShortcut(sumInput, "Enter", this::sumInput);
         Pages.bindShortcut(sumInput, "Ctrl+Delete", this::clearSumInput);
         Pages.bindShortcut(root, "Ctrl+E", sumInput);
         Pages.bindShortcut(root, "Ctrl+B", this::Supplier);
-        Pages.bindShortcut(root, "Alt+N", this::onAddRowShortcut);
+        Pages.bindShortcut(root, "Ctrl+N", this::onAddRowShortcut);
         bindUndoShortcut();
 
         baseTitle = "SLSP : " + Taxpayer.getTaxpayer().getTradeName();
