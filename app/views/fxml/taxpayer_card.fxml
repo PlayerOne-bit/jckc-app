@@ -4,12 +4,43 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.paint.Color?>
+<?import javafx.scene.paint.LinearGradient?>
+<?import javafx.scene.paint.Stop?>
 <?import javafx.scene.text.Font?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 
 <fx:root maxWidth="1.7976931348623157E308" style="-fx-border-radius: 10; -fx-background-radius: 10; -fx-border-color: gray;" type="VBox" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <HBox alignment="CENTER_RIGHT" maxWidth="1.7976931348623157E308">
          <children>
+            <HBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+               <children>
+                  <FontIcon fx:id="notify" iconLiteral="fas-bell" iconSize="20">
+                     <fill>
+                        <LinearGradient endX="1.0" endY="1.0">
+                           <stops>
+                              <Stop>
+                                 <color>
+                                    <Color red="1.0" green="1.0" blue="0.125490203499794" />
+                                 </color>
+                              </Stop>
+                              <Stop offset="0.9798657718120806">
+                                 <color>
+                                    <Color red="0.8666666746139526" green="0.8666666746139526" blue="0.125490203499794" />
+                                 </color>
+                              </Stop>
+                              <Stop offset="1.0">
+                                 <color>
+                                    <Color red="0.8666666746139526" green="0.8666666746139526" blue="0.125490203499794" />
+                                 </color>
+                              </Stop>
+                           </stops>
+                        </LinearGradient>
+                     </fill>
+                  </FontIcon>
+               </children>
+            </HBox>
             <Label fx:id="tinNumber" maxWidth="1.7976931348623157E308" text="XXX-XXX-XXX-XXX" wrapText="true">
                <font>
                   <Font size="18.0" />

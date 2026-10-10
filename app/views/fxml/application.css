@@ -13,7 +13,6 @@
 #auth-button{
 	-fx-background-color: #24A0ED;
 	-fx-text-fill: white;
-	
 }
 #auth-button:disabled{
 	-fx-background-color:#0E3E42;
@@ -21,7 +20,15 @@
 #auth-button:hover{
 	-fx-background-color: #1A85CA;
 }
-
+#yellow-button{
+	-fx-background-color: #FFFF20;
+}
+#yellow-button:hover{
+	-fx-background-color: #DDDD20;
+}
+#yellow-button:disabled{
+	-fx-background-color: #101010;
+}
 #red-button{
 	-fx-background-color: #FF1010;
 	-fx-text-fill: white;

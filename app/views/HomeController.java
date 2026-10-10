@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.kordamp.ikonli.javafx.FontIcon;
+
 import app.models.Account;
 import app.models.PersonalInfo;
 import app.models.Taxpayer;
@@ -44,9 +46,11 @@ public class HomeController {
 	@FXML private Button editBtn;
 	@FXML private Button delBtn;
 	@FXML private Button slspBtn;
+	@FXML private Button confirmationBtn;
 	@FXML private TextField searchField;
 	@FXML private VBox taxpayerContainer;
 	@FXML private FlowPane noSelectedHint;
+	@FXML private FontIcon notify;
 	
 	@FXML private void initialize(){
 		try{
@@ -54,6 +58,7 @@ public class HomeController {
 			Pages.bindShortcut(root,"Ctrl+N",this::AddTaxpayer);
 			Pages.bindShortcut(root,"Ctrl+E",this::EditTaxpayer);
 			Pages.bindShortcut(root,"Ctrl+D",this::DeleteTaxpayer);
+			Pages.bindShortcut(root, "Ctrl+P", this::PrintTaxpayer);
 			Pages.bindShortcut(root,"ESC",this::Logout);
 			Pages.bindShortcut(root,"UP",this::SelectPrevious);
 			Pages.bindShortcut(root,"DOWN",this::SelectNext);
@@ -91,6 +96,8 @@ public class HomeController {
 		editBtn.setDisable(true);
 		delBtn.setDisable(true);
 		slspBtn.setDisable(true);
+		printBtn.setDisable(true);
+		confirmationBtn.setDisable(true);
 	}
 
 	private void reloadTaxpayers() {
@@ -210,6 +217,8 @@ public class HomeController {
 		editBtn.setDisable(!this.isTaxpayerSelected);
 		delBtn.setDisable(!this.isTaxpayerSelected);
 		slspBtn.setDisable(!this.isTaxpayerSelected);
+		printBtn.setDisable(!this.isTaxpayerSelected);
+		confirmationBtn.setDisable(!this.isTaxpayerSelected);
 		PersonalInfo person = taxpayer.getPersonalInfo();
 		Account acc = taxpayer.getAccount();
 		tinNum.setText(taxpayer.getTinNum());
@@ -256,12 +265,22 @@ public class HomeController {
 		Pages.change(e,Pages.SLSP);
 	}
 	@FXML
+	public void PrintTaxpayer(ActionEvent e) {
+		if(!this.isTaxpayerSelected) return;
+		Pages.change(e,Pages.TAXPAYER_PRINT);
+	}
+	@FXML
+	public void BirConfirmation(ActionEvent e) {
+		Pages.change(e, Pages.TAXPAYER_BIR_CONFIRMATION);
+	}
+	@FXML
 	public void Logout(ActionEvent e) {
 		Pages.change(e, Pages.AUTH);
+		Taxpayer.setTaxpayer(null);
 	}
 	@FXML
 	public void AddTaxpayer(ActionEvent e) {
-		Pages.change(e,Pages.ADD_TAXPAYER);
+		Pages.change(e,Pages.TAXPAYER_CREATE);
 	}
 	@FXML
 	public void EditTaxpayer(ActionEvent e) {

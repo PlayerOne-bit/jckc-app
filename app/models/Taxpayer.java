@@ -14,6 +14,7 @@ public class Taxpayer {
     private String psic;
     private String formTypes;
     private String vat;
+    private String appPassword;
 
     private PersonalInfo personalInfo;
     private Account account;
@@ -82,6 +83,13 @@ public class Taxpayer {
 
     public void setVat(String vat) {
         this.vat = vat;
+    }
+    public String getAppPassword() {
+        return appPassword;
+    }
+
+    public void setAppPassword(String appPassword) {
+        this.appPassword = appPassword;
     }
 
     public PersonalInfo getPersonalInfo() {

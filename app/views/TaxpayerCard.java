@@ -1,5 +1,7 @@
 package app.views;
 
+import org.kordamp.ikonli.javafx.FontIcon;
+
 import app.models.Taxpayer;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -10,6 +12,7 @@ public class TaxpayerCard extends VBox{
 	@FXML private Label taxpayerName;
 	@FXML private Label tradeName;
 	@FXML private Label businessAddress;
+	@FXML private FontIcon notify;
 	private static final String DEFAULT_CARD_STYLE = """
 			-fx-border-radius: 10;
 			-fx-background-radius: 10;
@@ -35,6 +38,7 @@ public class TaxpayerCard extends VBox{
 		taxpayerName.setText(taxpayer.getName().getFullName(2));
 		tradeName.setText(taxpayer.getTradeName());
 		businessAddress.setText(taxpayer.getBussAddress());
+		notify.setVisible(false);
 	}
 	public void setSelected(boolean selected) {
 		setStyle(selected ? SELECTED_CARD_STYLE : DEFAULT_CARD_STYLE);

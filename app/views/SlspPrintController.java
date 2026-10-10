@@ -36,7 +36,23 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.transform.Scale;
+import javafx.scene.transform.Translate;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Comparator;
+
+import javafx.stage.FileChooser;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.util.CellReference;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class SlspPrintController {
     private static final DecimalFormat MONEY = new DecimalFormat("#,##0.00");
 
@@ -61,7 +77,7 @@ public class SlspPrintController {
     private void initialize() throws Exception {
         Pages.bindShortcut(root, "ESC", this::back);
         Pages.bindShortcut(root, "Ctrl+P", this::printSlsp);
-
+        Pages.bindShortcut(root, "Ctrl+E", this::exportExcel);
         repo = new SlspRepository();
         for (Supplier s : new SupplierViewModel().loadSuppliers()) {
             supplierNames.put(s.getId(), s.getTradeName());
@@ -162,22 +178,54 @@ public class SlspPrintController {
     private void addSalesTable(SLSP slsp) {
         previewPage.getChildren().add(bold("Sales", 11));
         GridPane grid = newGrid("Date", "SI No.", "Exempt", "Zero-rated", "Taxable", "Output VAT", "Gross");
+
+        List<Sale> sales = new ArrayList<>(slsp.getSales());
+        sales.sort(Comparator.comparing((Sale s) -> LocalDate.parse(s.getSaleDate()))
+                .thenComparing(s -> String.valueOf(s.getSiNum())));
+
         BigDecimal ex = BigDecimal.ZERO, zr = BigDecimal.ZERO, tx = BigDecimal.ZERO,
                 vat = BigDecimal.ZERO, gr = BigDecimal.ZERO;
-        int row = 1;
-        for (Sale s : slsp.getSales()) {
-            addRow(grid, row++, s.getSaleDate(), s.getSiNum(), s.getExemptAmount(), s.getZeroRatedAmount(),
-                    s.getTaxableAmount(), s.getOutputVat(), s.getGrossAmount());
+        for (Sale s : sales) {
             ex = ex.add(s.getExemptAmount());
             zr = zr.add(s.getZeroRatedAmount());
             tx = tx.add(s.getTaxableAmount());
             vat = vat.add(s.getOutputVat());
             gr = gr.add(s.getGrossAmount());
         }
-        addTotals(grid, row, ex, zr, tx, vat, gr);
+
+        String date = "", invoice = "";
+        if (!sales.isEmpty()) {
+            Sale first = sales.get(0), last = sales.get(sales.size() - 1);
+            date = dateRange(first.getSaleDate(), last.getSaleDate());
+            invoice = invoiceRange(first.getSiNum(), last.getSiNum());
+        }
+
+        addRow(grid, 1, date, invoice, ex, zr, tx, vat, gr);   // one summary row per month
         previewPage.getChildren().add(grid);
     }
+    /** "January 01-31, 2026" (or "January 05, 2026" if both dates are the same day). */
+    private String dateRange(String from, String to) {
+        LocalDate a = LocalDate.parse(from), b = LocalDate.parse(to);
+        String month = a.getMonth().getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH);
+        return a.equals(b)
+                ? "%s %02d, %d".formatted(month, a.getDayOfMonth(), a.getYear())
+                : "%s %02d-%02d, %d".formatted(month, a.getDayOfMonth(), b.getDayOfMonth(), a.getYear());
+    }
 
+    /** First row's start number - last row's end number, e.g. "10001 - 19999". */
+    private String invoiceRange(String firstRow, String lastRow) {
+        String start = splitInvoice(firstRow, true);
+        String end = splitInvoice(lastRow, false);
+        if (start.isEmpty()) return end;
+        if (end.isEmpty() || start.equals(end)) return start;
+        return start + " - " + end;
+    }
+
+    private String splitInvoice(String value, boolean takeFirst) {
+        if (value == null || value.isBlank()) return "";
+        String[] parts = value.trim().split("\\s*-\\s*");
+        return (takeFirst ? parts[0] : parts[parts.length - 1]).trim();
+    }
     private void addPurchasesTable(SLSP slsp) {
         previewPage.getChildren().add(bold("Purchases", 11));
         GridPane grid = newGrid("Date", "Supplier / Invoice", "Exempt", "Zero-rated", "Taxable", "Input VAT", "Gross");
@@ -251,19 +299,176 @@ public class SlspPrintController {
         if (job == null) return;
         if (!job.showPrintDialog(root.getScene().getWindow())) return;
 
-        // Landscape, scale the preview page down to the printable width
         PageLayout layout = job.getPrinter().createPageLayout(
-                Paper.A4, PageOrientation.LANDSCAPE, Printer.MarginType.DEFAULT);
-        double scale = Math.min(1.0, layout.getPrintableWidth() / previewPage.getBoundsInParent().getWidth());
-        Scale s = new Scale(scale, scale);
-        previewPage.getTransforms().add(s);
+                Paper.A4, PageOrientation.PORTRAIT, Printer.MarginType.DEFAULT);
+
+        double w = previewPage.getLayoutBounds().getWidth();
+        double h = previewPage.getLayoutBounds().getHeight();
+        double scale = Math.min(1.0, Math.min(
+                layout.getPrintableWidth() / w,
+                layout.getPrintableHeight() / h));
+
+        double offsetX = (layout.getPrintableWidth() - w * scale) / 2.0;
+        Translate move = new Translate(offsetX - previewPage.getLayoutX(), -previewPage.getLayoutY());
+        Scale shrink = new Scale(scale, scale, 0, 0);
+
+        String oldStyle = previewPage.getStyle();
+        previewPage.setStyle("-fx-background-color: white;");   // no drop shadow
+        previewPage.getTransforms().addAll(move, shrink);
         try {
             if (job.printPage(layout, previewPage)) job.endJob();
         } finally {
-            previewPage.getTransforms().remove(s);
+            previewPage.getTransforms().removeAll(move, shrink);
+            previewPage.setStyle(oldStyle);
+        }
+    }
+    private record XlStyles(CellStyle head, CellStyle date, CellStyle money,
+            CellStyle bold, CellStyle moneyBold) {}
+    @FXML
+    public void exportExcel(ActionEvent e) {
+        if (loaded.isEmpty()) {
+            Alert a = new Alert(Alert.AlertType.WARNING, "There is nothing to export for this range.");
+            a.setHeaderText(null);
+            a.showAndWait();
+            return;
+        }
+        if (!includeSales.isSelected() && !includePurchases.isSelected()) {
+            Alert a = new Alert(Alert.AlertType.WARNING, "Select Sales and/or Purchases to export.");
+            a.setHeaderText(null);
+            a.showAndWait();
+            return;
+        }
+
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Export to Excel");
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Workbook (*.xlsx)", "*.xlsx"));
+        fc.setInitialFileName("SLSP_" + rangeLabel().replaceAll("[^A-Za-z0-9]+", "_") + ".xlsx");
+        File file = fc.showSaveDialog(root.getScene().getWindow());
+        if (file == null) return;
+
+        try (XSSFWorkbook wb = new XSSFWorkbook(); OutputStream out = new FileOutputStream(file)) {
+            XlStyles st = buildStyles(wb);
+
+            if (includeSales.isSelected()) {
+                List<Object[]> rows = new ArrayList<>();
+                for (SLSP slsp : loaded) {
+                    for (Sale s : slsp.getSales()) {
+                        rows.add(new Object[] { slsp.getTitle(), LocalDate.parse(s.getSaleDate()), s.getSiNum(),
+                                s.getExemptAmount(), s.getZeroRatedAmount(), s.getTaxableAmount(),
+                                s.getOutputVat(), s.getGrossAmount() });
+                    }
+                }
+                rows.sort(Comparator.comparing((Object[] a) -> (LocalDate) a[1])
+                        .thenComparing(a -> String.valueOf(a[2])));
+                writeSheet(wb, "Sales",
+                        new String[] { "Period", "Date", "Sales Invoice No.", "Exempt", "Zero-rated",
+                                "Taxable", "Output VAT", "Gross" },
+                        rows, 3, st);
+            }
+
+            if (includePurchases.isSelected()) {
+                List<Object[]> rows = new ArrayList<>();
+                for (SLSP slsp : loaded) {
+                    for (Purchase p : slsp.getPurchases()) {
+                        rows.add(new Object[] { slsp.getTitle(), LocalDate.parse(p.getPurchaseDate()),
+                                supplierNames.getOrDefault(p.getSupplierId(), "?"), p.getInvoiceNum(),
+                                p.getExemptAmount(), p.getZeroRatedAmount(), p.getTaxableAmount(),
+                                p.getInputVat(), p.getGrossAmount() });
+                    }
+                }
+                rows.sort(Comparator.comparing((Object[] a) -> (LocalDate) a[1])
+                        .thenComparing(a -> String.valueOf(a[3])));
+                writeSheet(wb, "Purchases",
+                        new String[] { "Period", "Date", "Supplier", "Invoice No.", "Exempt", "Zero-rated",
+                                "Taxable", "Input VAT", "Gross" },
+                        rows, 4, st);
+            }
+
+            wb.write(out);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            Alert a = new Alert(Alert.AlertType.ERROR,
+                    "Could not export the file. Make sure it isn't open in Excel.\n" + ex.getMessage());
+            a.setHeaderText(null);
+            a.showAndWait();
         }
     }
 
+    private XlStyles buildStyles(XSSFWorkbook wb) {
+        var dataFormat = wb.createDataFormat();
+
+        org.apache.poi.ss.usermodel.Font boldFont = wb.createFont();
+        boldFont.setBold(true);
+
+        CellStyle head = wb.createCellStyle();
+        head.setFont(boldFont);
+        head.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        head.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        CellStyle date = wb.createCellStyle();
+        date.setDataFormat(dataFormat.getFormat("mm/dd/yyyy"));
+
+        CellStyle money = wb.createCellStyle();
+        money.setDataFormat(dataFormat.getFormat("#,##0.00"));
+
+        CellStyle bold = wb.createCellStyle();
+        bold.setFont(boldFont);
+
+        CellStyle moneyBold = wb.createCellStyle();
+        moneyBold.setFont(boldFont);
+        moneyBold.setDataFormat(dataFormat.getFormat("#,##0.00"));
+
+        return new XlStyles(head, date, money, bold, moneyBold);
+    }
+
+    /** firstAmountCol = index of the first numeric column; every column from there on gets a SUM. */
+    private void writeSheet(XSSFWorkbook wb, String name, String[] headers, List<Object[]> rows,
+                            int firstAmountCol, XlStyles st) {
+        Sheet sheet = wb.createSheet(name);
+
+        Row headRow = sheet.createRow(0);
+        for (int i = 0; i < headers.length; i++) {
+            Cell c = headRow.createCell(i);
+            c.setCellValue(headers[i]);
+            c.setCellStyle(st.head());
+        }
+
+        int r = 1;
+        for (Object[] data : rows) {
+            Row row = sheet.createRow(r++);
+            for (int i = 0; i < data.length; i++) {
+                Cell c = row.createCell(i);
+                Object v = data[i];
+                if (v instanceof BigDecimal b) {
+                    c.setCellValue(b.doubleValue());
+                    c.setCellStyle(st.money());
+                } else if (v instanceof LocalDate d) {
+                    c.setCellValue(d);
+                    c.setCellStyle(st.date());
+                } else {
+                    c.setCellValue(v == null ? "" : v.toString());
+                }
+            }
+        }
+
+        Row total = sheet.createRow(r);
+        Cell label = total.createCell(0);
+        label.setCellValue("TOTAL");
+        label.setCellStyle(st.bold());
+        for (int i = firstAmountCol; i < headers.length; i++) {
+            Cell c = total.createCell(i);
+            if (rows.isEmpty()) {
+                c.setCellValue(0);
+            } else {
+                String col = CellReference.convertNumToColString(i);
+                c.setCellFormula("SUM(" + col + "2:" + col + r + ")");
+            }
+            c.setCellStyle(st.moneyBold());
+        }
+
+        sheet.createFreezePane(0, 1);   // keep the header visible while scrolling
+        for (int i = 0; i < headers.length; i++) sheet.autoSizeColumn(i);
+    }
     @FXML
     public void back(ActionEvent e) {
         Pages.change(e, Pages.SLSP_MANAGER);

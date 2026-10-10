@@ -38,59 +38,49 @@
    <center>
       <BorderPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" BorderPane.alignment="CENTER">
          <top>
-            <HBox alignment="CENTER_LEFT" prefHeight="38.0" prefWidth="967.0" spacing="20.0" BorderPane.alignment="CENTER">
-               <children>
-                  <Button mnemonicParsing="false" onAction="#back" prefHeight="30.0" prefWidth="43.0" styleClass="copy-edit-text" stylesheets="@application.css">
-                     <cursor>
-                        <Cursor fx:constant="HAND" />
-                     </cursor>
-                     <font>
-                        <Font size="18.0" />
-                     </font>
-                     <graphic>
-                        <FontIcon iconLiteral="fas-arrow-circle-left" iconSize="30" selectionEnd="0" wrappingWidth="17.5" />
-                     </graphic>
-                  </Button>
-                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Summary List of Sales and Purchases">
-                     <font>
-                        <Font name="System Bold" size="24.0" />
-                     </font>
-                  </Text>
-                  <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" HBox.hgrow="ALWAYS">
-                     <children>
-                        <TextField fx:id="searchField" promptText="Search period">
-                           <font>
-                              <Font size="18.0" />
-                           </font>
-                        </TextField>
-                     </children>
-                  </HBox>
-               </children>
+            <VBox BorderPane.alignment="CENTER">
                <BorderPane.margin>
                   <Insets bottom="20.0" />
                </BorderPane.margin>
-            </HBox>
-         </top>
-         <padding>
-            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-         </padding>
-         <bottom>
-            <HBox alignment="TOP_RIGHT" prefHeight="100.0" prefWidth="200.0" spacing="10.0" BorderPane.alignment="CENTER">
                <children>
-                  <FlowPane HBox.hgrow="ALWAYS">
+                  <HBox alignment="CENTER_LEFT" prefHeight="38.0" prefWidth="967.0" spacing="20.0">
                      <children>
-                        <VBox maxWidth="1.7976931348623157E308" prefHeight="89.0" prefWidth="415.0" style="-fx-border-radius: 10; -fx-background-radius: 10; -fx-border-color: gray;">
+                        <Button mnemonicParsing="false" onAction="#back" prefHeight="30.0" prefWidth="43.0" styleClass="copy-edit-text" stylesheets="@application.css">
+                           <cursor>
+                              <Cursor fx:constant="HAND" />
+                           </cursor>
+                           <font>
+                              <Font size="18.0" />
+                           </font>
+                           <graphic>
+                              <FontIcon iconLiteral="fas-arrow-circle-left" iconSize="30" selectionEnd="0" wrappingWidth="17.5" />
+                           </graphic>
+                        </Button>
+                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Summary List of Sales and Purchases">
+                           <font>
+                              <Font name="System Bold" size="24.0" />
+                           </font>
+                        </Text>
+                     </children>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" spacing="10.0">
+                     <children>
+                        <VBox styleClass="home-card" stylesheets="@application.css">
                            <children>
-                              <Label fx:id="taxpayerName" maxWidth="1.7976931348623157E308" text="Claudio, Julie Christie y Kallos" wrapText="true">
-                                 <font>
-                                    <Font name="System Bold" size="18.0" />
-                                 </font>
-                              </Label>
-                              <Label fx:id="tinNumber" maxWidth="1.7976931348623157E308" text="XXX-XXX-XXX-XXX" wrapText="true">
-                                 <font>
-                                    <Font size="18.0" />
-                                 </font>
-                              </Label>
+                              <HBox spacing="25.0">
+                                 <children>
+                                    <Label fx:id="taxpayerName" maxWidth="1.7976931348623157E308" text="Claudio, Julie Christie y Kallos" wrapText="true">
+                                       <font>
+                                          <Font name="System Bold" size="18.0" />
+                                       </font>
+                                    </Label>
+                                    <Label fx:id="tinNumber" maxWidth="1.7976931348623157E308" text="XXX-XXX-XXX-XXX" wrapText="true">
+                                       <font>
+                                          <Font size="18.0" />
+                                       </font>
+                                    </Label>
+                                 </children>
+                              </HBox>
                               <Label fx:id="tradeName" maxWidth="1.7976931348623157E308" text="JCKC and Bookkeeping and Services" wrapText="true">
                                  <font>
                                     <Font size="18.0" />
@@ -101,25 +91,37 @@
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                            </padding>
                         </VBox>
+                        <HBox alignment="CENTER_RIGHT" spacing="10.0" HBox.hgrow="ALWAYS">
+                           <children>
+                              <TextField fx:id="searchField" promptText="Search period">
+                                 <font>
+                                    <Font size="18.0" />
+                                 </font>
+                              </TextField>
+                              <Button id="green-button" mnemonicParsing="false" onAction="#AddSlsp" stylesheets="@application.css" text="New">
+                                 <cursor>
+                                    <Cursor fx:constant="HAND" />
+                                 </cursor>
+                                 <font>
+                                    <Font size="18.0" />
+                                 </font>
+                                 <graphic>
+                                    <FontIcon iconColor="WHITE" iconLiteral="fas-plus" />
+                                 </graphic>
+                              </Button>
+                           </children>
+                        </HBox>
                      </children>
-                  </FlowPane>
-                  <Button id="green-button" mnemonicParsing="false" onAction="#AddSlsp" stylesheets="@application.css" text="New">
-                     <cursor>
-                        <Cursor fx:constant="HAND" />
-                     </cursor>
-                     <font>
-                        <Font size="18.0" />
-                     </font>
-                     <graphic>
-                        <FontIcon iconColor="WHITE" iconLiteral="fas-plus" />
-                     </graphic>
-                  </Button>
+                     <padding>
+                        <Insets top="10.0" />
+                     </padding>
+                  </HBox>
                </children>
-               <BorderPane.margin>
-                  <Insets top="10.0" />
-               </BorderPane.margin>
-            </HBox>
-         </bottom>
+            </VBox>
+         </top>
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
          <center>
             <VBox BorderPane.alignment="CENTER">
                <children>

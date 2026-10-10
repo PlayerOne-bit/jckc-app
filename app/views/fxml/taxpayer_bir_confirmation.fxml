@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.Cursor?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.web.WebView?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<BorderPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="608.0" prefWidth="1127.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.views.TaxpayerBirConfirmation">
+   <top>
+      <BorderPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: pink;" BorderPane.alignment="CENTER">
+         <left>
+            <ImageView fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER">
+               <image>
+                  <Image url="@images/header.png" />
+               </image>
+            </ImageView>
+         </left>
+         <padding>
+            <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
+         </padding>
+      </BorderPane>
+   </top>
+
+   <center>
+      <BorderPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" BorderPane.alignment="CENTER">
+         <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+         </padding>
+
+         <!-- Title row -->
+         <top>
+            <HBox alignment="CENTER_LEFT" prefHeight="38.0" spacing="20.0" BorderPane.alignment="CENTER">
+               <children>
+                  <Button mnemonicParsing="false" onAction="#back" prefHeight="30.0" prefWidth="43.0" styleClass="copy-edit-text" stylesheets="@application.css">
+                     <cursor>
+                        <Cursor fx:constant="HAND" />
+                     </cursor>
+                     <graphic>
+                        <FontIcon iconLiteral="fas-arrow-circle-left" iconSize="30" />
+                     </graphic>
+                  </Button>
+                  <Text fx:id="headerText" strokeType="OUTSIDE" strokeWidth="0.0" text="BIR TAX CONFIRMATION: Taxpayer Name">
+                     <font>
+                        <Font name="System Bold" size="24.0" />
+                     </font>
+                  </Text>
+               </children>
+               <BorderPane.margin>
+                  <Insets bottom="20.0" />
+               </BorderPane.margin>
+            </HBox>
+         </top>
+
+         <!-- LEFT: list of cards -->
+         <left>
+            <VBox maxWidth="380.0" minWidth="380.0" prefWidth="380.0" spacing="8.0" BorderPane.alignment="CENTER">
+               <children>
+                  <HBox alignment="CENTER_LEFT" spacing="10.0">
+                     <children>
+                        <Button id="auth-button" fx:id="refreshBtn" mnemonicParsing="false" onAction="#refresh" stylesheets="@application.css" text="Refresh">
+                           <graphic>
+                              <FontIcon fill="WHITE" iconLiteral="fas-sync-alt" iconSize="16" />
+                           </graphic>
+                        </Button>
+                        <TextField fx:id="statusText" editable="false" styleClass="copy-edit-text" stylesheets="@application.css" HBox.hgrow="ALWAYS">
+                           <font>
+                              <Font name="System Bold" size="12.0" />
+                           </font>
+                        </TextField>
+                     </children>
+                  </HBox>
+
+                  <!-- shown only while mails are loading -->
+                  <ProgressBar fx:id="loadingBar" managed="false" maxWidth="1.7976931348623157E308" progress="-1.0" visible="false" />
+
+                  <ScrollPane fitToWidth="true" hbarPolicy="NEVER" style="-fx-border-color: gray;" VBox.vgrow="ALWAYS">
+                     <content>
+                        <VBox fx:id="cardList" spacing="8.0">
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                        </VBox>
+                     </content>
+                  </ScrollPane>
+               </children>
+            </VBox>
+         </left>
+
+         <!-- CENTER: Gmail-style message preview -->
+         <center>
+            <VBox minHeight="0.0" minWidth="0.0" spacing="8.0" style="-fx-background-color: white; -fx-border-color: gray; -fx-border-radius: 8; -fx-background-radius: 8;" BorderPane.alignment="CENTER">
+               <BorderPane.margin>
+                  <Insets left="20.0" />
+               </BorderPane.margin>
+               <padding>
+                  <Insets bottom="15.0" left="20.0" right="20.0" top="15.0" />
+               </padding>
+               <children>
+                  <Text fx:id="subjectText" strokeType="OUTSIDE" strokeWidth="0.0" text="Select a message to preview" wrappingWidth="620.0">
+                     <font>
+                        <Font name="System Bold" size="20.0" />
+                     </font>
+                  </Text>
+                  <HBox alignment="CENTER_LEFT" spacing="10.0">
+                     <children>
+                        <FontIcon iconLiteral="fas-user-circle" iconSize="32" />
+                        <VBox>
+                           <children>
+                              <Text fx:id="fromText" strokeType="OUTSIDE" strokeWidth="0.0" text="">
+                                 <font>
+                                    <Font name="System Bold" size="13.0" />
+                                 </font>
+                              </Text>
+                              <Text fx:id="dateText" strokeType="OUTSIDE" strokeWidth="0.0" text="" />
+                           </children>
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button id="auth-button" fx:id="printBtn" disable="true" mnemonicParsing="false" onAction="#PrintConfirmation" stylesheets="@application.css" text="Print">
+                           <cursor>
+                              <Cursor fx:constant="HAND" />
+                           </cursor>
+                           <graphic>
+                              <FontIcon fill="WHITE" iconLiteral="fas-print" iconSize="16" />
+                           </graphic>
+                        </Button>
+                     </children>
+                  </HBox>
+                  <Text fx:id="attachmentText" strokeType="OUTSIDE" strokeWidth="0.0" text="" />
+                  <Separator />
+                  <WebView fx:id="previewView" VBox.vgrow="ALWAYS" />
+               </children>
+            </VBox>
+         </center>
+      </BorderPane>
+   </center>
+</BorderPane>

@@ -21,7 +21,6 @@ public class TaxpayerRepository {
         sql = DatabaseConfig.getConnection();
     }
 
-
     public int addTaxpayer(Taxpayer taxpayer) throws SQLException {
         try {
             sql.setAutoCommit(false);
@@ -580,6 +579,9 @@ public class TaxpayerRepository {
         taxpayer.setVat(
                 rs.getString(DATABASE.COLUMN_T_VAT)
         );
+        taxpayer.setAppPassword(
+                rs.getString(DATABASE.COLUMN_T_APP_PASSWORD)
+        );
 
         return taxpayer;
     }
@@ -613,7 +615,13 @@ public class TaxpayerRepository {
             ps.executeUpdate();
         }
     }
-
+    public void updateAppPassword(int taxId, String appPassword) throws SQLException {
+        try (PreparedStatement ps = sql.prepareStatement(DATABASE.UPDATE_APP_PASSWORD)) {
+            ps.setString(1, appPassword);
+            ps.setInt(2, taxId);
+            ps.executeUpdate();
+        }
+    }
     private static class DATABASE {
 
         static final String COLUMN_T_ID = "id";
@@ -624,7 +632,8 @@ public class TaxpayerRepository {
         static final String COLUMN_T_PSIC = "psic";
         static final String COLUMN_T_FORM_TYPES = "formTypes";
         static final String COLUMN_T_VAT = "vat";
-
+        static final String COLUMN_T_APP_PASSWORD = "appPassword";
+        
         static final String COLUMN_P_ID = "id";
         static final String COLUMN_P_TAX_ID = "taxId";
         static final String COLUMN_P_BIRTHDATE = "birthdate";
@@ -691,7 +700,8 @@ public class TaxpayerRepository {
                 "orusName, orusPass, afsName, afsPass, fbName, " +
                 "recoveryEmail) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
+        static final String UPDATE_APP_PASSWORD =
+                "UPDATE Taxpayer SET appPassword = ? WHERE id = ?";
         static final String INSERT_TABLE_NAME =
                 "INSERT INTO Name " +
                 "(taxId, lastName, firstName, middleName, suffix) " +

@@ -13,7 +13,6 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Priority?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
@@ -41,8 +40,9 @@
       </BorderPane>
    </top>
 
+   <!-- minHeight/minWidth = 0 lets this pane always shrink to the root's size -->
    <center>
-      <BorderPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" BorderPane.alignment="CENTER">
+      <BorderPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" BorderPane.alignment="CENTER">
          <padding>
             <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
          </padding>
@@ -71,64 +71,75 @@
             </HBox>
          </top>
 
-         <!-- LEFT: print options -->
+         <!-- LEFT: print options (scrolls instead of stretching the layout) -->
          <left>
-            <VBox prefWidth="300.0" spacing="12.0" style="-fx-border-color: gray; -fx-border-radius: 10; -fx-background-radius: 10;" BorderPane.alignment="CENTER">
-               <padding>
-                  <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
-               </padding>
-               <children>
-                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Year">
-                     <font>
-                        <Font name="System Bold" size="16.0" />
-                     </font>
-                  </Text>
-                  <ComboBox fx:id="years" maxWidth="1.7976931348623157E308" promptText="Year*" />
+            <ScrollPane fitToWidth="true" hbarPolicy="NEVER" maxWidth="330.0" minWidth="330.0" prefWidth="330.0" style="-fx-background-color: transparent; -fx-background: transparent;" BorderPane.alignment="CENTER">
+               <content>
+                  <VBox spacing="8.0" style="-fx-border-color: gray; -fx-border-radius: 10; -fx-background-radius: 10;">
+                     <padding>
+                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                     </padding>
+                     <children>
+                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Year">
+                           <font>
+                              <Font name="System Bold" size="16.0" />
+                           </font>
+                        </Text>
+                        <ComboBox fx:id="years" maxWidth="1.7976931348623157E308" promptText="Year*" />
 
-                  <Separator />
+                        <Separator />
 
-                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Print range">
-                     <font>
-                        <Font name="System Bold" size="16.0" />
-                     </font>
-                  </Text>
-                  <RadioButton fx:id="wholeYearRadio" mnemonicParsing="false" selected="true" text="Whole year (Jan – Dec)" toggleGroup="$rangeGroup" />
-                  <RadioButton fx:id="quarterRadio" mnemonicParsing="false" text="By quarter" toggleGroup="$rangeGroup" />
-                  <ComboBox fx:id="quarters" disable="true" maxWidth="1.7976931348623157E308" promptText="Select quarter*" />
+                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Print range">
+                           <font>
+                              <Font name="System Bold" size="16.0" />
+                           </font>
+                        </Text>
+                        <RadioButton fx:id="wholeYearRadio" mnemonicParsing="false" selected="true" text="Whole year (Jan – Dec)" toggleGroup="$rangeGroup" style="-fx-text-fill: black;"/>
+                        <RadioButton fx:id="quarterRadio" mnemonicParsing="false" text="By quarter" toggleGroup="$rangeGroup" style="-fx-text-fill: black;"/>
+                        <ComboBox fx:id="quarters" disable="true" maxWidth="1.7976931348623157E308" promptText="Select quarter*" />
 
-                  <Separator />
+                        <Separator />
 
-                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Include">
-                     <font>
-                        <Font name="System Bold" size="16.0" />
-                     </font>
-                  </Text>
-                  <CheckBox fx:id="includeSales" mnemonicParsing="false" selected="true" text="Sales" />
-                  <CheckBox fx:id="includePurchases" mnemonicParsing="false" selected="true" text="Purchases" />
+                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Include">
+                           <font>
+                              <Font name="System Bold" size="16.0" />
+                           </font>
+                        </Text>
+                        <CheckBox fx:id="includeSales" mnemonicParsing="false" selected="true" text="Sales" style="-fx-text-fill: black;" />
+                        <CheckBox fx:id="includePurchases" mnemonicParsing="false" selected="true" text="Purchases" style="-fx-text-fill: black;"/>
 
-                  <Separator />
+                        <Separator />
 
-                  <Text fx:id="coverageText" strokeType="OUTSIDE" strokeWidth="0.0" text="0 of 12 months have an SLSP" wrappingWidth="260.0" />
-                  <Text fx:id="missingText" fill="RED" strokeType="OUTSIDE" strokeWidth="0.0" wrappingWidth="260.0" />
+                        <Text fx:id="coverageText" strokeType="OUTSIDE" strokeWidth="0.0" text="0 of 12 months have an SLSP" wrappingWidth="260.0" />
+                        <Text fx:id="missingText" fill="RED" strokeType="OUTSIDE" strokeWidth="0.0" wrappingWidth="260.0" />
 
-                  <StackPane VBox.vgrow="ALWAYS" />
+                        <Button id="green-button" fx:id="exportBtn" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#exportExcel" stylesheets="@application.css" text="Export to Excel">
+                           <graphic>
+                              <FontIcon fill="WHITE" iconLiteral="fas-file-excel" iconSize="20" />
+                           </graphic>
+                           <font>
+                              <Font size="16.0" />
+                           </font>
+                        </Button>
 
-                  <Button id="auth-button" fx:id="printBtn" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#printSlsp" stylesheets="@application.css" text="Print">
-                     <graphic>
-                        <FontIcon fill="WHITE" iconLiteral="fas-print" iconSize="20" />
-                     </graphic>
-                     <font>
-                        <Font size="16.0" />
-                     </font>
-                  </Button>
-                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Ctrl+P to print, Esc to go back" />
-               </children>
-            </VBox>
+                        <Button id="auth-button" fx:id="printBtn" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#printSlsp" stylesheets="@application.css" text="Print">
+                           <graphic>
+                              <FontIcon fill="WHITE" iconLiteral="fas-print" iconSize="20" />
+                           </graphic>
+                           <font>
+                              <Font size="16.0" />
+                           </font>
+                        </Button>
+                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Ctrl+P print, Ctrl+E export, Esc back" wrappingWidth="260.0" />
+                     </children>
+                  </VBox>
+               </content>
+            </ScrollPane>
          </left>
 
-         <!-- RIGHT / CENTER: live preview -->
+         <!-- CENTER: live preview -->
          <center>
-            <VBox spacing="8.0" BorderPane.alignment="CENTER">
+            <VBox minHeight="0.0" minWidth="0.0" spacing="8.0" BorderPane.alignment="CENTER">
                <BorderPane.margin>
                   <Insets left="20.0" />
                </BorderPane.margin>

@@ -81,7 +81,7 @@
                         <Insets top="10.0" />
                      </padding>
                      <children>
-                        <Button fx:id="printBtn" mnemonicParsing="false">
+                        <Button fx:id="printBtn" mnemonicParsing="false" onAction="#PrintTaxpayer">
                            <font>
                               <Font size="18.0" />
                            </font>
@@ -139,13 +139,16 @@
          <top>
             <HBox alignment="CENTER_LEFT" prefHeight="38.0" prefWidth="967.0" spacing="10.0" BorderPane.alignment="CENTER">
                <children>
-                  <Button mnemonicParsing="false" text="FORM">
+                  <Button id="yellow-button" fx:id="confirmationBtn" mnemonicParsing="false" onAction="#BirConfirmation" stylesheets="@application.css" text="Check BIR Confirmation">
                      <cursor>
                         <Cursor fx:constant="HAND" />
                      </cursor>
                      <font>
                         <Font size="18.0" />
                      </font>
+                     <graphic>
+                        <FontIcon fx:id="notify" iconLiteral="fas-bell" />
+                     </graphic>
                   </Button>
                   <Button fx:id="slspBtn" layoutX="421.0" layoutY="17.0" mnemonicParsing="false" onAction="#SLSP" text="SLSP">
                      <cursor>

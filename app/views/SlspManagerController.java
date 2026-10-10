@@ -34,6 +34,7 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
@@ -41,6 +42,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 import javafx.util.StringConverter;
 
 public class SlspManagerController {
@@ -777,7 +779,8 @@ public class SlspManagerController {
         alert.setTitle("Unsaved changes");
         alert.setHeaderText("This SLSP has unsaved changes.");
         alert.setContentText("Do you want to save before continuing?");
-
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(new Image(getClass().getResourceAsStream("/app/views/fxml/images/logo.png")));
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isEmpty() || result.get() == cancel) return false;
 
@@ -835,6 +838,8 @@ public class SlspManagerController {
                 purchases.add(purchase);
             }
 
+            // Returns false when another SLSP already owns this period,
+            // both when creating a new SLSP and when editing one and moving it to a taken month/year
             boolean saved = vm.save(period, sales, purchases);
             if (!saved) {
                 showAlert("Cannot save", "An SLSP for this month and year already exists.");

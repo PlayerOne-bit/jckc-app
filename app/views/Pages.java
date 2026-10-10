@@ -19,8 +19,10 @@ public class Pages {
     public final static String
             AUTH = "fxml/auth.fxml",
             HOME = "fxml/taxpayer.fxml",
-            ADD_TAXPAYER="fxml/add_taxpayer.fxml",
+            TAXPAYER_PRINT = "fxml/taxpayer_print.fxml",
+            TAXPAYER_CREATE="fxml/taxpayer_create.fxml",
             TAXPAYER_CARD="fxml/taxpayer_card.fxml",
+            TAXPAYER_BIR_CONFIRMATION = "fxml/taxpayer_bir_confirmation.fxml",
             EDIT_TAXPAYER = "fxml/edit_taxpayer.fxml",
             DELETE_TAXPAYER = "fxml/delete_taxpayer.fxml",
             SLSP="fxml/slsp.fxml",
@@ -29,6 +31,7 @@ public class Pages {
             SLSP_PRINT = "fxml/slsp_print.fxml",
             SUPPLIER = "fxml/supplier.fxml",
             SUPPLIER_CARD = "fxml/supplier_card.fxml";
+
             
     
     private static Stage stage;

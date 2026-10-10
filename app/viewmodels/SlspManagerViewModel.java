@@ -68,6 +68,10 @@ public class SlspManagerViewModel {
             repo.addSLSP(created);
             slsp = created;
         } else if (!period.equals(slsp.getPeriod())) {
+            // Editing and moved to a different month/year: make sure it's not taken
+            if (repo.slspExists(taxId, period)) {
+                return false;   // checked before mutating slsp, so the loaded state stays intact
+            }
             slsp.setPeriod(period);
             repo.updateSLSP(slsp);
         }

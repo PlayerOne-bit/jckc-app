@@ -169,10 +169,10 @@
                               </GridPane>
 			            <HBox alignment="CENTER_LEFT" spacing="8.0" style="-fx-padding: 8;">
 			              <children>
-			                <Button id="auth-button" fx:id="sAddBtn" mnemonicParsing="false" stylesheets="@application.css" text="New row">
+			                <Button id="auth-button" fx:id="sAddBtn" mnemonicParsing="false" stylesheets="@application.css" text="New Sale Row">
 			                  <graphic><FontIcon fill="WHITE" iconLiteral="fas-plus" /></graphic>
 			                </Button>
-			                <Text text="Enter" />
+			                <Text text="Ctrl + N" />
 			              </children>
 			            </HBox>
 			          </children>
@@ -253,10 +253,10 @@
                               </GridPane>
 			            <HBox alignment="CENTER_LEFT" spacing="8.0" style="-fx-padding: 8;">
 			              <children>
-			                <Button id="auth-button" fx:id="pAddBtn" mnemonicParsing="false" stylesheets="@application.css" text="+ New row">
+			                <Button id="auth-button" fx:id="pAddBtn" mnemonicParsing="false" stylesheets="@application.css" text="New Purchase Row">
 			                  <graphic><FontIcon fill="WHITE" iconLiteral="fas-plus" /></graphic>
 			                </Button>
-			                <Text text="Alt+N" />
+			                <Text text="Ctrl + N" />
 			              </children>
 			            </HBox>
 			          </children>
