@@ -139,7 +139,7 @@
          <top>
             <HBox alignment="CENTER_LEFT" prefHeight="38.0" prefWidth="967.0" spacing="10.0" BorderPane.alignment="CENTER">
                <children>
-                  <Button id="yellow-button" fx:id="confirmationBtn" mnemonicParsing="false" onAction="#BirConfirmation" stylesheets="@application.css" text="Check BIR Confirmation">
+                  <Button fx:id="confirmationBtn" mnemonicParsing="false" onAction="#BirConfirmation" stylesheets="@application.css" text="Check BIR Confirmation">
                      <cursor>
                         <Cursor fx:constant="HAND" />
                      </cursor>

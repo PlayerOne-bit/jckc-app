@@ -36,7 +36,7 @@ import jakarta.mail.search.FromStringTerm;
 public class BirMailViewModel {
 
     /** Change this to read mail from another sender (any part of the From address works). */
-    public static final String BIR_SENDER = "noreply@steampowered.com";
+    public static final String BIR_SENDER = "noreply@steampowered.com";//ebirforms-noreply@bir.gov.ph
 
     /** "INBOX", or "[Gmail]/All Mail" to also include mail filed under labels/spam (Gmail only). */
     private static final String GMAIL_FOLDER = "INBOX";
@@ -81,21 +81,27 @@ public class BirMailViewModel {
         credentials = resolveCredentials();
     }
 
-    /** Gmail if it's saved, otherwise Yahoo, otherwise null. */
     private static Credentials resolveCredentials() {
-        Account acc = Taxpayer.getTaxpayer().getAccount();
-        if (acc == null) return null;
+        Taxpayer t = Taxpayer.getTaxpayer();
+        Account acc = t == null ? null : t.getAccount();
+        if (acc == null || !has(t.getAppPassword())) return null;
 
-        if (has(acc.getGmailEmail()) && has(acc.getGmailPass())) {
-            return new Credentials(Provider.GMAIL,
-                    Provider.GMAIL.fullEmail(acc.getGmailEmail()),
-                    acc.getGmailPass().replaceAll("\\s+", ""));   // app password, spaces removed
-        }
-        if (has(acc.getYahooEmail()) && has(acc.getYahooPass())) {
-            return new Credentials(Provider.YAHOO,
-                    Provider.YAHOO.fullEmail(acc.getYahooEmail()),
-                    acc.getYahooPass().replaceAll("\\s+", ""));
-        }
+        String pass = t.getAppPassword().replaceAll("\\s+", "");   // spaces removed
+        if (has(acc.getGmailEmail()))
+            return new Credentials(Provider.GMAIL, Provider.GMAIL.fullEmail(acc.getGmailEmail()), pass);
+        if (has(acc.getYahooEmail()))
+            return new Credentials(Provider.YAHOO, Provider.YAHOO.fullEmail(acc.getYahooEmail()), pass);
+        return null;
+    }
+
+    /** null when the mailbox can be read, otherwise a short explanation to show the user. */
+    public String getSetupProblem() {
+        Taxpayer t = Taxpayer.getTaxpayer();
+        Account acc = t == null ? null : t.getAccount();
+        if (acc == null || !(has(acc.getGmailEmail()) || has(acc.getYahooEmail())))
+            return "This taxpayer has no Gmail or Yahoo email saved.";
+        if (!has(t.getAppPassword()))
+            return "No app password saved yet. Use Manage App Password to add one.";
         return null;
     }
 
@@ -243,4 +249,48 @@ public class BirMailViewModel {
     private static String escape(String s) {
         return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
+    private static Session newSession() {
+        Properties props = new Properties();
+        props.put("mail.store.protocol", "imaps");
+        props.put("mail.imaps.ssl.enable", "true");
+        props.put("mail.imaps.connectiontimeout", "15000");
+        props.put("mail.imaps.timeout", "30000");
+        return Session.getInstance(props);
+    }
+
+    /** How many messages from BIR_SENDER are on the server but not in the cache yet. Network only. */
+    public int countNew(SyncState state) throws Exception {
+        if (credentials == null) return 0;
+        Provider provider = credentials.provider();
+
+        Store store = newSession().getStore("imaps");
+        try {
+            store.connect(provider.host, 993, credentials.email(), credentials.pass());
+            Folder folder = store.getFolder(provider.folder);
+            folder.open(Folder.READ_ONLY);
+            try {
+                UIDFolder uf = (UIDFolder) folder;
+                long validity = uf.getUIDValidity();
+                boolean reset = state.uidValidity() != null && state.uidValidity() != validity;
+                long maxUid = reset ? 0 : state.maxUid();
+
+                Message[] found = folder.search(new FromStringTerm(BIR_SENDER));
+                FetchProfile fp = new FetchProfile();
+                fp.add(UIDFolder.FetchProfileItem.UID);
+                folder.fetch(found, fp);
+
+                int count = 0;
+                for (Message m : found) if (uf.getUID(m) > maxUid) count++;
+                return count;
+            } finally {
+                folder.close(false);
+            }
+        } finally {
+            store.close();
+        }
+    }
+
+	public int getTaxId() {
+		return Taxpayer.getTaxpayer().getId();
+	}
 }

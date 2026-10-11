@@ -6,13 +6,14 @@ import java.util.Locale;
 
 import app.models.BirMail;
 import app.models.Taxpayer;
+import app.viewmodels.BirMailSyncManager;
+import app.viewmodels.BirMailSyncManager.Job;
+import app.viewmodels.BirMailSyncManager.Outcome;
 import app.viewmodels.BirMailViewModel;
 import app.viewmodels.BirMailViewModel.Credentials;
 import app.viewmodels.BirMailViewModel.Provider;
-import app.viewmodels.BirMailViewModel.SyncResult;
-import app.viewmodels.BirMailViewModel.SyncState;
 import javafx.application.Platform;
-import javafx.concurrent.Task;
+import javafx.beans.value.ChangeListener;
 import javafx.concurrent.Worker;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -20,15 +21,19 @@ import javafx.print.PrinterJob;
 import javafx.scene.Cursor;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import javafx.stage.Stage;
 
-public class TaxpayerBirConfirmation {
+public class TaxpayerBirConfirmationController {
 
     private static final DateTimeFormatter CARD_FMT =
             DateTimeFormatter.ofPattern("MM/dd/yyyy - hh:mm a", Locale.ENGLISH);
@@ -62,6 +67,11 @@ public class TaxpayerBirConfirmation {
     private VBox selectedCard;
     private BirMail selectedItem;
 
+    // Background download this page is watching
+    private boolean closed = false;                 // true once the user leaves this page
+    private Job watchedJob;
+    private ChangeListener<String> messageListener;
+
     @FXML
     private void initialize() throws Exception {
         Pages.bindShortcut(root, "ESC", this::back);
@@ -70,8 +80,9 @@ public class TaxpayerBirConfirmation {
         vm = new BirMailViewModel();
 
         Credentials cred = vm.getCredentials();
-        headerText.setText("BIR TAX CONFIRMATION: "
-                + (cred == null ? "" : cred.email() + " (" + cred.provider().label + ")"));
+        headerText.setText(cred == null
+                ? "BIR TAX CONFIRMATION"
+                : "BIR TAX CONFIRMATION: " + cred.email() + " (" + cred.provider().label + ")");
 
         previewView.getEngine().setJavaScriptEnabled(false);   // never run scripts from email HTML
         printBtn.setDisable(true);
@@ -85,7 +96,31 @@ public class TaxpayerBirConfirmation {
 
     @FXML
     public void back(ActionEvent e) {
+        leave();
         Pages.change(e, Pages.HOME);
+    }
+
+    @FXML
+    public void ManageAppPassword(ActionEvent e) {
+        leave();
+        Pages.change(e, Pages.TAXPAYER_APP_PASSWORD);
+    }
+
+    /** Stops this page from listening. The download itself keeps running and saves to the cache. */
+    private void leave() {
+        closed = true;
+        detachFromJob();
+    }
+
+    private void detachFromJob() {
+        loadingBar.progressProperty().unbind();
+        loadingBar.visibleProperty().unbind();
+        loadingBar.managedProperty().unbind();
+        if (watchedJob != null && messageListener != null) {
+            watchedJob.messageProperty().removeListener(messageListener);
+        }
+        watchedJob = null;
+        messageListener = null;
     }
 
     // ---------- Loading ----------
@@ -93,7 +128,8 @@ public class TaxpayerBirConfirmation {
     private void loadMessages() throws Exception {
         Credentials cred = vm.getCredentials();
         if (cred == null) {
-            statusText.setText("This taxpayer has no Gmail or Yahoo account saved.");
+            // either no Gmail/Yahoo email, or no app password saved yet
+            statusText.setText(vm.getSetupProblem());
             return;
         }
 
@@ -103,51 +139,51 @@ public class TaxpayerBirConfirmation {
 
         // 1. Show what's already saved, instantly
         showCards(vm.loadSaved());
-        final SyncState state = vm.readSyncState();
 
-        // 2. Check the server for anything newer
+        // 2. Start a download, or join the one that is already running (even from an earlier visit)
+        boolean joining = BirMailSyncManager.isRunning(vm.getTaxId());
+        Job job = BirMailSyncManager.startOrJoin(vm);
+
         refreshBtn.setDisable(true);
-        statusText.setText("Checking " + provider.label + " for new messages...");
+        String current = job.messageProperty().get();
+        statusText.setText(joining && current != null && !current.isBlank()
+                ? current
+                : "Checking " + provider.label + " for new messages...");
 
-        Task<SyncResult> task = new Task<>() {
-            @Override protected SyncResult call() throws Exception {
-                return vm.fetchNew(state, (done, total) -> {
-                    updateProgress(done, total);
-                    updateMessage("Downloading " + done + " of " + total + "...");
-                });
-            }
-        };
-        loadingBar.progressProperty().bind(task.progressProperty());   // indeterminate until the first message
-        loadingBar.visibleProperty().bind(task.runningProperty());
+        detachFromJob();   // in case Refresh was pressed while an older job was still attached
+        watchedJob = job;
+        loadingBar.progressProperty().bind(job.progressProperty());   // indeterminate until the first message
+        loadingBar.visibleProperty().bind(job.runningProperty());
         loadingBar.managedProperty().bind(loadingBar.visibleProperty());
-        task.messageProperty().addListener((_, _, m) -> statusText.setText(m));
+        messageListener = (_, _, m) -> {
+            if (m != null && !m.isBlank()) statusText.setText(m);
+        };
+        job.messageProperty().addListener(messageListener);
 
-        task.setOnSucceeded(_ -> {
-            try {
-                SyncResult result = task.getValue();
-                List<BirMail> all = vm.save(result);                    // database work stays on this thread
-                if (!result.fresh().isEmpty() || result.reset()) showCards(all);
-                statusText.setText(all.isEmpty()
-                        ? "No messages from " + BirMailViewModel.BIR_SENDER
-                        : all.size() + " message(s)"
-                          + (result.fresh().isEmpty() ? "" : ", " + result.fresh().size() + " new"));
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                statusText.setText("Could not save messages: " + ex.getMessage());
-            }
-            refreshBtn.setDisable(false);
-        });
-        task.setOnFailed(_ -> {
-            task.getException().printStackTrace();
+        job.whenDone(outcome -> onSyncDone(job, outcome, provider));
+    }
+
+    private void onSyncDone(Job job, Outcome outcome, Provider provider) {
+        if (closed || root.getScene() == null) return;   // page was left; the cache is already updated
+        if (watchedJob != job) return;                   // a newer job replaced this one
+        detachFromJob();
+        loadingBar.setVisible(false);
+        loadingBar.setManaged(false);
+        refreshBtn.setDisable(false);
+
+        if (outcome.error() != null) {
             boolean haveSaved = !cardList.getChildren().isEmpty();
             statusText.setText((haveSaved ? "Showing saved messages. " : "")
-                    + "Could not reach " + provider.label + ": " + task.getException().getMessage());
-            refreshBtn.setDisable(false);
-        });
+                    + "Could not reach " + provider.label + ": " + outcome.error().getMessage());
+            return;
+        }
 
-        Thread t = new Thread(task, "mail-fetch");
-        t.setDaemon(true);
-        t.start();
+        List<BirMail> all = outcome.all();
+        if (outcome.newCount() > 0 || outcome.reset()) showCards(all);
+        statusText.setText(all.isEmpty()
+                ? "No messages from " + BirMailViewModel.BIR_SENDER + " in " + accountEmail
+                : all.size() + " message(s)"
+                  + (outcome.newCount() == 0 ? "" : ", " + outcome.newCount() + " new"));
     }
 
     // ---------- Cards + preview ----------
@@ -237,7 +273,7 @@ public class TaxpayerBirConfirmation {
         String owner = Taxpayer.getTaxpayer().getName().getFullName(0);
         String ownerHtml = "<b>" + escape(owner) + " &lt;" + escape(accountEmail) + "&gt;</b>";
 
-        // Sender: "Steam <noreply@steampowered.com>" -> bold name + address
+        // Sender: "BIR <ebirforms-noreply@bir.gov.ph>" -> bold name + address
         String from = item.from();
         int lt = from.indexOf('<');
         String fromHtml = lt > 0
@@ -275,5 +311,50 @@ public class TaxpayerBirConfirmation {
                 + attachment
                 + "</div>"
                 + body;
+    }
+
+    // ---------- Cache ----------
+
+    @FXML
+    public void ClearCache(ActionEvent e) {
+        Credentials cred = vm.getCredentials();
+        if (cred == null) {
+            statusText.setText(vm.getSetupProblem());
+            return;
+        }
+        if (refreshBtn.isDisabled() || BirMailSyncManager.isRunning(vm.getTaxId())) {   // a download is still running
+            statusText.setText("Wait for the current download to finish, then try again.");
+            return;
+        }
+
+        ButtonType clear = new ButtonType("Clear and reload", ButtonBar.ButtonData.OK_DONE);
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+                "This deletes the saved copies of these messages from this computer and downloads them again from "
+                + cred.provider().label + ". It needs an internet connection.\n\n"
+                + "Your mailbox itself is not touched.",
+                clear, ButtonType.CANCEL);
+        alert.setTitle("Clear saved messages");
+        alert.setHeaderText("Clear the message cache?");
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(new Image(getClass().getResourceAsStream("/app/views/fxml/images/logo.png")));
+        if (alert.showAndWait().orElse(ButtonType.CANCEL) != clear) return;
+
+        try {
+            vm.clearSaved();
+            showCards(List.of());   // empties the list and resets the selection
+            clearPreview();
+            loadMessages();         // fresh download of everything
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            statusText.setText("Could not clear the saved messages: " + ex.getMessage());
+        }
+    }
+
+    private void clearPreview() {
+        subjectText.setText("");
+        fromText.setText("");
+        dateText.setText("");
+        attachmentText.setText("");
+        previewView.getEngine().loadContent("");
     }
 }

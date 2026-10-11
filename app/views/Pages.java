@@ -23,6 +23,7 @@ public class Pages {
             TAXPAYER_CREATE="fxml/taxpayer_create.fxml",
             TAXPAYER_CARD="fxml/taxpayer_card.fxml",
             TAXPAYER_BIR_CONFIRMATION = "fxml/taxpayer_bir_confirmation.fxml",
+            TAXPAYER_APP_PASSWORD = "fxml/taxpayer_app_password.fxml",
             EDIT_TAXPAYER = "fxml/edit_taxpayer.fxml",
             DELETE_TAXPAYER = "fxml/delete_taxpayer.fxml",
             SLSP="fxml/slsp.fxml",

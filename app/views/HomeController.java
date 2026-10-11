@@ -21,13 +21,26 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import app.viewmodels.BirMailViewModel;
+import app.viewmodels.BirMailViewModel.SyncState;
+import javafx.animation.PauseTransition;
+import javafx.concurrent.Task;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.util.Duration;
 public class HomeController {
 	private TaxpayerViewModel vm;
 	private boolean isTaxpayerSelected;
@@ -35,7 +48,11 @@ public class HomeController {
 	private List<Taxpayer> displayedTaxpayers = new ArrayList<>(); 
 	private final List<TaxpayerCard> cards = new ArrayList<>();
 	private int selectedIndex = -1;
-	
+	private static final long MAIL_CHECK_INTERVAL_MS = 5 * 60 * 1000;   // don't re-check a taxpayer more often than this
+	private final Map<Integer, Boolean> newMailByTaxpayer = new HashMap<>();
+	private final Map<Integer, Long> lastMailCheck = new HashMap<>();
+	private final PauseTransition mailCheckDelay = new PauseTransition(Duration.millis(700));
+	private String confirmationDefaultId;
 	
 	@FXML private BorderPane root;
 	@FXML private Text pageText;
@@ -54,6 +71,8 @@ public class HomeController {
 	
 	@FXML private void initialize(){
 		try{
+			confirmationDefaultId = confirmationBtn.getId();
+			notify.setIconLiteral("fas-bell");
 			Pages.bindShortcut(root,"Ctrl+F",searchField);
 			Pages.bindShortcut(root,"Ctrl+N",this::AddTaxpayer);
 			Pages.bindShortcut(root,"Ctrl+E",this::EditTaxpayer);
@@ -85,6 +104,8 @@ public class HomeController {
 			vm = new TaxpayerViewModel();
 			searchField.textProperty().addListener((_, _, newValue) -> filterTaxpayers(newValue));
 			resetSelection();
+			mailCheckDelay.stop();
+			applyNewMailIndicator(false);
 			reloadTaxpayers();
 		}catch(Exception e) {
 			e.printStackTrace();
@@ -130,6 +151,7 @@ public class HomeController {
 		for (int i = 0; i < taxpayers.size(); i++) {
 			Taxpayer taxpayer = taxpayers.get(i);
 			TaxpayerCard card = new TaxpayerCard(taxpayer);
+			card.setNewMail(newMailByTaxpayer.getOrDefault(taxpayer.getId(), false));
 			card.setSelected(i == selectedIndex);
 			card.addEventHandler(MouseEvent.MOUSE_CLICKED, _ -> loadTaxpayer(taxpayer));
 			cards.add(card);
@@ -252,11 +274,12 @@ public class HomeController {
 		fbName.setText(acc.getFbName());
 		recoveryEmail.setText(acc.getRecoveryEmail());
 		
-		gmailPassword.setText(acc.getGmailEmail());
+		gmailPassword.setText(acc.getGmailPass());
 		yahooPassword.setText(acc.getYahooPass());
 		orusPassword.setText(acc.getOrusPass());
 		afsPassword.setText(acc.getAfsPass());
 		updateSelection(displayedTaxpayers.indexOf(taxpayer));
+		scheduleMailCheck(taxpayer);
 	}
 	
 	@FXML
@@ -271,7 +294,34 @@ public class HomeController {
 	}
 	@FXML
 	public void BirConfirmation(ActionEvent e) {
-		Pages.change(e, Pages.TAXPAYER_BIR_CONFIRMATION);
+	    if (!this.isTaxpayerSelected) return;
+	    Taxpayer taxpayer = Taxpayer.getTaxpayer();
+
+	    // 1. No Gmail or Yahoo email saved at all
+	    if (!hasMailAccount(taxpayer)) {
+	        ButtonType edit = new ButtonType("Edit Taxpayer", ButtonBar.ButtonData.OK_DONE);
+	        Alert alert = new Alert(Alert.AlertType.ERROR,
+	                "This taxpayer has no Gmail or Yahoo account saved, so there is no mailbox to read.\n"
+	                + "Add one in the taxpayer's details first.",
+	                edit, ButtonType.CLOSE);
+	        alert.setTitle("No mail account");
+	        alert.setHeaderText("Cannot open BIR confirmation");
+	        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+	        stage.getIcons().add(new Image(getClass().getResourceAsStream("/app/views/fxml/images/logo.png")));
+	        alert.showAndWait().ifPresent(choice -> {
+	            if (choice == edit) EditTaxpayer(e);
+	        });
+	        return;
+	    }
+
+	    // 2. Email is there, but no app password yet -> go set one up
+	    if (!has(taxpayer.getAppPassword())) {
+	        Pages.change(e, Pages.TAXPAYER_APP_PASSWORD);
+	        return;
+	    }
+
+	    // 3. Ready
+	    Pages.change(e, Pages.TAXPAYER_BIR_CONFIRMATION);
 	}
 	@FXML
 	public void Logout(ActionEvent e) {
@@ -306,6 +356,74 @@ public class HomeController {
 				fbName, recoveryEmail,
 				gmailPassword, yahooPassword, orusPassword, afsPassword)
 			.forEach(TextField::clear);
+	}
+	private static boolean has(String s) {
+	    return s != null && !s.isBlank();
+	}
+
+	private static boolean hasMailAccount(Taxpayer t) {
+	    Account a = t == null ? null : t.getAccount();
+	    return a != null && (has(a.getGmailEmail()) || has(a.getYahooEmail()));
+	}
+
+	// ---------- New-mail bell ----------
+
+	private void applyNewMailIndicator(boolean show) {
+	    notify.setVisible(show);
+	    confirmationBtn.setId(show ? "yellow-button" : confirmationDefaultId);
+	}
+	private void runMailCheck(int taxId) {
+	    Taxpayer current = Taxpayer.getTaxpayer();
+	    if (current == null || current.getId() != taxId) return;   // selection moved on
+
+	    try {
+	        BirMailViewModel mailVm = new BirMailViewModel();   // reads Taxpayer.getTaxpayer()
+	        SyncState state = mailVm.readSyncState();           // database read, on this thread
+
+	        Task<Integer> task = new Task<>() {
+	            @Override protected Integer call() throws Exception {
+	                return mailVm.countNew(state);              // network only
+	            }
+	        };
+	        task.setOnSucceeded(_ -> {
+	            boolean hasNew = task.getValue() > 0;
+	            lastMailCheck.put(taxId, System.currentTimeMillis());
+	            newMailByTaxpayer.put(taxId, hasNew);
+
+	            // update the card's bell
+	            for (int i = 0; i < displayedTaxpayers.size() && i < cards.size(); i++) {
+	                if (displayedTaxpayers.get(i).getId() == taxId) cards.get(i).setNewMail(hasNew);
+	            }
+	            // update the page-level bell only if this taxpayer is still selected
+	            Taxpayer now = Taxpayer.getTaxpayer();
+	            if (now != null && now.getId() == taxId) applyNewMailIndicator(hasNew);
+	        });
+	        task.setOnFailed(_ -> task.getException().printStackTrace());   // offline or bad password: just no bell
+
+	        Thread t = new Thread(task, "mail-check");
+	        t.setDaemon(true);
+	        t.start();
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	}
+	private void scheduleMailCheck(Taxpayer taxpayer) {
+	    final int taxId = taxpayer.getId();
+	    mailCheckDelay.stop();
+
+	    if (!hasMailAccount(taxpayer)) {
+	        applyNewMailIndicator(false);
+	        return;
+	    }
+	    // Show the last known answer straight away
+	    applyNewMailIndicator(newMailByTaxpayer.getOrDefault(taxId, false));
+
+	    long last = lastMailCheck.getOrDefault(taxId, 0L);
+	    if (System.currentTimeMillis() - last < MAIL_CHECK_INTERVAL_MS) return;   // checked recently
+
+	    // Wait a moment so arrowing through the list doesn't open a mail connection per row
+	    mailCheckDelay.setOnFinished(_ -> runMailCheck(taxId));
+	    mailCheckDelay.playFromStart();
 	}
 	
 	@FXML private TextField tinNum;

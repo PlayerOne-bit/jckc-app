@@ -6,6 +6,7 @@ import app.models.Taxpayer;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 
 public class TaxpayerCard extends VBox{
 	@FXML private Label tinNumber;
@@ -47,5 +48,10 @@ public class TaxpayerCard extends VBox{
 		taxpayerName.setStyle(textStyle);
 		tradeName.setStyle(textStyle);
 		businessAddress.setStyle(textStyle);
+	}
+	public void setNewMail(boolean show) {
+	    notify.setIconLiteral("fas-bell");
+	    notify.setIconColor(Color.web("#f59e0b"));
+	    notify.setVisible(show);
 	}
 }

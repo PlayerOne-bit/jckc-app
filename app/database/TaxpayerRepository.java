@@ -615,11 +615,11 @@ public class TaxpayerRepository {
             ps.executeUpdate();
         }
     }
-    public void updateAppPassword(int taxId, String appPassword) throws SQLException {
+    public boolean updateAppPassword(int taxId, String appPassword) throws SQLException {
         try (PreparedStatement ps = sql.prepareStatement(DATABASE.UPDATE_APP_PASSWORD)) {
             ps.setString(1, appPassword);
             ps.setInt(2, taxId);
-            ps.executeUpdate();
+            return ps.executeUpdate()>0;
         }
     }
     private static class DATABASE {
