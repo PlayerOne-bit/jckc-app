@@ -45,18 +45,31 @@ public class DeleteTaxpayer extends VBox {
     
     @FXML
     public void delete(ActionEvent e) {
-    	if (delButton.isDisable()) return;
+        if (delButton.isDisable()) return;
         try {
-            vm.deleteTaxpayer(id);
-            if (onDeleted != null) onDeleted.run();
-            closeWindow();
-        } catch(Exception e1) {
-            e1.printStackTrace();
+        	vm.deleteTaxpayer(id);
+        	closeWindow();
+        	if (onDeleted != null) {
+        	    onDeleted.run();
+        	}
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+
+            javafx.scene.control.Alert alert =
+                    new javafx.scene.control.Alert(
+                            javafx.scene.control.Alert.AlertType.ERROR);
+
+            alert.setTitle("Delete Failed");
+            alert.setHeaderText("Unable to delete taxpayer");
+            alert.setContentText(ex.getMessage());
+            alert.showAndWait();
         }
     }
+
     private void closeWindow() {
-        Stage stage = (Stage) this.getScene().getWindow();
-        if (stage != null) {
+        if (getScene() != null && getScene().getWindow() != null) {
+            Stage stage = (Stage) getScene().getWindow();
             stage.close();
         }
     }

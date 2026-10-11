@@ -123,15 +123,26 @@ public class HomeController {
 	}
 
 	private void reloadTaxpayers() {
-		try {
-			List<Taxpayer> taxpayers = vm.loadTaxpayers();
-			allTaxpayers = taxpayers != null ? taxpayers : new ArrayList<>();
-			filterTaxpayers(searchField.getText());
-			Taxpayer match = findByTin(allTaxpayers, Taxpayer.getTaxpayer());
-			if (match != null) loadTaxpayer(match);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+	    try {
+	        List<Taxpayer> taxpayers = vm.loadTaxpayers();
+
+	        allTaxpayers = taxpayers != null
+	                ? taxpayers
+	                : new ArrayList<>();
+
+	        filterTaxpayers(searchField.getText());
+
+	        Taxpayer match = findByTin(
+	                allTaxpayers,
+	                Taxpayer.getTaxpayer());
+
+	        if (match != null) {
+	            loadTaxpayer(match);
+	        }
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
 	}
 	private Taxpayer findByTin(List<Taxpayer> list, Taxpayer target) {
 		if (target == null || target.getTinNum() == null) return null;
@@ -345,10 +356,18 @@ public class HomeController {
 		Pages.popupComponent(deleteView);
 	}
 	private void onTaxpayerDeleted() {
-		Taxpayer.setTaxpayer(null);
-		clearDetails();
-		resetSelection();
-		reloadTaxpayers();
+	    try {
+	        Taxpayer.setTaxpayer(null);
+	        clearDetails();
+	        resetSelection();
+
+	        vm.refreshTaxpayers();
+	        allTaxpayers = new ArrayList<>(vm.loadTaxpayers());
+	        filterTaxpayers(searchField.getText());
+	        selectedIndex = -1;
+	    } catch (Exception ex) {
+	        ex.printStackTrace();
+	    }
 	}
 	private void clearDetails() {
 		List.of(tinNum, fullName, tradeName, bussAddress, bussKind, taxNformTypes, psic,

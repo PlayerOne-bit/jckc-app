@@ -141,40 +141,78 @@ public class TaxpayerRepository {
         try {
             sql.setAutoCommit(false);
 
+            // 1. Delete sales belonging to taxpayer's SLSP records
             deleteChildByTaxId(
-                    DATABASE.DELETE_PERSONAL_INFO_BY_TAX_ID,
-                    taxId
+                "DELETE FROM Sale WHERE slspId IN " +
+                "(SELECT id FROM SLSP WHERE taxId = ?)",
+                taxId
             );
 
+            // 2. Delete purchases belonging to taxpayer's SLSP records
             deleteChildByTaxId(
-                    DATABASE.DELETE_ACCOUNT_BY_TAX_ID,
-                    taxId
+                "DELETE FROM Purchase WHERE slspId IN " +
+                "(SELECT id FROM SLSP WHERE taxId = ?)",
+                taxId
             );
 
+            // 3. Delete SLSP records
             deleteChildByTaxId(
-                    DATABASE.DELETE_NAME_BY_TAX_ID,
-                    taxId
+                "DELETE FROM SLSP WHERE taxId = ?",
+                taxId
             );
 
+            // 4. Delete taxpayer's personal information
             deleteChildByTaxId(
-                    DATABASE.DELETE_SUPPLIER_BY_TAX_ID,
-                    taxId
+                DATABASE.DELETE_PERSONAL_INFO_BY_TAX_ID,
+                taxId
             );
 
+            // 5. Delete taxpayer's account
+            deleteChildByTaxId(
+                DATABASE.DELETE_ACCOUNT_BY_TAX_ID,
+                taxId
+            );
+
+            // 6. Delete taxpayer's name
+            deleteChildByTaxId(
+                DATABASE.DELETE_NAME_BY_TAX_ID,
+                taxId
+            );
+
+            // 7. Delete taxpayer's suppliers
+            deleteChildByTaxId(
+                DATABASE.DELETE_SUPPLIER_BY_TAX_ID,
+                taxId
+            );
+
+            // 8. Delete taxpayer
             try (PreparedStatement ps =
                     sql.prepareStatement(DATABASE.DELETE_TABLE_TAXPAYER)) {
 
                 ps.setInt(1, taxId);
-                ps.executeUpdate();
+
+                int affectedRows = ps.executeUpdate();
+
+                if (affectedRows == 0) {
+                    throw new SQLException(
+                        "Taxpayer not found. ID: " + taxId
+                    );
+                }
             }
 
             sql.commit();
 
+            System.out.println(
+                "Taxpayer and related records deleted: " + taxId
+            );
+
         } catch (SQLException e) {
+
             sql.rollback();
             throw e;
 
         } finally {
+
             sql.setAutoCommit(true);
         }
     }
@@ -194,7 +232,7 @@ public class TaxpayerRepository {
             ps.setString(6, taxpayer.getFormTypes());
             ps.setString(7, taxpayer.getVat());
 
-            ps.executeUpdate();
+            ps.executeUpdate(); 
 
             try (ResultSet keys = ps.getGeneratedKeys()) {
 
