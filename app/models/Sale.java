@@ -53,23 +53,16 @@ public class Sale {
 	    this.grossAmount = (grossAmount != null)
 	            ? grossAmount : BigDecimal.ZERO;
 	}
-	public BigDecimal getOutputVat() {
-	    BigDecimal vatInclusiveSales = grossAmount
-	            .subtract(exemptAmount)
-	            .subtract(zeroRatedAmount);
-
-	    return vatInclusiveSales.subtract(getTaxableAmount())
-	            .setScale(2, RoundingMode.HALF_UP);
+	private BigDecimal vatBase() {   // Total Amount - VAT Exempt - Zero-rated, never below zero
+	    BigDecimal base = grossAmount.subtract(exemptAmount).subtract(zeroRatedAmount);
+	    return base.signum() < 0 ? BigDecimal.ZERO : base;
 	}
-	public BigDecimal getTaxableAmount() {
-	    BigDecimal vatInclusiveSales = grossAmount
-	            .subtract(exemptAmount)
-	            .subtract(zeroRatedAmount);
 
-	    return vatInclusiveSales.divide(
-	            new BigDecimal("1.12"),
-	            2,
-	            RoundingMode.HALF_UP
-	    );
+	public BigDecimal getOutputVat() {
+	    return vatBase().subtract(getTaxableAmount()).setScale(2, RoundingMode.HALF_UP);
+	}
+
+	public BigDecimal getTaxableAmount() {
+	    return vatBase().divide(new BigDecimal("1.12"), 2, RoundingMode.HALF_UP);
 	}
 }

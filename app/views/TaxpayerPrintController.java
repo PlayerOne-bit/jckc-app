@@ -22,7 +22,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
-
+import javafx.scene.Group;
+import javafx.scene.control.Button;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.input.ScrollEvent;
 public class TaxpayerPrintController {
 
     private static final String MASK = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022";
@@ -39,20 +42,134 @@ public class TaxpayerPrintController {
                         pSpouseName, pFatherName, pMotherName;
     @FXML private Label pGmailEmail, pGmailPass, pYahooEmail, pYahooPass, pOrusUser, pOrusPass,
                         pAfsUser, pAfsPass, pFbName, pRecoveryEmail;
+    @FXML private ScrollPane previewScrollPane;
+    @FXML private Group previewZoomGroup;
+    @FXML private Label zoomLabel;
+    @FXML private Button zoomInBtn;
+    @FXML private Button zoomOutBtn;
 
+    private static final double MIN_ZOOM = 0.50;
+    private static final double MAX_ZOOM = 2.00;
+    private static final double ZOOM_STEP = 0.10;
+
+    private double currentZoom = 1.00;
+
+    private final Scale previewScale = new Scale(1.0, 1.0, 0, 0);
     @FXML
     private void initialize() {
         Pages.bindShortcut(root, "ESC", this::back);
         Pages.bindShortcut(root, "Ctrl+P", this::printTaxpayer);
 
+        // Existing section visibility controls
         bindSection(includeTaxpayer, sectionTaxpayer);
         bindSection(includePersonal, sectionPersonal);
         bindSection(includeAccounts, sectionAccounts);
+
         showPasswords.selectedProperty().addListener((_, _, _) -> fill());
+
+        // Apply zoom when Ctrl + mouse wheel is used over the preview.
+        root.addEventFilter(
+            ScrollEvent.SCROLL,
+            this::handlePreviewZoom
+        );
+        root.addEventFilter(
+        	    javafx.scene.input.KeyEvent.KEY_PRESSED,
+        	    this::handleZoomShortcut
+        	);
+
+        // Set the initial zoom.
+        setZoom(1.00);
 
         fill();
     }
+ // ---------- Preview Zoom ----------
+    private void handleZoomShortcut(javafx.scene.input.KeyEvent event) {
+        if (event.isControlDown()) {
+            switch (event.getCode()) {
+                case EQUALS, PLUS, ADD -> {
+                    zoomIn();
+                    event.consume();
+                }
+                case MINUS, SUBTRACT -> {
+                    zoomOut();
+                    event.consume();
+                }
+                case DIGIT0, NUMPAD0 -> {
+                    resetZoom();
+                    event.consume();
+                }
+                default -> {
+                    // No zoom shortcut for this key.
+                }
+            }
+        }
+    }
+    private void handlePreviewZoom(ScrollEvent event) {
+        if (!event.isControlDown()) {
+            return;
+        }
 
+        double deltaY = event.getDeltaY();
+
+        if (deltaY == 0) {
+            return;
+        }
+
+        setZoom(
+            deltaY > 0
+                ? currentZoom + ZOOM_STEP
+                : currentZoom - ZOOM_STEP
+        );
+
+        // Prevent Ctrl + scroll from scrolling the preview normally.
+        event.consume();
+    }
+
+    @FXML
+    private void zoomIn() {
+        setZoom(currentZoom + ZOOM_STEP);
+    }
+
+    @FXML
+    private void zoomOut() {
+        setZoom(currentZoom - ZOOM_STEP);
+    }
+
+    @FXML
+    private void resetZoom() {
+        setZoom(1.00);
+    }
+
+    private void setZoom(double zoom) {
+        currentZoom = Math.max(
+            MIN_ZOOM,
+            Math.min(
+                MAX_ZOOM,
+                Math.round(zoom * 100.0) / 100.0
+            )
+        );
+
+        // Apply scaling to the page, not the Group.
+        if (!previewPage.getTransforms().contains(previewScale)) {
+            previewPage.getTransforms().add(previewScale);
+        }
+
+        previewScale.setX(currentZoom);
+        previewScale.setY(currentZoom);
+
+        // Update zoom percentage.
+        zoomLabel.setText(
+            Math.round(currentZoom * 100) + "%"
+        );
+
+        // Disable zoom buttons at their limits.
+        zoomInBtn.setDisable(currentZoom >= MAX_ZOOM);
+        zoomOutBtn.setDisable(currentZoom <= MIN_ZOOM);
+
+        // Refresh the scrollable layout.
+        previewZoomGroup.requestLayout();
+        previewScrollPane.requestLayout();
+    }
     private void bindSection(CheckBox box, GridPane section) {
         section.visibleProperty().bind(box.selectedProperty());
         section.managedProperty().bind(box.selectedProperty());

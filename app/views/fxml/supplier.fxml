@@ -197,7 +197,7 @@
                   </VBox>
                   <Button id="green-button" mnemonicParsing="false" onAction="#CreateSupplier" stylesheets="@application.css" text="Supplier">
                      <graphic>
-                        <FontIcon fill="WHITE" iconLiteral="fas-plus" iconSize="20" />
+                        <FontIcon fill="WHITE" iconLiteral="fas-save" iconSize="20" />
                      </graphic>
                      <font>
                         <Font size="18.0" />
@@ -208,4 +208,11 @@
          </bottom>
       </BorderPane>
    </center>
+   <bottom>
+      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="back=Esc    Save=Ctrl+Enter    Navigate=Up/Down    Delete=Ctrl+W" BorderPane.alignment="CENTER_LEFT">
+         <BorderPane.margin>
+            <Insets bottom="10.0" left="10.0" />
+         </BorderPane.margin>
+      </Text>
+   </bottom>
 </BorderPane>

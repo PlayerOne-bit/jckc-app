@@ -34,7 +34,9 @@ public class SupplierViewModel {
         }
         return deleted;
     }
-
+    public void editSupplier(Supplier supplier) throws Exception{
+    	db.updateSupplier(supplier);
+    }
     // returns null if creation succeeded, or an error message if the TIN is already taken
     public String createSupplier(Supplier supplier) throws Exception {
         Supplier existing = db.findByTin(supplier.getTaxId(), supplier.getTinNum());
@@ -45,7 +47,21 @@ public class SupplierViewModel {
         refreshSuppliers();
         return null;
     }
-
+    /** Creates the supplier if its TIN is new, otherwise updates the one that owns that TIN.
+     *  Returns the same instance you passed in when it was created, or the existing one when edited. */
+    public Supplier saveSupplier(Supplier supplier) throws Exception {
+        Supplier existing = db.findByTin(supplier.getTaxId(), supplier.getTinNum());
+        if (existing == null) {
+            db.addSupplier(supplier);
+            refreshSuppliers();
+            return supplier;
+        }
+        existing.setTradeName(supplier.getTradeName());
+        existing.setBussAddress(supplier.getBussAddress());
+        db.updateSupplier(existing);
+        refreshSuppliers();
+        return existing;
+    }
     public List<Supplier> loadSuppliers() {
         suppliers.sort(Comparator.comparing(
                 Supplier::getTinNum, Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER)));

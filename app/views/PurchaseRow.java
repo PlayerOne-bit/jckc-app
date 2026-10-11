@@ -42,9 +42,9 @@ public class PurchaseRow {
 
     public PurchaseRow() {
         InvalidationListener recalculate = _ -> recalcTaxable();
-
         gross.addListener(recalculate);
         exempt.addListener(recalculate);
+        zeroRated.addListener(recalculate);
     }
 
     public IntegerProperty dayProperty() {
@@ -81,32 +81,11 @@ public class PurchaseRow {
     }
 
     private void recalcTaxable() {
-        BigDecimal vatInclusive = nz(gross.get())
-                .subtract(nz(exempt.get()));
-
-        if (vatInclusive.signum() < 0) {
-            vatInclusive = BigDecimal.ZERO;
-        }
-
-        taxable.set(
-                vatInclusive.divide(
-                        VAT_DIVISOR,
-                        2,
-                        RoundingMode.HALF_UP
-                )
-        );
+        taxable.set(vatBase().divide(VAT_DIVISOR, 2, RoundingMode.HALF_UP));
     }
 
     public BigDecimal getInputVat() {
-        BigDecimal vatInclusive = nz(gross.get())
-                .subtract(nz(exempt.get()));
-
-        if (vatInclusive.signum() < 0) {
-            vatInclusive = BigDecimal.ZERO;
-        }
-
-        return vatInclusive.subtract(nz(taxable.get()))
-                .setScale(2, RoundingMode.HALF_UP);
+        return vatBase().subtract(nz(taxable.get())).setScale(2, RoundingMode.HALF_UP);
     }
 
     public BigDecimal getGross() {
@@ -116,7 +95,10 @@ public class PurchaseRow {
     public BigDecimal getTotalAmount() {
         return nz(gross.get());
     }
-
+    private BigDecimal vatBase() {   // Total Amt. of VAT - VAT Exempt - Zero-rated
+        BigDecimal base = nz(gross.get()).subtract(nz(exempt.get())).subtract(nz(zeroRated.get()));
+        return base.signum() < 0 ? BigDecimal.ZERO : base;
+    }
     public boolean isEmpty() {
         return (invoiceNo.get() == null || invoiceNo.get().isBlank())
                 && supplier.get() == null

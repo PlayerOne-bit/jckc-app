@@ -23,7 +23,8 @@ import jakarta.mail.Store;
 import jakarta.mail.UIDFolder;
 import jakarta.mail.internet.MimeUtility;
 import jakarta.mail.search.FromStringTerm;
-
+import jakarta.mail.search.OrTerm;
+import jakarta.mail.search.SearchTerm;
 /**
  * Loads the taxpayer's BIR confirmation emails. Messages are cached in the local
  * database, so opening the page is instant and the mail server is only asked for
@@ -36,7 +37,7 @@ import jakarta.mail.search.FromStringTerm;
 public class BirMailViewModel {
 
     /** Change this to read mail from another sender (any part of the From address works). */
-    public static final String BIR_SENDER = "ebirforms-noreply@bir.gov.ph";
+    public static final String[] BIR_SENDERS = {"ebirforms-noreply@bir.gov.ph","esubmission@bir.gov.ph"};
 
     /** "INBOX", or "[Gmail]/All Mail" to also include mail filed under labels/spam (Gmail only). */
     private static final String GMAIL_FOLDER = "INBOX";
@@ -108,6 +109,14 @@ public class BirMailViewModel {
     private static boolean has(String s) {
         return s != null && !s.isBlank();
     }
+    /** Matches mail from any address in BIR_SENDERS. */
+    private static SearchTerm senderTerm() {
+        SearchTerm[] terms = new SearchTerm[BIR_SENDERS.length];
+        for (int i = 0; i < BIR_SENDERS.length; i++) {
+            terms[i] = new FromStringTerm(BIR_SENDERS[i]);
+        }
+        return terms.length == 1 ? terms[0] : new OrTerm(terms);
+    }
 
     public Credentials getCredentials() {
         return credentials;
@@ -167,7 +176,7 @@ public class BirMailViewModel {
                 boolean reset = state.uidValidity() != null && state.uidValidity() != validity;
                 long maxUid = reset ? 0 : state.maxUid();
 
-                Message[] found = folder.search(new FromStringTerm(BIR_SENDER));
+                Message[] found = folder.search(senderTerm());
                 FetchProfile fp = new FetchProfile();
                 fp.add(UIDFolder.FetchProfileItem.UID);
                 folder.fetch(found, fp);                 // all uids in one round trip
@@ -198,7 +207,7 @@ public class BirMailViewModel {
         LocalDateTime when = date == null ? LocalDateTime.of(1970, 1, 1, 0, 0)
                 : LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
         String from = m.getFrom() == null || m.getFrom().length == 0
-                ? BIR_SENDER : MimeUtility.decodeText(m.getFrom()[0].toString());
+                ? BIR_SENDERS[0] : MimeUtility.decodeText(m.getFrom()[0].toString());
         String subject = m.getSubject() == null ? "(no subject)" : m.getSubject();
 
         List<String> attachments = new ArrayList<>();
@@ -274,7 +283,7 @@ public class BirMailViewModel {
                 boolean reset = state.uidValidity() != null && state.uidValidity() != validity;
                 long maxUid = reset ? 0 : state.maxUid();
 
-                Message[] found = folder.search(new FromStringTerm(BIR_SENDER));
+                Message[] found = folder.search(senderTerm());
                 FetchProfile fp = new FetchProfile();
                 fp.add(UIDFolder.FetchProfileItem.UID);
                 folder.fetch(found, fp);

@@ -156,7 +156,7 @@
                                     <Button id="auth-button" fx:id="sAddBtn" mnemonicParsing="false" stylesheets="@application.css" text="New Sale Row">
                                        <graphic><FontIcon fill="WHITE" iconLiteral="fas-plus" /></graphic>
                                     </Button>
-                                    <Text text="Ctrl + N" />
+                                    <Text text="Ctrl + Enter" />
                                     <HBox alignment="CENTER_RIGHT" spacing="10.0" HBox.hgrow="ALWAYS">
                                        <children>
                                           <CheckBox fx:id="sHideExempt" mnemonicParsing="false" text="Hide VAT Exempt" />
@@ -240,7 +240,7 @@
                                     <Button id="auth-button" fx:id="pAddBtn" mnemonicParsing="false" stylesheets="@application.css" text="New Purchase Row">
                                        <graphic><FontIcon fill="WHITE" iconLiteral="fas-plus" /></graphic>
                                     </Button>
-                                    <Text text="Ctrl + N" />
+                                    <Text text="Ctrl + Enter" />
                                     <HBox alignment="CENTER_RIGHT" spacing="10.0" HBox.hgrow="ALWAYS">
                                        <children>
                                           <CheckBox fx:id="pHideExempt" mnemonicParsing="false" text="Hide VAT Exempt" />
@@ -294,4 +294,11 @@
          </right>
       </BorderPane>
    </center>
+   <bottom>
+      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="back=Esc    Save=Ctrl+S    DeleteSlsp=Ctrl+D    DeleteRow=Ctrl+W    UseCalc=Ctrl+E    ClearCalc=Ctrl+Delete    Buyer/Supplier=Ctrl+B    Undo=Ctrl+Z    Redo=Ctrl+Y" BorderPane.alignment="CENTER_LEFT">
+         <BorderPane.margin>
+            <Insets bottom="10.0" left="10.0" />
+         </BorderPane.margin>
+      </Text>
+   </bottom>
 </BorderPane>

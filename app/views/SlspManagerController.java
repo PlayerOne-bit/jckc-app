@@ -39,6 +39,7 @@ import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
@@ -118,13 +119,34 @@ public class SlspManagerController {
                     r.exemptProperty(), r.zeroRatedProperty(), r.grossInputProperty() });
 
     // Used once when loading an existing SLSP (no live sorting, so new rows stay at the bottom)
-    private static final Comparator<SaleRow> SALE_ORDER = Comparator
-            .comparingInt((SaleRow r) -> r.dayProperty().get())
-            .thenComparing(r -> r.invoiceNoProperty().get(), Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
+ // SALES: Day of month -> Invoice number
+    private static final Comparator<SaleRow> SALE_ORDER =
+            Comparator.comparingInt(
+                    (SaleRow r) -> r.dayProperty().get()
+            ).thenComparing(
+                    r -> r.invoiceNoProperty().get(),
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            );
 
-    private static final Comparator<PurchaseRow> PURCHASE_ORDER = Comparator
-            .comparingInt((PurchaseRow r) -> r.dayProperty().get())
-            .thenComparing(r -> r.invoiceNoProperty().get(), Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER));
+    // PURCHASES: Supplier name -> Day of month -> Invoice number
+    private final Comparator<PurchaseRow> purchaseOrder =
+            Comparator.comparing(
+                    (PurchaseRow r) -> {
+                        Supplier supplier = r.supplierProperty().get();
+
+                        if (supplier == null || supplier.getTradeName() == null) {
+                            return "";
+                        }
+
+                        return supplier.getTradeName().trim();
+                    },
+                    String.CASE_INSENSITIVE_ORDER
+            ).thenComparingInt(
+                    r -> r.dayProperty().get()
+            ).thenComparing(
+                    r -> r.invoiceNoProperty().get(),
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+            );
 
     private final ObservableList<Integer> dayOptions = FXCollections.observableArrayList();
     private ObservableList<Supplier> suppliers = FXCollections.observableArrayList();
@@ -162,7 +184,7 @@ public class SlspManagerController {
         Pages.bindShortcut(sumInput, "Ctrl+Delete", this::clearSumInput);
         Pages.bindShortcut(root, "Ctrl+E", sumInput);
         Pages.bindShortcut(root, "Ctrl+B", this::Supplier);
-        Pages.bindShortcut(root, "Ctrl+N", this::onAddRowShortcut);
+        Pages.bindShortcut(root, "Ctrl+Enter", this::onAddRowShortcut);
         bindUndoShortcut();
 
         baseTitle = "SLSP : " + Taxpayer.getTaxpayer().getTradeName();
@@ -258,38 +280,54 @@ public class SlspManagerController {
 
     private void loadExisting(SLSP slsp) throws Exception {
         vm.loadForPeriod(slsp.getPeriod());
+
         YearMonth ym = slsp.getYearMonth();
+
         years.setValue(ym.getYear());
         months.getSelectionModel().select(ym.getMonthValue() - 1);
         delBtn.setVisible(true);
 
+        // Load sales.
         for (Sale sale : vm.getSales()) {
             SaleRow row = new SaleRow();
-            row.dayProperty().set(LocalDate.parse(sale.getSaleDate()).getDayOfMonth());
+
+            row.dayProperty().set(
+                    LocalDate.parse(sale.getSaleDate()).getDayOfMonth()
+            );
+
             row.invoiceNoProperty().set(sale.getSiNum());
             row.exemptProperty().set(nz(sale.getExemptAmount()));
             row.zeroRatedProperty().set(nz(sale.getZeroRatedAmount()));
-            row.grossProperty().set(nz(sale.getGrossAmount()));   // taxable is derived from this
+            row.grossProperty().set(nz(sale.getGrossAmount()));
+
             saleRows.add(row);
         }
 
+        // Load purchases.
         for (Purchase purchase : vm.getPurchases()) {
             PurchaseRow row = new PurchaseRow();
-            row.dayProperty().set(LocalDate.parse(purchase.getPurchaseDate()).getDayOfMonth());
+
+            row.dayProperty().set(
+                    LocalDate.parse(purchase.getPurchaseDate()).getDayOfMonth()
+            );
+
             Supplier matchingSupplier = suppliers.stream()
                     .filter(s -> s.getId() == purchase.getSupplierId())
-                    .findFirst().orElse(null);
+                    .findFirst()
+                    .orElse(null);
+
             row.supplierProperty().set(matchingSupplier);
             row.invoiceNoProperty().set(purchase.getInvoiceNum());
             row.exemptProperty().set(nz(purchase.getExemptAmount()));
             row.zeroRatedProperty().set(nz(purchase.getZeroRatedAmount()));
-            row.grossProperty().set(nz(purchase.getGrossAmount()));   // taxable is derived from this
+            row.grossProperty().set(nz(purchase.getGrossAmount()));
+
             purchaseRows.add(row);
         }
 
-        // Sort once on load; after this, rows stay in insertion order
+        // Sort after loading all records.
         FXCollections.sort(saleRows, SALE_ORDER);
-        FXCollections.sort(purchaseRows, PURCHASE_ORDER);
+        FXCollections.sort(purchaseRows, purchaseOrder);
     }
 
     // ---------- Day-of-month restriction ----------
@@ -1154,18 +1192,30 @@ public class SlspManagerController {
             List<Sale> sales = new java.util.ArrayList<>();
             for (SaleRow row : saleRows) {
                 if (row.isEmpty()) continue;
+                BigDecimal gross = row.grossProperty().get();
+                if (gross == null || gross.signum() == 0) {
+                    showAlert("Cannot save", "Sale row " + (saleRows.indexOf(row) + 1)
+                            + " has a Total Amount of zero. Enter an amount or delete the row.");
+                    return false;
+                }
                 Sale sale = new Sale();
                 sale.setSaleDate(ym.atDay(row.dayProperty().get()).toString());
                 sale.setSiNum(row.invoiceNoProperty().get());
                 sale.setExemptAmount(row.exemptProperty().get());
                 sale.setZeroRatedAmount(row.zeroRatedProperty().get());
-                sale.setGrossAmount(row.grossProperty().get()); 
+                sale.setGrossAmount(gross);
                 sales.add(sale);
             }
 
             List<Purchase> purchases = new java.util.ArrayList<>();
             for (PurchaseRow row : purchaseRows) {
                 if (row.isEmpty()) continue;
+                BigDecimal gross = row.grossProperty().get();
+                if (gross == null || gross.signum() == 0) {
+                    showAlert("Cannot save", "Purchase row " + (purchaseRows.indexOf(row) + 1)
+                            + " has a Gross Taxable amount of zero. Enter an amount or delete the row.");
+                    return false;
+                }
                 Purchase purchase = new Purchase();
                 purchase.setPurchaseDate(ym.atDay(row.dayProperty().get()).toString());
                 Supplier s = row.supplierProperty().get();
@@ -1177,7 +1227,7 @@ public class SlspManagerController {
                 purchase.setInvoiceNum(row.invoiceNoProperty().get());
                 purchase.setExemptAmount(row.exemptProperty().get());
                 purchase.setZeroRatedAmount(row.zeroRatedProperty().get());
-                purchase.setGrossAmount(row.grossProperty().get());
+                purchase.setGrossAmount(gross);
                 purchases.add(purchase);
             }
 
@@ -1225,7 +1275,6 @@ public class SlspManagerController {
 
         BigDecimal sum = BigDecimal.ZERO;
         sumContainer.getChildren().clear();
-
         for (BigDecimal amount : total) {
             TextField newTextField = new TextField(
                     "₱ " + String.format("%,.2f", amount)
@@ -1238,12 +1287,15 @@ public class SlspManagerController {
                     -fx-background-radius: 0;
                     -fx-padding: 0;
                     -fx-text-fill: black;
-                    -fx-alignment: center;
                     """);
-
+            newTextField.setAlignment(javafx.geometry.Pos.CENTER_RIGHT); 
             newTextField.addEventHandler(
                     MouseEvent.MOUSE_CLICKED,
-                    _ -> deleteTextField(amount, newTextField, e)
+                    event ->{
+                    	if (event.getButton() == MouseButton.SECONDARY) {
+                    }
+                        deleteTextField(amount, newTextField, e);
+                    }
             );
 
             sum = sum.add(amount);
@@ -1283,26 +1335,32 @@ public class SlspManagerController {
     @FXML
     public void SaveSlsp(ActionEvent e) {
         if (!persistSlsp()) return;
+
         sortRows();
         markClean();
-        editingSlsp = null;
+
+        editingSlsp = vm.getSlsp();
     }
 
     private void sortRows() {
-        // Commit/cancel any in-progress cell edit so the sort doesn't fight it
+        // Finish editing before sorting.
         sTable.edit(-1, null);
         pTable.edit(-1, null);
 
-        historyPaused = true;   // reordering isn't an undoable user edit
+        historyPaused = true;
+
         try {
             FXCollections.sort(saleRows, SALE_ORDER);
-            FXCollections.sort(purchaseRows, PURCHASE_ORDER);
+            FXCollections.sort(purchaseRows, purchaseOrder);
         } finally {
             historyPaused = false;
         }
 
-        lastSnapshot = captureSnapshot();   // new baseline, so the next undo doesn't jump back to the unsorted order
-        sTable.refresh();                   // refreshes the # column
+        // Update the undo baseline after sorting.
+        lastSnapshot = captureSnapshot();
+
+        // Refresh row numbers and displayed values.
+        sTable.refresh();
         pTable.refresh();
     }
 
@@ -1335,6 +1393,11 @@ public class SlspManagerController {
     @FXML
     public void Supplier(ActionEvent e) {
         if (!confirmLeave()) return;
+        // If this SLSP exists in the DB (already existing, or just saved via the prompt),
+        // make sure coming back reloads it in edit state instead of as a new one.
+        if (vm.isExisting()) {
+            editingSlsp = vm.getSlsp();
+        }
         Pages.change(e, Pages.SUPPLIER);
     }
     private static class MoneyCell<T> extends TextFieldTableCell<T, BigDecimal> {

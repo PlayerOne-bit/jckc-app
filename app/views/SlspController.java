@@ -44,6 +44,7 @@ public class SlspController {
         Pages.bindShortcut(root, "Ctrl+N", this::AddSlsp);
         Pages.bindShortcut(root, "ESC", this::back);
         Pages.bindShortcut(root, "Ctrl+P", this::PrintSlsp);
+        Pages.bindShortcut(root, "Ctrl+F", searchField);
         setupListNavigation();
 
         taxpayerName.setText(Taxpayer.getTaxpayer().getName().getFullName(1));

@@ -21,7 +21,7 @@
 <?import javafx.scene.text.Text?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<BorderPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="675.0" prefWidth="1259.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.views.HomeController">
+<BorderPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="628.0" prefWidth="1259.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.views.HomeController">
    <top>
       <BorderPane style="-fx-background-color: pink;" BorderPane.alignment="CENTER">
          <left>
@@ -569,7 +569,7 @@
       </BorderPane>
    </center>
    <bottom>
-      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Logout = ESC    New = Ctrl+N    Edit=Ctrl+E    Delete=Ctrl+D    Find=Ctrl+F" BorderPane.alignment="CENTER_LEFT">
+      <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Logout=Esc    New=Ctrl+N    Edit=Ctrl+E    Delete=Ctrl+W    Find=Ctrl+F    Navigate=Up/Down     Print=Ctrl+P    CheckBIRconfirmation=F1    SLSP=F2" BorderPane.alignment="CENTER_LEFT">
          <BorderPane.margin>
             <Insets bottom="10.0" left="10.0" />
          </BorderPane.margin>

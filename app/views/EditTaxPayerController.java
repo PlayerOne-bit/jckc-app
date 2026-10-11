@@ -130,7 +130,7 @@ public class EditTaxPayerController {
 	private void setUpTextOnly(TextField t) {
 		t.setTextFormatter(new TextFormatter<>(change -> {
             String newText = change.getControlNewText();
-            if (newText.matches("[a-zA-Z,\\.\\- ]*")) {
+            if (newText.matches("[a-zA-Z,\\.\\- ñÑ]*")) {
                 return change;
             }
             return null;

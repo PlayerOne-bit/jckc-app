@@ -82,26 +82,16 @@ public class Purchase {
                 ? grossAmount : BigDecimal.ZERO;
     }
 
-    // Purchases subject to 12% VAT (VAT-exclusive)
-    public BigDecimal getTaxableAmount() {
-        BigDecimal vatInclusivePurchases = grossAmount
-                .subtract(exemptAmount)
-                .subtract(zeroRatedAmount);
-
-        return vatInclusivePurchases.divide(
-                VAT_DIVISOR,
-                2,
-                RoundingMode.HALF_UP
-        );
+    private BigDecimal vatBase() {   // Total Amt. of VAT - VAT Exempt - Zero-rated, never below zero
+        BigDecimal base = grossAmount.subtract(exemptAmount).subtract(zeroRatedAmount);
+        return base.signum() < 0 ? BigDecimal.ZERO : base;
     }
 
-    // Input VAT (12%)
-    public BigDecimal getInputVat() {
-        BigDecimal vatInclusivePurchases = grossAmount
-                .subtract(exemptAmount)
-                .subtract(zeroRatedAmount);
+    public BigDecimal getTaxableAmount() {
+        return vatBase().divide(VAT_DIVISOR, 2, RoundingMode.HALF_UP);
+    }
 
-        return vatInclusivePurchases.subtract(getTaxableAmount())
-                .setScale(2, RoundingMode.HALF_UP);
+    public BigDecimal getInputVat() {
+        return vatBase().subtract(getTaxableAmount()).setScale(2, RoundingMode.HALF_UP);
     }
 }

@@ -76,7 +76,7 @@ public class HomeController {
 			Pages.bindShortcut(root,"Ctrl+F",searchField);
 			Pages.bindShortcut(root,"Ctrl+N",this::AddTaxpayer);
 			Pages.bindShortcut(root,"Ctrl+E",this::EditTaxpayer);
-			Pages.bindShortcut(root,"Ctrl+D",this::DeleteTaxpayer);
+			Pages.bindShortcut(root,"Ctrl+W",this::DeleteTaxpayer);
 			Pages.bindShortcut(root, "Ctrl+P", this::PrintTaxpayer);
 			Pages.bindShortcut(root,"ESC",this::Logout);
 			Pages.bindShortcut(root,"UP",this::SelectPrevious);

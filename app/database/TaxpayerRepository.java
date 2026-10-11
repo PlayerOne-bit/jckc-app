@@ -184,6 +184,13 @@ public class TaxpayerRepository {
                 DATABASE.DELETE_SUPPLIER_BY_TAX_ID,
                 taxId
             );
+         // 7b. Delete cached BIR mails (table is created lazily, so it may not exist yet)
+            if (tableExists("BirMail")) {
+                deleteChildByTaxId(
+                    DATABASE.DELETE_BIR_MAIL_BY_TAX_ID,
+                    taxId
+                );
+            }
 
             // 8. Delete taxpayer
             try (PreparedStatement ps =
@@ -202,10 +209,6 @@ public class TaxpayerRepository {
 
             sql.commit();
 
-            System.out.println(
-                "Taxpayer and related records deleted: " + taxId
-            );
-
         } catch (SQLException e) {
 
             sql.rollback();
@@ -214,6 +217,15 @@ public class TaxpayerRepository {
         } finally {
 
             sql.setAutoCommit(true);
+        }
+    }
+    private boolean tableExists(String table) throws SQLException {
+        try (PreparedStatement ps = sql.prepareStatement(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?")) {
+            ps.setString(1, table);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
         }
     }
 
@@ -805,5 +817,7 @@ public class TaxpayerRepository {
 
         static final String DELETE_SUPPLIER_BY_TAX_ID =
                 "DELETE FROM Supplier WHERE taxId = ?";
+        static final String DELETE_BIR_MAIL_BY_TAX_ID =
+                "DELETE FROM BirMail WHERE taxId = ?";
     }
 }

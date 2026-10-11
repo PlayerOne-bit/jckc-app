@@ -126,6 +126,8 @@ public class TaxpayerBirConfirmationController {
         Pages.bindShortcut(root, "ESC", this::back);
         Pages.bindShortcut(root, "Ctrl+P", this::PrintConfirmation);
         Pages.bindShortcut(root, "Ctrl+E", this::ManageAppPassword);
+        Pages.bindShortcut(root, "Ctrl+F", searchField);
+        Pages.bindShortcut(root, "Ctrl+W", this::ClearCache);
 
         vm = new BirMailViewModel();
 
@@ -306,13 +308,12 @@ public class TaxpayerBirConfirmationController {
         statusText.setText(
                 all.isEmpty()
                         ? "No messages from "
-                                + BirMailViewModel.BIR_SENDER
+                                + String.join(", ", BirMailViewModel.BIR_SENDERS)
                                 + " in " + accountEmail
                         : all.size() + " message(s)"
                                 + (outcome.newCount() == 0
                                         ? ""
-                                        : ", " + outcome.newCount()
-                                                + " new")
+                                        : ", " + outcome.newCount() + " new")
         );
     }
 
@@ -604,16 +605,11 @@ public class TaxpayerBirConfirmationController {
                         + escape(from.substring(lt))
                 : "<b>" + escape(from) + "</b>";
 
-        String replyTo = item.replyTo().isBlank()
-                ? ""
-                : "Reply-To: "
-                        + escape(item.replyTo())
-                        + "<br>";
-
         String to = item.to().isBlank()
                 ? ""
                 : "To: "
                         + escape(item.to())
+                        + "<br>"
                         + "<br>";
 
         String attachment = item.attachments().isEmpty()
@@ -676,7 +672,6 @@ public class TaxpayerBirConfirmationController {
                 + "<td style='vertical-align:top'>"
                 + fromHtml
                 + "<br>"
-                + replyTo
                 + to
                 + "</td>"
 
