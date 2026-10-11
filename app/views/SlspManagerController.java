@@ -682,7 +682,17 @@ public class SlspManagerController {
 
         table.addEventFilter(KeyEvent.KEY_PRESSED, ev -> {
             KeyCode code = ev.getCode();
+            if (ev.isControlDown() && ev.getCode() == KeyCode.W) {
+                ev.consume();
 
+                int selectedIndex = table.getSelectionModel().getSelectedIndex();
+
+                if (selectedIndex >= 0) {
+                    table.getItems().remove(selectedIndex);
+                }
+
+                return;
+            }
             // Allow the ComboBox to handle Enter before table navigation.
             if (code == KeyCode.ENTER
                     && table.getEditingCell() != null
@@ -818,7 +828,7 @@ public class SlspManagerController {
             if (ev.getTarget() instanceof TextField textField) {
                 textField.fireEvent(new ActionEvent(textField, textField));
             }
-
+            
             int targetRow = row;
             int targetCol;
 
@@ -1194,6 +1204,8 @@ public class SlspManagerController {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(new Image(getClass().getResourceAsStream("/app/views/fxml/images/logo.png")));
         alert.showAndWait();
     }
 
@@ -1303,7 +1315,8 @@ public class SlspManagerController {
                 ButtonType.YES, ButtonType.NO);
         confirm.setTitle("Delete SLSP");
         confirm.setHeaderText(null);
-
+        Stage stage = (Stage) confirm.getDialogPane().getScene().getWindow();
+        stage.getIcons().add(new Image(getClass().getResourceAsStream("/app/views/fxml/images/logo.png")));
         Optional<ButtonType> result = confirm.showAndWait();
         if (result.isEmpty() || result.get() != ButtonType.YES) return;
 

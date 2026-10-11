@@ -36,7 +36,7 @@ import jakarta.mail.search.FromStringTerm;
 public class BirMailViewModel {
 
     /** Change this to read mail from another sender (any part of the From address works). */
-    public static final String BIR_SENDER = "noreply@steampowered.com";//ebirforms-noreply@bir.gov.ph
+    public static final String BIR_SENDER = "ebirforms-noreply@bir.gov.ph";
 
     /** "INBOX", or "[Gmail]/All Mail" to also include mail filed under labels/spam (Gmail only). */
     private static final String GMAIL_FOLDER = "INBOX";

@@ -88,18 +88,19 @@
          <left>
             <VBox maxWidth="380.0" minWidth="380.0" prefWidth="380.0" spacing="8.0" BorderPane.alignment="CENTER">
                <children>
+                  <TextField fx:id="statusText" editable="false" styleClass="copy-edit-text" stylesheets="@application.css">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                  </TextField>
                   <HBox alignment="CENTER_LEFT" spacing="10.0">
                      <children>
+                        <TextField fx:id="searchField" promptText="Search messages" HBox.hgrow="ALWAYS" />
                         <Button id="auth-button" fx:id="refreshBtn" mnemonicParsing="false" onAction="#refresh" stylesheets="@application.css" text="Refresh">
                            <graphic>
                               <FontIcon fill="WHITE" iconLiteral="fas-sync-alt" iconSize="16" />
                            </graphic>
                         </Button>
-                        <TextField fx:id="statusText" editable="false" styleClass="copy-edit-text" stylesheets="@application.css" HBox.hgrow="ALWAYS">
-                           <font>
-                              <Font name="System Bold" size="12.0" />
-                           </font>
-                        </TextField>
                      </children>
                   </HBox>
 
