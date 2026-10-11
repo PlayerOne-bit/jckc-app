@@ -1,6 +1,5 @@
 package app.database;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -221,9 +220,9 @@ public class SlspRepository {
             ps.setInt(1, sale.getSlspId());
             ps.setString(2, sale.getSiNum());
             ps.setString(3, sale.getSaleDate());
-            ps.setString(4, fromAmount(sale.getExemptAmount()));
-            ps.setString(5, fromAmount(sale.getZeroRatedAmount()));
-            ps.setString(6, fromAmount(sale.getTaxableAmount()));
+            ps.setBigDecimal(4, sale.getExemptAmount());
+            ps.setBigDecimal(5, sale.getZeroRatedAmount());
+            ps.setBigDecimal(6, sale.getGrossAmount());
             ps.executeUpdate();
 
             try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -241,9 +240,9 @@ public class SlspRepository {
         try (PreparedStatement ps = sql.prepareStatement(DATABASE.UPDATE_SALE)) {
             ps.setString(1, sale.getSiNum());
             ps.setString(2, sale.getSaleDate());
-            ps.setString(3, fromAmount(sale.getExemptAmount()));
-            ps.setString(4, fromAmount(sale.getZeroRatedAmount()));
-            ps.setString(5, fromAmount(sale.getTaxableAmount()));
+            ps.setBigDecimal(3, sale.getExemptAmount());
+            ps.setBigDecimal(4, sale.getZeroRatedAmount());
+            ps.setBigDecimal(5, sale.getGrossAmount());
             ps.setInt(6, sale.getId());
             ps.executeUpdate();
         }
@@ -278,9 +277,9 @@ public class SlspRepository {
             ps.setInt(2, purchase.getSupplierId());
             ps.setString(3, purchase.getInvoiceNum());
             ps.setString(4, purchase.getPurchaseDate());
-            ps.setString(5, fromAmount(purchase.getExemptAmount()));
-            ps.setString(6, fromAmount(purchase.getZeroRatedAmount()));
-            ps.setString(7, fromAmount(purchase.getTaxableAmount()));
+            ps.setBigDecimal(5, purchase.getExemptAmount());
+            ps.setBigDecimal(6, purchase.getZeroRatedAmount());
+            ps.setBigDecimal(7, purchase.getGrossAmount());
             ps.executeUpdate();
 
             try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -299,9 +298,9 @@ public class SlspRepository {
             ps.setInt(1, purchase.getSupplierId());
             ps.setString(2, purchase.getInvoiceNum());
             ps.setString(3, purchase.getPurchaseDate());
-            ps.setString(4, fromAmount(purchase.getExemptAmount()));
-            ps.setString(5, fromAmount(purchase.getZeroRatedAmount()));
-            ps.setString(6, fromAmount(purchase.getTaxableAmount()));
+            ps.setBigDecimal(4, purchase.getExemptAmount());
+            ps.setBigDecimal(5, purchase.getZeroRatedAmount());
+            ps.setBigDecimal(6, purchase.getGrossAmount());
             ps.setInt(7, purchase.getId());
             ps.executeUpdate();
         }
@@ -337,14 +336,6 @@ public class SlspRepository {
         return LocalDateTime.now().withNano(0).toString();
     }
 
-    private static String fromAmount(BigDecimal amount) {
-        return (amount != null ? amount : BigDecimal.ZERO).toPlainString();
-    }
-
-    private static BigDecimal toAmount(String text) {
-        return (text == null || text.isBlank()) ? BigDecimal.ZERO : new BigDecimal(text);
-    }
-
     private SLSP mapSLSP(ResultSet rs) throws SQLException {
         SLSP slsp = new SLSP();
         slsp.setId(rs.getInt(DATABASE.COLUMN_S_ID));
@@ -361,9 +352,9 @@ public class SlspRepository {
         sale.setSlspId(rs.getInt(DATABASE.COLUMN_SA_SLSP_ID));
         sale.setSiNum(rs.getString(DATABASE.COLUMN_SA_SI_NUM));
         sale.setSaleDate(rs.getString(DATABASE.COLUMN_SA_SALE_DATE));
-        sale.setExemptAmount(toAmount(rs.getString(DATABASE.COLUMN_SA_EXEMPT)));
-        sale.setZeroRatedAmount(toAmount(rs.getString(DATABASE.COLUMN_SA_ZERO_RATED)));
-        sale.setTaxableAmount(toAmount(rs.getString(DATABASE.COLUMN_SA_TAXABLE)));
+        sale.setExemptAmount(rs.getBigDecimal(DATABASE.COLUMN_SA_EXEMPT));
+        sale.setZeroRatedAmount(rs.getBigDecimal(DATABASE.COLUMN_SA_ZERO_RATED));
+        sale.setGrossAmount(rs.getBigDecimal(DATABASE.COLUMN_SA_GROSS));
         return sale;
     }
 
@@ -374,9 +365,9 @@ public class SlspRepository {
         purchase.setSupplierId(rs.getInt(DATABASE.COLUMN_PU_SUPPLIER_ID));
         purchase.setInvoiceNum(rs.getString(DATABASE.COLUMN_PU_INVOICE_NUM));
         purchase.setPurchaseDate(rs.getString(DATABASE.COLUMN_PU_PURCHASE_DATE));
-        purchase.setExemptAmount(toAmount(rs.getString(DATABASE.COLUMN_PU_EXEMPT)));
-        purchase.setZeroRatedAmount(toAmount(rs.getString(DATABASE.COLUMN_PU_ZERO_RATED)));
-        purchase.setTaxableAmount(toAmount(rs.getString(DATABASE.COLUMN_PU_TAXABLE)));
+        purchase.setExemptAmount(rs.getBigDecimal(DATABASE.COLUMN_PU_EXEMPT));
+        purchase.setZeroRatedAmount(rs.getBigDecimal(DATABASE.COLUMN_PU_ZERO_RATED));
+        purchase.setGrossAmount(rs.getBigDecimal(DATABASE.COLUMN_PU_GROSS));
         return purchase;
     }
 
@@ -394,7 +385,7 @@ public class SlspRepository {
         static final String COLUMN_SA_SALE_DATE = "saleDate";
         static final String COLUMN_SA_EXEMPT = "exemptAmount";
         static final String COLUMN_SA_ZERO_RATED = "zeroRatedAmount";
-        static final String COLUMN_SA_TAXABLE = "taxableAmount";
+        static final String COLUMN_SA_GROSS = "grossAmount";
 
         static final String COLUMN_PU_ID = "id";
         static final String COLUMN_PU_SLSP_ID = "slspId";
@@ -403,7 +394,7 @@ public class SlspRepository {
         static final String COLUMN_PU_PURCHASE_DATE = "purchaseDate";
         static final String COLUMN_PU_EXEMPT = "exemptAmount";
         static final String COLUMN_PU_ZERO_RATED = "zeroRatedAmount";
-        static final String COLUMN_PU_TAXABLE = "taxableAmount";
+        static final String COLUMN_PU_GROSS = "grossAmount";
 
         static final String SELECT_ALL_SLSP =
                 "SELECT * FROM SLSP ORDER BY dateModified DESC";
@@ -431,7 +422,7 @@ public class SlspRepository {
                 "SELECT * FROM SLSP WHERE taxId = ? AND period = ?";
         static final String INSERT_SALE =
                 "INSERT INTO Sale " +
-                "(slspId, siNum, saleDate, exemptAmount, zeroRatedAmount, taxableAmount) " +
+                "(slspId, siNum, saleDate, exemptAmount, zeroRatedAmount, grossAmount) " +
                 "VALUES (?, ?, ?, ?, ?, ?)";
         static final String UPDATE_SALE =
                 "UPDATE Sale SET " +
@@ -439,7 +430,7 @@ public class SlspRepository {
                 "saleDate = ?, " +
                 "exemptAmount = ?, " +
                 "zeroRatedAmount = ?, " +
-                "taxableAmount = ? " +
+                "grossAmount = ? " +
                 "WHERE id = ?";
         static final String DELETE_SALE =
                 "DELETE FROM Sale WHERE id = ?";
@@ -451,7 +442,7 @@ public class SlspRepository {
         static final String INSERT_PURCHASE =
                 "INSERT INTO Purchase " +
                 "(slspId, supplierId, invoiceNum, purchaseDate, " +
-                "exemptAmount, zeroRatedAmount, taxableAmount) " +
+                "exemptAmount, zeroRatedAmount, grossAmount) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?)";
         static final String UPDATE_PURCHASE =
                 "UPDATE Purchase SET " +
@@ -460,7 +451,7 @@ public class SlspRepository {
                 "purchaseDate = ?, " +
                 "exemptAmount = ?, " +
                 "zeroRatedAmount = ?, " +
-                "taxableAmount = ? " +
+                "grossAmount = ? " +
                 "WHERE id = ?";
         static final String DELETE_PURCHASE =
                 "DELETE FROM Purchase WHERE id = ?";

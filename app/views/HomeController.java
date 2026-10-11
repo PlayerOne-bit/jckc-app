@@ -81,6 +81,7 @@ public class HomeController {
 			Pages.bindShortcut(root,"ESC",this::Logout);
 			Pages.bindShortcut(root,"UP",this::SelectPrevious);
 			Pages.bindShortcut(root,"DOWN",this::SelectNext);
+			Pages.bindShortcut(root, "F1", this::BirConfirmation);
 			Pages.bindShortcut(root, "F2", this::SLSP);
 			
 			if (this.isTaxpayerSelected) loadTaxpayer(Taxpayer.getTaxpayer());

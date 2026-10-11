@@ -4,13 +4,12 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 public class Sale {
-	private static final BigDecimal VAT_RATE = new BigDecimal("0.12");
 	private int id, slspId;
 	private String siNum, saleDate;
 	private BigDecimal 
 			exemptAmount = BigDecimal.ZERO,
             zeroRatedAmount = BigDecimal.ZERO,
-            taxableAmount = BigDecimal.ZERO;
+            grossAmount = BigDecimal.ZERO;
 	public int getId() {
 		return id;
 	}
@@ -47,16 +46,30 @@ public class Sale {
 	public void setZeroRatedAmount(BigDecimal zeroRatedAmount) {
 		this.zeroRatedAmount = (zeroRatedAmount!=null)?zeroRatedAmount:BigDecimal.ZERO;
 	}
-	public BigDecimal getTaxableAmount() {
-		return taxableAmount;
+	public BigDecimal getGrossAmount() {
+		return grossAmount;
 	}
-	public void setTaxableAmount(BigDecimal taxableAmount) {
-		this.taxableAmount = (taxableAmount!=null)?taxableAmount:BigDecimal.ZERO;
+	public void setGrossAmount(BigDecimal grossAmount) {
+	    this.grossAmount = (grossAmount != null)
+	            ? grossAmount : BigDecimal.ZERO;
 	}
 	public BigDecimal getOutputVat() {
-		return taxableAmount.multiply(VAT_RATE).setScale(2,RoundingMode.HALF_UP);
+	    BigDecimal vatInclusiveSales = grossAmount
+	            .subtract(exemptAmount)
+	            .subtract(zeroRatedAmount);
+
+	    return vatInclusiveSales.subtract(getTaxableAmount())
+	            .setScale(2, RoundingMode.HALF_UP);
 	}
-	public BigDecimal getGrossAmount() {
-		return exemptAmount.add(zeroRatedAmount).add(taxableAmount).add(getOutputVat());
+	public BigDecimal getTaxableAmount() {
+	    BigDecimal vatInclusiveSales = grossAmount
+	            .subtract(exemptAmount)
+	            .subtract(zeroRatedAmount);
+
+	    return vatInclusiveSales.divide(
+	            new BigDecimal("1.12"),
+	            2,
+	            RoundingMode.HALF_UP
+	    );
 	}
 }

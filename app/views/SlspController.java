@@ -43,6 +43,7 @@ public class SlspController {
     private void initialize() throws Exception {
         Pages.bindShortcut(root, "Ctrl+N", this::AddSlsp);
         Pages.bindShortcut(root, "ESC", this::back);
+        Pages.bindShortcut(root, "Ctrl+P", this::PrintSlsp);
         setupListNavigation();
 
         taxpayerName.setText(Taxpayer.getTaxpayer().getName().getFullName(1));
@@ -171,5 +172,9 @@ public class SlspController {
     public void AddSlsp(ActionEvent e) {
         SlspManagerController.editingSlsp = null;
         Pages.change(e, Pages.SLSP_MANAGER);
+    }
+    @FXML
+    public void PrintSlsp(ActionEvent e) {
+    	Pages.change(e,Pages.SLSP_PRINT);
     }
 }

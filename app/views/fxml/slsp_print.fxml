@@ -19,164 +19,256 @@
 <?import javafx.scene.text.Text?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<BorderPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="608.0" prefWidth="1127.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="app.views.SlspPrintController">
-   <fx:define>
-      <ToggleGroup fx:id="rangeGroup" />
-   </fx:define>
+<BorderPane fx:id="root"
+            maxHeight="-Infinity"
+            maxWidth="-Infinity"
+            minHeight="-Infinity"
+            minWidth="-Infinity"
+            prefHeight="608.0"
+            prefWidth="1127.0"
+            xmlns="http://javafx.com/javafx/24.0.1"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="app.views.SlspPrintController">
 
-   <!-- Header (same as the other pages) -->
-   <top>
-      <BorderPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: pink;" BorderPane.alignment="CENTER">
-         <left>
-            <ImageView fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER">
-               <image>
-                  <Image url="@images/header.png" />
-               </image>
-            </ImageView>
-         </left>
-         <padding>
-            <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
-         </padding>
-      </BorderPane>
-   </top>
+    <fx:define>
+        <ToggleGroup fx:id="rangeGroup"/>
+    </fx:define>
 
-   <!-- minHeight/minWidth = 0 lets this pane always shrink to the root's size -->
-   <center>
-      <BorderPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" BorderPane.alignment="CENTER">
-         <padding>
-            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-         </padding>
+    <top>
+        <BorderPane maxHeight="1.7976931348623157E308"
+                    maxWidth="1.7976931348623157E308"
+                    style="-fx-background-color: pink;"
+                    BorderPane.alignment="CENTER">
+            <left>
+                <ImageView fitHeight="150.0"
+                           fitWidth="200.0"
+                           pickOnBounds="true"
+                           preserveRatio="true">
+                    <image>
+                        <Image url="@images/header.png"/>
+                    </image>
+                </ImageView>
+            </left>
+            <padding>
+                <Insets bottom="10.0" left="20.0" right="20.0" top="10.0"/>
+            </padding>
+        </BorderPane>
+    </top>
 
-         <!-- Title row -->
-         <top>
-            <HBox alignment="CENTER_LEFT" prefHeight="38.0" spacing="20.0" BorderPane.alignment="CENTER">
-               <children>
-                  <Button mnemonicParsing="false" onAction="#back" prefHeight="30.0" prefWidth="43.0" styleClass="copy-edit-text" stylesheets="@application.css">
-                     <cursor>
-                        <Cursor fx:constant="HAND" />
-                     </cursor>
-                     <graphic>
-                        <FontIcon iconLiteral="fas-arrow-circle-left" iconSize="30" />
-                     </graphic>
-                  </Button>
-                  <Text fx:id="titleText" strokeType="OUTSIDE" strokeWidth="0.0" text="Print SLSP">
-                     <font>
-                        <Font name="System Bold" size="24.0" />
-                     </font>
-                  </Text>
-               </children>
-               <BorderPane.margin>
-                  <Insets bottom="20.0" />
-               </BorderPane.margin>
-            </HBox>
-         </top>
+    <center>
+        <BorderPane maxHeight="1.7976931348623157E308"
+                    maxWidth="1.7976931348623157E308"
+                    minHeight="0.0"
+                    minWidth="0.0">
 
-         <!-- LEFT: print options (scrolls instead of stretching the layout) -->
-         <left>
-            <ScrollPane fitToWidth="true" hbarPolicy="NEVER" maxWidth="330.0" minWidth="330.0" prefWidth="330.0" style="-fx-background-color: transparent; -fx-background: transparent;" BorderPane.alignment="CENTER">
-               <content>
-                  <VBox spacing="8.0" style="-fx-border-color: gray; -fx-border-radius: 10; -fx-background-radius: 10;">
-                     <padding>
-                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
-                     </padding>
-                     <children>
-                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Year">
-                           <font>
-                              <Font name="System Bold" size="16.0" />
-                           </font>
-                        </Text>
-                        <ComboBox fx:id="years" maxWidth="1.7976931348623157E308" promptText="Year*" />
+            <padding>
+                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
+            </padding>
 
-                        <Separator />
-
-                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Print range">
-                           <font>
-                              <Font name="System Bold" size="16.0" />
-                           </font>
-                        </Text>
-                        <RadioButton fx:id="wholeYearRadio" mnemonicParsing="false" selected="true" text="Whole year (Jan – Dec)" toggleGroup="$rangeGroup" style="-fx-text-fill: black;"/>
-                        <RadioButton fx:id="quarterRadio" mnemonicParsing="false" text="By quarter" toggleGroup="$rangeGroup" style="-fx-text-fill: black;"/>
-                        <ComboBox fx:id="quarters" disable="true" maxWidth="1.7976931348623157E308" promptText="Select quarter*" />
-
-                        <Separator />
-
-                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Include">
-                           <font>
-                              <Font name="System Bold" size="16.0" />
-                           </font>
-                        </Text>
-                        <CheckBox fx:id="includeSales" mnemonicParsing="false" selected="true" text="Sales" style="-fx-text-fill: black;" />
-                        <CheckBox fx:id="includePurchases" mnemonicParsing="false" selected="true" text="Purchases" style="-fx-text-fill: black;"/>
-
-                        <Separator />
-
-                        <Text fx:id="coverageText" strokeType="OUTSIDE" strokeWidth="0.0" text="0 of 12 months have an SLSP" wrappingWidth="260.0" />
-                        <Text fx:id="missingText" fill="RED" strokeType="OUTSIDE" strokeWidth="0.0" wrappingWidth="260.0" />
-
-                        <Button id="green-button" fx:id="exportBtn" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#exportExcel" stylesheets="@application.css" text="Export to Excel">
-                           <graphic>
-                              <FontIcon fill="WHITE" iconLiteral="fas-file-excel" iconSize="20" />
-                           </graphic>
-                           <font>
-                              <Font size="16.0" />
-                           </font>
+            <top>
+                <HBox alignment="CENTER_LEFT"
+                      prefHeight="38.0"
+                      spacing="20.0">
+                    <children>
+                        <Button mnemonicParsing="false"
+                                onAction="#back"
+                                prefHeight="30.0"
+                                prefWidth="43.0"
+                                styleClass="copy-edit-text"
+                                stylesheets="@application.css">
+                            <cursor>
+                                <Cursor fx:constant="HAND"/>
+                            </cursor>
+                            <graphic>
+                                <FontIcon iconLiteral="fas-arrow-circle-left"
+                                          iconSize="30"/>
+                            </graphic>
                         </Button>
 
-                        <Button id="auth-button" fx:id="printBtn" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#printSlsp" stylesheets="@application.css" text="Print">
-                           <graphic>
-                              <FontIcon fill="WHITE" iconLiteral="fas-print" iconSize="20" />
-                           </graphic>
-                           <font>
-                              <Font size="16.0" />
-                           </font>
-                        </Button>
-                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Ctrl+P print, Ctrl+E export, Esc back" wrappingWidth="260.0" />
-                     </children>
-                  </VBox>
-               </content>
-            </ScrollPane>
-         </left>
-
-         <!-- CENTER: live preview -->
-         <center>
-            <VBox minHeight="0.0" minWidth="0.0" spacing="8.0" BorderPane.alignment="CENTER">
-               <BorderPane.margin>
-                  <Insets left="20.0" />
-               </BorderPane.margin>
-               <children>
-                  <HBox alignment="CENTER_LEFT" spacing="10.0">
-                     <children>
-                        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Preview">
-                           <font>
-                              <Font name="System Bold" size="16.0" />
-                           </font>
+                        <Text fx:id="titleText" text="Print SLSP">
+                            <font>
+                                <Font name="System Bold" size="24.0"/>
+                            </font>
                         </Text>
-                        <Text fx:id="previewSubtitle" strokeType="OUTSIDE" strokeWidth="0.0" text="" />
-                     </children>
-                  </HBox>
-                  <ScrollPane fitToWidth="true" style="-fx-background: #d9d9d9;" VBox.vgrow="ALWAYS">
-                     <content>
-                        <StackPane style="-fx-background-color: #d9d9d9;">
-                           <padding>
-                              <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-                           </padding>
-                           <children>
-                              <!-- the "paper" -->
-                              <VBox fx:id="previewPage" maxWidth="760.0" spacing="10.0" style="-fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 10, 0, 0, 2);">
-                                 <padding>
-                                    <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
-                                 </padding>
-                                 <children>
-                                    <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Select a year and range to preview" />
-                                 </children>
-                              </VBox>
-                           </children>
-                        </StackPane>
-                     </content>
-                  </ScrollPane>
-               </children>
-            </VBox>
-         </center>
-      </BorderPane>
-   </center>
+                    </children>
+                    <BorderPane.margin>
+                        <Insets bottom="20.0"/>
+                    </BorderPane.margin>
+                </HBox>
+            </top>
+
+            <left>
+                <ScrollPane fitToWidth="true"
+                            hbarPolicy="NEVER"
+                            maxWidth="330.0"
+                            minWidth="330.0"
+                            prefWidth="330.0"
+                            style="-fx-background-color: transparent; -fx-background: transparent;">
+                    <content>
+                        <VBox spacing="8.0"
+                              style="-fx-border-color: gray; -fx-border-radius: 10; -fx-background-radius: 10;">
+                            <padding>
+                                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0"/>
+                            </padding>
+
+                            <children>
+                                <Text text="Year">
+                                    <font>
+                                        <Font name="System Bold" size="16.0"/>
+                                    </font>
+                                </Text>
+
+                                <ComboBox fx:id="years"
+                                          maxWidth="1.7976931348623157E308"
+                                          promptText="Year*"/>
+
+                                <Separator/>
+
+                                <Text text="Print range">
+                                    <font>
+                                        <Font name="System Bold" size="16.0"/>
+                                    </font>
+                                </Text>
+
+                                <RadioButton fx:id="wholeYearRadio"
+                                             mnemonicParsing="false"
+                                             selected="true"
+                                             text="Whole year (Jan – Dec)"
+                                             toggleGroup="$rangeGroup"
+                                             style="-fx-text-fill: black;"/>
+
+                                <RadioButton fx:id="quarterRadio"
+                                             mnemonicParsing="false"
+                                             text="By quarter"
+                                             toggleGroup="$rangeGroup"
+                                             style="-fx-text-fill: black;"/>
+
+                                <ComboBox fx:id="quarters"
+                                          disable="true"
+                                          maxWidth="1.7976931348623157E308"
+                                          promptText="Select quarter*"/>
+
+                                <Separator/>
+
+                                <Text text="Include">
+                                    <font>
+                                        <Font name="System Bold" size="16.0"/>
+                                    </font>
+                                </Text>
+
+                                <CheckBox fx:id="includeSales"
+                                          mnemonicParsing="false"
+                                          selected="true"
+                                          text="Sales"
+                                          style="-fx-text-fill: black;"/>
+
+                                <CheckBox fx:id="includePurchases"
+                                          mnemonicParsing="false"
+                                          selected="true"
+                                          text="Purchases"
+                                          style="-fx-text-fill: black;"/>
+
+                                <Separator/>
+
+                                <Text fx:id="coverageText"
+                                      text="0 of 12 months have an SLSP"
+                                      wrappingWidth="260.0"/>
+
+                                <Text fx:id="missingText"
+                                      fill="RED"
+                                      wrappingWidth="260.0"/>
+
+                                <Button id="green-button"
+                                        fx:id="exportBtn"
+                                        maxWidth="1.7976931348623157E308"
+                                        mnemonicParsing="false"
+                                        onAction="#exportExcel"
+                                        stylesheets="@application.css"
+                                        text="Export to Excel">
+                                    <graphic>
+                                        <FontIcon fill="WHITE"
+                                                  iconLiteral="fas-file-excel"
+                                                  iconSize="20"/>
+                                    </graphic>
+                                    <font>
+                                        <Font size="16.0"/>
+                                    </font>
+                                </Button>
+
+                                <Button id="auth-button"
+                                        fx:id="printBtn"
+                                        maxWidth="1.7976931348623157E308"
+                                        mnemonicParsing="false"
+                                        onAction="#printSlsp"
+                                        stylesheets="@application.css"
+                                        text="Print">
+                                    <graphic>
+                                        <FontIcon fill="WHITE"
+                                                  iconLiteral="fas-print"
+                                                  iconSize="20"/>
+                                    </graphic>
+                                    <font>
+                                        <Font size="16.0"/>
+                                    </font>
+                                </Button>
+
+                                <Text text="Ctrl+P print, Ctrl+E export, Esc back"
+                                      wrappingWidth="260.0"/>
+                            </children>
+                        </VBox>
+                    </content>
+                </ScrollPane>
+            </left>
+
+            <center>
+                <VBox minHeight="0.0"
+                      minWidth="0.0"
+                      spacing="8.0">
+                    <BorderPane.margin>
+                        <Insets left="20.0"/>
+                    </BorderPane.margin>
+
+                    <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                            <children>
+                                <Text text="Preview">
+                                    <font>
+                                        <Font name="System Bold" size="16.0"/>
+                                    </font>
+                                </Text>
+                                <Text fx:id="previewSubtitle" text=""/>
+                            </children>
+                        </HBox>
+
+                        <ScrollPane fitToWidth="true"
+                                    style="-fx-background: #d9d9d9;"
+                                    VBox.vgrow="ALWAYS">
+                            <content>
+                                <StackPane style="-fx-background-color: #d9d9d9;">
+                                    <padding>
+                                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
+                                    </padding>
+
+                                    <children>
+                                        <VBox fx:id="previewPage"
+                                              maxWidth="760.0"
+                                              spacing="10.0"
+                                              style="-fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 10, 0, 0, 2);">
+                                            <padding>
+                                                <Insets bottom="25.0" left="25.0" right="25.0" top="25.0"/>
+                                            </padding>
+
+                                            <children>
+                                                <Text text="Select a year and range to preview"/>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </StackPane>
+                            </content>
+                        </ScrollPane>
+                    </children>
+                </VBox>
+            </center>
+        </BorderPane>
+    </center>
 </BorderPane>

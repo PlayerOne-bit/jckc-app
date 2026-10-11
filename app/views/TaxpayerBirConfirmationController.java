@@ -76,6 +76,7 @@ public class TaxpayerBirConfirmationController {
     private void initialize() throws Exception {
         Pages.bindShortcut(root, "ESC", this::back);
         Pages.bindShortcut(root, "Ctrl+P", this::PrintConfirmation);
+        Pages.bindShortcut(root,"Ctrl+E", this::ManageAppPassword);
 
         vm = new BirMailViewModel();
 

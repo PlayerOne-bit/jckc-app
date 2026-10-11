@@ -104,7 +104,7 @@ public class SaleRepository {
         sale.setSiNum(rs.getString(DATABASE.COLUMN_SI_NUM));
         sale.setExemptAmount(rs.getBigDecimal(DATABASE.COLUMN_EXEMPT));
         sale.setZeroRatedAmount(rs.getBigDecimal(DATABASE.COLUMN_ZERO_RATED));
-        sale.setTaxableAmount(rs.getBigDecimal(DATABASE.COLUMN_TAXABLE));
+        sale.setGrossAmount(rs.getBigDecimal(DATABASE.COLUMN_TAXABLE));
         return sale;
     }
 

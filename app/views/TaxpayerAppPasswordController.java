@@ -4,6 +4,7 @@ import java.awt.Desktop;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
 
 import org.kordamp.ikonli.javafx.FontIcon;
 
@@ -14,6 +15,8 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 
@@ -26,8 +29,13 @@ public class TaxpayerAppPasswordController {
     private static final String YAHOO_PAGE = "https://login.yahoo.com/account/security";
 
     /** Google and Yahoo both issue 16-character app passwords (shown in groups of 4). */
-    private static final String APP_PASSWORD_PATTERN = "[A-Za-z0-9]{16}";
-
+    /** Two accepted formats: abcdefghijklmnop or abcd efgh ijkl mnop (lowercase letters only). */
+    private static final String APP_PASSWORD_PATTERN = "[a-z]{16}|([a-z]{4} ){3}[a-z]{4}";
+    /** Typed or pasted text must look like abcdefghijklmnop or abcd efgh ijkl mnop (lowercase letters only). */
+    private static final Pattern PLAIN = Pattern.compile("[a-z]{0,16}");
+    private static final Pattern GROUPED = Pattern.compile("([a-z]{4} ){0,3}[a-z]{0,4}");
+    /** Only used while deleting, so you can erase a letter in the middle of a grouped value. */
+    private static final Pattern GROUPED_LOOSE = Pattern.compile("([a-z]{1,4} ){0,3}[a-z]{0,4}");
     private AppPasswordViewModel vm;
     private Taxpayer taxpayer;
     private boolean hasGmail;
@@ -40,12 +48,18 @@ public class TaxpayerAppPasswordController {
     @FXML private TextField appPasswordTextField;
     @FXML private Text headerText;
     @FXML private Text errorText;
-
+    @FXML private BorderPane root;
     @FXML
     private void initialize() throws Exception {
+    	
+    	Pages.bindShortcut(root, "ESC", this::back);
+    	Pages.bindShortcut(root, "Enter", this::ManageAppPassword);
+    	Pages.bindShortcut(root,"Ctrl+E",appPasswordTextField);
+    	Pages.bindShortcut(root, "Ctrl+B", this::DirectToAppPassword);
+    	
         vm = new AppPasswordViewModel();
         taxpayer = Taxpayer.getTaxpayer();
-        
+        setupAppPasswordFormat();
         // Same priority as the mail loader: Gmail first, then Yahoo
         Account account = taxpayer.getAccount();
         if (account != null && has(account.getGmailEmail())) {
@@ -182,5 +196,26 @@ public class TaxpayerAppPasswordController {
     private static String withDomain(String stored, String domain) {
         String s = stored.trim();
         return s.contains("@") ? s : s + domain;
+    }
+    private void setupAppPasswordFormat() {
+        appPasswordTextField.setPromptText("abcd efgh ijkl mnop");
+        appPasswordTextField.setTextFormatter(new TextFormatter<String>(change -> {
+            if (!change.isContentChange()) return change;   // caret moves and selections pass through
+
+            // Pasted text (e.g. copied from Google): drop line breaks and surrounding spaces
+            if (change.getText().length() > 1) {
+                String cleaned = change.getText().replaceAll("[\\r\\n\\t]+", " ").strip();
+                change.setText(cleaned);
+                int caret = change.getRangeStart() + cleaned.length();
+                change.selectRange(caret, caret);
+            }
+
+            String next = change.getControlNewText();
+            boolean deleting = change.getText().isEmpty();
+            boolean ok = PLAIN.matcher(next).matches()
+                    || GROUPED.matcher(next).matches()
+                    || (deleting && GROUPED_LOOSE.matcher(next).matches());
+            return ok ? change : null;   // null = the keystroke is ignored
+        }));
     }
 }

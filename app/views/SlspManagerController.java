@@ -1,6 +1,7 @@
 package app.views;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import javafx.geometry.Pos;
 import javafx.scene.paint.Color;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -13,7 +14,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-
+import javafx.scene.control.TableCell;
 import app.models.Purchase;
 import app.models.SLSP;
 import app.models.Sale;
@@ -44,6 +45,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
+import javafx.beans.binding.Bindings;
+import javafx.geometry.Insets;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
 
 public class SlspManagerController {
 
@@ -77,6 +82,8 @@ public class SlspManagerController {
     @FXML private TextField saleTaxable;
     @FXML private TextField outputVat;
     @FXML private TextField saleGross;
+    @FXML private CheckBox sHideExempt, sHideZero;
+    @FXML private GridPane saleFooter, purchaseFooter;
 
     // Purchase table
     @FXML private TableView<PurchaseRow> pTable;
@@ -89,8 +96,9 @@ public class SlspManagerController {
     @FXML private TableColumn<PurchaseRow, BigDecimal> pColTaxable;
     @FXML private TableColumn<PurchaseRow, BigDecimal> pColInputVat;
     @FXML private TableColumn<PurchaseRow, BigDecimal> pColGross;
+    @FXML private TableColumn<PurchaseRow, BigDecimal> pColTotalAmt;
     @FXML private TableColumn<PurchaseRow, BigDecimal> pColDelete;
-    
+
     @FXML private Button pAddBtn;
     @FXML private Text purchaseTotalRows;
     @FXML private TextField purchaseExempt;
@@ -98,14 +106,16 @@ public class SlspManagerController {
     @FXML private TextField purchaseTaxable;
     @FXML private TextField inputVat;
     @FXML private TextField purchaseGross;
+    @FXML private TextField purchaseTotalAmt;
+    @FXML private CheckBox pHideExempt, pHideZero, pHideTotalAmt;
 
     private final ObservableList<SaleRow> saleRows = FXCollections.observableArrayList(
             r -> new Observable[] { r.dayProperty(), r.invoiceNoProperty(),
-                    r.exemptProperty(), r.zeroRatedProperty(), r.taxableProperty() });
+                    r.exemptProperty(), r.zeroRatedProperty(), r.grossInputProperty() });
 
     private final ObservableList<PurchaseRow> purchaseRows = FXCollections.observableArrayList(
             r -> new Observable[] { r.dayProperty(), r.supplierProperty(), r.invoiceNoProperty(),
-                    r.exemptProperty(), r.zeroRatedProperty(), r.taxableProperty() });
+                    r.exemptProperty(), r.zeroRatedProperty(), r.grossInputProperty() });
 
     // Used once when loading an existing SLSP (no live sorting, so new rows stay at the bottom)
     private static final Comparator<SaleRow> SALE_ORDER = Comparator
@@ -134,12 +144,19 @@ public class SlspManagerController {
     private final Deque<Snapshot> redoStack = new ArrayDeque<>();
     private Snapshot lastSnapshot;          // the current state, as of the last recorded change
     private boolean historyPaused = false;  // true while restoring / making programmatic changes
+    
+ // Calculated (read-only) values get a tint so they stand apart from the cells you type into
+    private static final String CALC_BG = "#eef2ff";
+    private static final String CALC_TEXT = "#1e3a8a";
+    private static final String CALC_CELL_STYLE =
+            "-fx-background-color: " + CALC_BG + "; -fx-text-fill: " + CALC_TEXT + "; -fx-font-weight: bold;";
+    private static final String CALC_FOOTER_STYLE =
+            "-fx-background-color: " + CALC_BG + "; -fx-background-radius: 4; -fx-text-fill: " + CALC_TEXT + ";";
 
     @FXML
     private void initialize() throws Exception {
         Pages.bindShortcut(root, "Ctrl+S", this::SaveSlsp);
         Pages.bindShortcut(root, "Ctrl+D", this::DeleteSlsp);
-        Pages.bindShortcut(root, "Ctrl+P", this::PrintSlsp);
         Pages.bindShortcut(root, "ESC", this::back);
         Pages.bindShortcut(sumInput, "Enter", this::sumInput);
         Pages.bindShortcut(sumInput, "Ctrl+Delete", this::clearSumInput);
@@ -161,12 +178,23 @@ public class SlspManagerController {
 
         suppliers.setAll(new SupplierViewModel().loadSuppliers());
 
-        setUpNumberTextField(sumInput);
+        formatPesoField(sumInput);
+        formatPesoField(totalSum);
+        totalSum.setEditable(false);
         setupSaleTable();
         setupPurchaseTable();
-
+        alignFooter(saleFooter, sTable);
+        alignFooter(purchaseFooter, pTable);
+        styleCalculatedFooter(saleTaxable, outputVat, purchaseTaxable, inputVat, purchaseTotalAmt);
         sAddBtn.setOnAction(_ -> addPurchaseOrSaleRow(true));
         pAddBtn.setOnAction(_ -> addPurchaseOrSaleRow(false));
+
+        // Hide / show columns (values are kept and still counted in the totals)
+        bindHide(sHideExempt, sColExempt, saleExempt);
+        bindHide(sHideZero, sColZeroRated, saleZeroRated);
+        bindHide(pHideExempt, pColExempt, purchaseExempt);
+        bindHide(pHideZero, pColZeroRated, purchaseZeroRated);
+        bindHide(pHideTotalAmt, pColTotalAmt, purchaseTotalAmt);
 
         loading = true;
         if (editingSlsp != null) {
@@ -196,6 +224,13 @@ public class SlspManagerController {
         });
         years.valueProperty().addListener((_, _, _) -> onPeriodChanged());
         months.valueProperty().addListener((_, _, _) -> onPeriodChanged());
+    }
+
+    private void bindHide(CheckBox box, TableColumn<?, ?> col, TextField footer) {
+        box.selectedProperty().addListener((_, _, hide) -> {
+            col.setVisible(!hide);
+            if (footer != null) footer.setVisible(!hide);
+        });
     }
 
     private StringConverter<Integer> buildDayConverter() {
@@ -232,9 +267,9 @@ public class SlspManagerController {
             SaleRow row = new SaleRow();
             row.dayProperty().set(LocalDate.parse(sale.getSaleDate()).getDayOfMonth());
             row.invoiceNoProperty().set(sale.getSiNum());
-            row.exemptProperty().set(sale.getExemptAmount());
-            row.zeroRatedProperty().set(sale.getZeroRatedAmount());
-            row.taxableProperty().set(sale.getTaxableAmount());
+            row.exemptProperty().set(nz(sale.getExemptAmount()));
+            row.zeroRatedProperty().set(nz(sale.getZeroRatedAmount()));
+            row.grossProperty().set(nz(sale.getGrossAmount()));   // taxable is derived from this
             saleRows.add(row);
         }
 
@@ -246,9 +281,9 @@ public class SlspManagerController {
                     .findFirst().orElse(null);
             row.supplierProperty().set(matchingSupplier);
             row.invoiceNoProperty().set(purchase.getInvoiceNum());
-            row.exemptProperty().set(purchase.getExemptAmount());
-            row.zeroRatedProperty().set(purchase.getZeroRatedAmount());
-            row.taxableProperty().set(purchase.getTaxableAmount());
+            row.exemptProperty().set(nz(purchase.getExemptAmount()));
+            row.zeroRatedProperty().set(nz(purchase.getZeroRatedAmount()));
+            row.grossProperty().set(nz(purchase.getGrossAmount()));   // taxable is derived from this
             purchaseRows.add(row);
         }
 
@@ -294,7 +329,7 @@ public class SlspManagerController {
             zeroRated = zeroRated.add(nz(r.zeroRatedProperty().get()));
             taxable = taxable.add(nz(r.taxableProperty().get()));
             vat = vat.add(r.getOutputVat());
-            gross = gross.add(r.getGross());
+            gross = gross.add(nz(r.grossInputProperty().get()));
         }
         if (saleTotalRows != null) saleTotalRows.setText("Total for " + count + " sale row" + (count == 1 ? ":" : "s:"));
         if (saleExempt != null) saleExempt.setText(formatMoney(exempt));
@@ -306,7 +341,8 @@ public class SlspManagerController {
 
     private void updatePurchaseTotals() {
         BigDecimal exempt = BigDecimal.ZERO, zeroRated = BigDecimal.ZERO,
-                taxable = BigDecimal.ZERO, vat = BigDecimal.ZERO, gross = BigDecimal.ZERO;
+                taxable = BigDecimal.ZERO, vat = BigDecimal.ZERO, gross = BigDecimal.ZERO,
+                totalAmt = BigDecimal.ZERO;
         int count = 0;
         for (PurchaseRow r : purchaseRows) {
             if (r.isEmpty()) continue;
@@ -315,7 +351,8 @@ public class SlspManagerController {
             zeroRated = zeroRated.add(nz(r.zeroRatedProperty().get()));
             taxable = taxable.add(nz(r.taxableProperty().get()));
             vat = vat.add(r.getInputVat());
-            gross = gross.add(r.getGross());
+            gross = gross.add(nz(r.grossInputProperty().get()));
+            totalAmt = totalAmt.add(r.getTotalAmount());
         }
         if (purchaseTotalRows != null) purchaseTotalRows.setText("Total for " + count + " purchase row" + (count == 1 ? ":" : "s:"));
         if (purchaseExempt != null) purchaseExempt.setText(formatMoney(exempt));
@@ -323,9 +360,10 @@ public class SlspManagerController {
         if (purchaseTaxable != null) purchaseTaxable.setText(formatMoney(taxable));
         if (inputVat != null) inputVat.setText(formatMoney(vat));
         if (purchaseGross != null) purchaseGross.setText(formatMoney(gross));
+        if (purchaseTotalAmt != null) purchaseTotalAmt.setText(formatMoney(totalAmt));
     }
 
-    // ---------- Even, locked column widths ----------
+    // ---------- Delete column ----------
 
     private <T, S> void wireDeleteColumn(TableColumn<T, S> col, TableView<T> table, ObservableList<T> rows) {
         col.setCellValueFactory(_ -> new ReadOnlyObjectWrapper<S>(null));
@@ -354,44 +392,58 @@ public class SlspManagerController {
         });
     }
 
-    // ---------- Column wiring helpers ----------
+    // ---------- Column widths: # and delete are fixed, visible columns share the rest evenly ----------
+
     private void setupColumnWidths(TableView<?> table, TableColumn<?, ?> numCol, TableColumn<?, ?> deleteCol) {
-        int others = table.getColumns().size() - 2;
+        final double numW = 45, delW = 55;
+        Runnable relayout = () -> {
+            int flexible = 0;
+            for (TableColumn<?, ?> col : table.getColumns()) {
+                if (col.isVisible() && col != numCol && col != deleteCol) flexible++;
+            }
+            double available = table.getWidth() - 2 - numW - delW;
+            if (flexible == 0 || available <= 0) return;
+            double each = available / flexible;
+            for (TableColumn<?, ?> col : table.getColumns()) {
+                col.setPrefWidth(col == numCol ? numW : col == deleteCol ? delW : each);
+            }
+        };
+        table.widthProperty().addListener(_ -> relayout.run());
         for (TableColumn<?, ?> col : table.getColumns()) {
-            double share = (col == numCol || col == deleteCol) ? 0.10 : 0.80 / others;
-            col.prefWidthProperty().bind(table.widthProperty().subtract(2).multiply(share));
+            col.visibleProperty().addListener(_ -> relayout.run());
         }
     }
+
+    // ---------- Column wiring helpers ----------
+
     private static final StringConverter<BigDecimal> MONEY_CONVERTER = new StringConverter<>() {
-        @Override public String toString(BigDecimal v) {
-            return v == null ? "0.00" : v.setScale(2, java.math.RoundingMode.HALF_UP).toString();
-        }
+        @Override public String toString(BigDecimal v) { return displayMoney(v); }
         @Override public BigDecimal fromString(String s) {
             try {
-                if (s == null || s.isBlank()) return BigDecimal.ZERO;
-                return new BigDecimal(s).setScale(2, java.math.RoundingMode.HALF_UP);
+                if (s == null) return BigDecimal.ZERO;
+                String clean = s.replace(",", "").replace("\u20B1", "").trim();
+                if (clean.isEmpty()) return BigDecimal.ZERO;
+                return new BigDecimal(clean).setScale(2, RoundingMode.HALF_UP);
             } catch (NumberFormatException e) {
                 return BigDecimal.ZERO;
             }
         }
     };
+    private <T> void wireComputedColumn(
+            TableColumn<T, BigDecimal> col,
+            Function<T, BigDecimal> compute,
+            Function<T, Observable[]> deps) {
 
-    private <T> void wireMoneyColumn(TableColumn<T, BigDecimal> col, Function<T, Property<BigDecimal>> extractor) {
-        col.setEditable(true);
-        col.setCellValueFactory(cd -> extractor.apply(cd.getValue()));
-        col.setCellFactory(TextFieldTableCell.forTableColumn(MONEY_CONVERTER));
-        col.setOnEditCommit(ev -> extractor.apply(ev.getRowValue()).setValue(ev.getNewValue()));
+        col.setCellValueFactory(cd ->
+            Bindings.createObjectBinding(
+                () -> compute.apply(cd.getValue()),
+                deps.apply(cd.getValue())
+            )
+        );
+
+        col.setCellFactory(_ -> new MoneyDisplayCell<>());
     }
 
-    private <T> void wireComputedColumn(TableColumn<T, BigDecimal> col, Function<T, BigDecimal> compute) {
-        col.setCellValueFactory(cd -> new javafx.beans.property.SimpleObjectProperty<>(compute.apply(cd.getValue())));
-        col.setCellFactory(_ -> new TableCell<>() {
-            @Override protected void updateItem(BigDecimal v, boolean empty) {
-                super.updateItem(v, empty);
-                setText(empty || v == null ? null : v.setScale(2, java.math.RoundingMode.HALF_UP).toString());
-            }
-        });
-    }
 
     private <T> void wireRowNumberColumn(TableColumn<T, Integer> col) {
         col.setCellValueFactory(_ -> new ReadOnlyObjectWrapper<>(0));
@@ -403,18 +455,52 @@ public class SlspManagerController {
         });
     }
 
-    private <T> void wireDayColumn(TableColumn<T, Integer> col, Function<T, IntegerProperty> extractor) {
+    private <T> void wireDayColumn(
+            TableColumn<T, Integer> col,
+            Function<T, IntegerProperty> extractor) {
+
         col.setEditable(true);
-        col.setCellValueFactory(cd -> extractor.apply(cd.getValue()).asObject());
-        col.setCellFactory(ComboBoxTableCell.forTableColumn(buildDayConverter(), dayOptions));
-        col.setOnEditCommit(ev -> extractor.apply(ev.getRowValue()).set(ev.getNewValue()));
+        col.setCellValueFactory(cd ->
+                extractor.apply(cd.getValue()).asObject());
+
+        col.setCellFactory(_ ->
+                new ComboBoxTableCell<T, Integer>(
+                        buildDayConverter(), dayOptions) {
+
+                    @Override
+                    public void startEdit() {
+                        super.startEdit();
+
+                        if (getGraphic() instanceof ComboBox<?> combo) {
+                            combo.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+                                if (event.getCode() == KeyCode.ENTER
+                                        && combo.isShowing()) {
+
+                                    event.consume();
+
+                                    Integer selected =
+                                            (Integer) combo.getSelectionModel()
+                                                    .getSelectedItem();
+
+                                    if (selected != null) {
+                                        commitEdit(selected);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+
+        col.setOnEditCommit(event ->
+                extractor.apply(event.getRowValue())
+                        .set(event.getNewValue()));
     }
 
     // ---------- Sale table setup ----------
 
     private void setupSaleTable() {
         sTable.setItems(saleRows);
-        setupColumnWidths(sTable, sColNum, sColDelete);  
+        setupColumnWidths(sTable, sColNum, sColDelete);
         wireDeleteColumn(sColDelete, sTable, saleRows);
         wireRowNumberColumn(sColNum);
         wireDayColumn(sColDate, SaleRow::dayProperty);
@@ -424,14 +510,14 @@ public class SlspManagerController {
         sColInvoice.setCellFactory(TextFieldTableCell.forTableColumn());
         sColInvoice.setOnEditCommit(ev -> ev.getRowValue().invoiceNoProperty().set(ev.getNewValue()));
 
-        wireMoneyColumn(sColExempt, SaleRow::exemptProperty);
-        wireMoneyColumn(sColZeroRated, SaleRow::zeroRatedProperty);
-        wireMoneyColumn(sColTaxable, SaleRow::taxableProperty);
-        wireComputedColumn(sColOutputVat, SaleRow::getOutputVat);
-        wireComputedColumn(sColGross, SaleRow::getGross);
+        wireMoneyColumn(sColExempt, SaleRow::exemptProperty);                 // VAT Exempt [editable]
+        wireMoneyColumn(sColZeroRated, SaleRow::zeroRatedProperty);           // Zero-rated [editable]
+        wireComputedColumn(sColTaxable, r -> nz(r.taxableProperty().get()), SlspManagerController::saleDeps);
+        wireComputedColumn(sColOutputVat, SaleRow::getOutputVat, SlspManagerController::saleDeps);
+        wireMoneyColumn(sColGross, SaleRow::grossInputProperty);              // Total Amount [editable]
 
         setupCellNavigation(sTable,
-                List.<TableColumn<SaleRow, ?>>of(sColDate, sColInvoice, sColExempt, sColZeroRated, sColTaxable),
+                List.<TableColumn<SaleRow, ?>>of(sColDate, sColInvoice, sColExempt, sColZeroRated, sColGross),
                 saleRows,
                 () -> addPurchaseOrSaleRow(true));
     }
@@ -440,161 +526,395 @@ public class SlspManagerController {
 
     private void setupPurchaseTable() {
         pTable.setItems(purchaseRows);
-        setupColumnWidths(pTable, pColNum, pColDelete);   
-        wireDeleteColumn(pColDelete, pTable, purchaseRows);
+
+        // Fixed-width row number and delete columns.
+        setupColumnWidths(pTable, pColNum, pColDelete);
+
+        // # column: displays 1, 2, 3, ...
         wireRowNumberColumn(pColNum);
+
+        // Date dropdown.
         wireDayColumn(pColDate, PurchaseRow::dayProperty);
 
+        // Supplier dropdown.
         pColSupplier.setEditable(true);
-        pColSupplier.setCellValueFactory(cd -> cd.getValue().supplierProperty());
-        pColSupplier.setCellFactory(ComboBoxTableCell.forTableColumn(new StringConverter<Supplier>() {
-            @Override public String toString(Supplier s) {
-                return s == null ? "" : s.getTinNum() + " - " + s.getTradeName();
+        pColSupplier.setCellValueFactory(
+                cd -> cd.getValue().supplierProperty()
+        );
+
+        pColSupplier.setCellFactory(_ ->
+        new ComboBoxTableCell<PurchaseRow, Supplier>(
+                supplierConverter(), suppliers) {
+
+            @Override
+            public void startEdit() {
+                super.startEdit();
+
+                Node graphic = getGraphic();
+
+                if (graphic instanceof ComboBox<?> combo) {
+                    combo.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+                        if (event.getCode() == KeyCode.ENTER && combo.isShowing()) {
+                            event.consume();
+
+                            Object selected = combo.getSelectionModel().getSelectedItem();
+
+                            if (selected != null) {
+                                Supplier supplier = (Supplier) selected;
+                                commitEdit(supplier);
+                            }
+                        }
+                    });
+                }
             }
-            @Override public Supplier fromString(String s) { return null; }
-        }, suppliers));
-        pColSupplier.setOnEditCommit(ev -> ev.getRowValue().supplierProperty().set(ev.getNewValue()));
+        }
+);
 
+        pColSupplier.setOnEditCommit(event ->
+                event.getRowValue()
+                        .supplierProperty()
+                        .set(event.getNewValue())
+        );
+
+        // Invoice number.
         pColInvoice.setEditable(true);
-        pColInvoice.setCellValueFactory(cd -> cd.getValue().invoiceNoProperty());
-        pColInvoice.setCellFactory(TextFieldTableCell.forTableColumn());
-        pColInvoice.setOnEditCommit(ev -> ev.getRowValue().invoiceNoProperty().set(ev.getNewValue()));
+        pColInvoice.setCellValueFactory(
+                cd -> cd.getValue().invoiceNoProperty()
+        );
 
+        pColInvoice.setCellFactory(
+                TextFieldTableCell.forTableColumn()
+        );
+
+        pColInvoice.setOnEditCommit(event ->
+                event.getRowValue()
+                        .invoiceNoProperty()
+                        .set(event.getNewValue())
+        );
+
+        // Editable monetary columns.
         wireMoneyColumn(pColExempt, PurchaseRow::exemptProperty);
         wireMoneyColumn(pColZeroRated, PurchaseRow::zeroRatedProperty);
-        wireMoneyColumn(pColTaxable, PurchaseRow::taxableProperty);
-        wireComputedColumn(pColInputVat, PurchaseRow::getInputVat);
-        wireComputedColumn(pColGross, PurchaseRow::getGross);
+        wireMoneyColumn(pColGross, PurchaseRow::grossInputProperty);
 
-        setupCellNavigation(pTable,
-                List.<TableColumn<PurchaseRow, ?>>of(pColDate, pColSupplier, pColInvoice, pColExempt, pColZeroRated, pColTaxable),
+        // Calculated columns.
+        wireComputedColumn(
+                pColTaxable,
+                row -> nz(row.taxableProperty().get()),
+                SlspManagerController::purchaseDeps
+        );
+
+        wireComputedColumn(
+                pColInputVat,
+                PurchaseRow::getInputVat,
+                SlspManagerController::purchaseDeps
+        );
+
+        wireComputedColumn(
+                pColTotalAmt,
+                PurchaseRow::getTotalAmount,
+                SlspManagerController::purchaseDeps
+        );
+
+        // Delete button.
+        wireDeleteColumn(pColDelete, pTable, purchaseRows);
+
+        // Keyboard navigation.
+        setupCellNavigation(
+                pTable,
+                List.of(
+                        pColDate,
+                        pColSupplier,
+                        pColInvoice,
+                        pColExempt,
+                        pColZeroRated,
+                        pColGross
+                ),
                 purchaseRows,
-                () -> addPurchaseOrSaleRow(false));
+                () -> addPurchaseOrSaleRow(false)
+        );
     }
 
     // ---------- Keyboard navigation: Enter = new bottom row, Tab / Shift+Tab = next / previous cell ----------
+    private boolean isEditingComboBoxShowing(TableView<?> table) {
+        TablePosition<?, ?> editing = table.getEditingCell();
 
-    private <T> void setupCellNavigation(TableView<T> table,
+        if (editing == null) {
+            return false;
+        }
+
+        for (Node node : table.lookupAll(".combo-box")) {
+            if (node instanceof ComboBox<?> comboBox
+                    && comboBox.isShowing()
+                    && isDescendantOfEditingCell(comboBox, table, editing)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean isDescendantOfEditingCell(
+            Node node,
+            TableView<?> table,
+            TablePosition<?, ?> editing) {
+
+        Node current = node;
+
+        while (current != null && current != table) {
+            if (current instanceof TableCell<?, ?> cell) {
+                return cell.getIndex() == editing.getRow()
+                        && cell.getTableColumn() == editing.getTableColumn();
+            }
+
+            current = current.getParent();
+        }
+
+        return false;
+    }
+    private <T> void setupCellNavigation(
+            TableView<T> table,
             List<TableColumn<T, ?>> editableCols,
             ObservableList<T> rows,
             Runnable addRow) {
-			table.setEditable(true);
-			
-			// Event filter runs before the cell's TextField/ComboBox sees the key
-			table.addEventFilter(KeyEvent.KEY_PRESSED, ev -> {
-				KeyCode code = ev.getCode();
-				
-				// DELETE removes the selected row (only when not typing in a cell)
-				if (code == KeyCode.DELETE && table.getEditingCell() == null) {
-					int sel = table.getSelectionModel().getSelectedIndex();
-					if (sel >= 0 && sel < rows.size()) {
-						rows.remove(sel);
-						if (!rows.isEmpty()) {
-							table.getSelectionModel().select(Math.min(sel, rows.size() - 1));
-						}
-					}
-					ev.consume();
-					return;
-				}
-			
-			// UP / DOWN while editing a text cell: move to the same column in the row above / below
-			if ((code == KeyCode.UP || code == KeyCode.DOWN)
-			&& table.getEditingCell() != null
-			&& ev.getTarget() instanceof TextField tf) {
-				TablePosition<T, ?> editing = table.getEditingCell();
-				int colIdx = editableCols.indexOf(editing.getTableColumn());
-				if (colIdx >= 0) {
-					tf.fireEvent(new ActionEvent(tf, tf));   // commit the current cell
-			
-					int targetRow = editing.getRow() + (code == KeyCode.DOWN ? 1 : -1);
-					if (targetRow < 0) targetRow = 0;
-					if (targetRow >= table.getItems().size()) {
-						addRow.run();                         // DOWN on the last row creates a new one
-						targetRow = table.getSelectionModel().getSelectedIndex();
-					}
-					final int r = Math.max(targetRow, 0);
-					final int c = colIdx;
-					ev.consume();
-					Platform.runLater(() -> {
-						table.getSelectionModel().clearAndSelect(r);
-						table.scrollTo(r);
-						table.edit(r, editableCols.get(c));
-					});
-					return;
-				}
-			}
-			
-			// DOWN on the last row adds a row (only when not editing)
-			if (code == KeyCode.DOWN && table.getEditingCell() == null) {
-				if (table.getSelectionModel().getSelectedIndex() == table.getItems().size() - 1) {
-					addRow.run();
-					ev.consume();
-				}
-				return;
-			}
-			
-			if (code != KeyCode.TAB && code != KeyCode.ENTER) return;
-			if (ev.isControlDown() || ev.isAltDown()) return;
-			
-			// Where are we now?
-			TablePosition<T, ?> editing = table.getEditingCell();
-			int row = editing != null ? editing.getRow()
-			         : table.getSelectionModel().getSelectedIndex();
-			int colIdx = editing != null ? editableCols.indexOf(editing.getTableColumn()) : -1;
-			
-			// Commit whatever is being typed (fires the cell's onAction -> commitEdit)
-			if (ev.getTarget() instanceof TextField tf) {
-				tf.fireEvent(new ActionEvent(tf, tf));
-			}
-			
-			int n = editableCols.size();
-			int targetRow = row;
-			int targetCol;
-			
-			if (code == KeyCode.ENTER) {
-			// New row at the bottom, start editing its first column
-				addRow.run();
-				targetRow = table.getSelectionModel().getSelectedIndex();
-				targetCol = 0;
-			} else {
-				int step = ev.isShiftDown() ? -1 : 1;
-				targetCol = colIdx < 0 ? (step > 0 ? 0 : n - 1) : colIdx + step;
-			
-				if (targetCol >= n) {            // past last column -> next row
-					targetCol = 0;
-					targetRow++;
-				} else if (targetCol < 0) {      // before first column -> previous row
-					targetCol = n - 1;
-					targetRow--;
-			}
-			
-			if (targetRow < 0) { targetRow = 0; targetCol = 0; }
-			
-			if (targetRow >= table.getItems().size()) {   // Tab off the end -> new row
-				addRow.run();
-				targetRow = table.getSelectionModel().getSelectedIndex();
-				targetCol = 0;
-				}
-			}
-			
-			final int r = Math.max(targetRow, 0);
-			final int c = targetCol;
-			ev.consume();
-			
-			// Wait for the commit to finish before starting the next edit
-				Platform.runLater(() -> {
-					table.getSelectionModel().clearAndSelect(r);
-					table.scrollTo(r);
-					table.edit(r, editableCols.get(c));
-				});
-			});
-		}
+
+        table.setEditable(true);
+
+        table.addEventFilter(KeyEvent.KEY_PRESSED, ev -> {
+            KeyCode code = ev.getCode();
+
+            // Allow the ComboBox to handle Enter before table navigation.
+            if (code == KeyCode.ENTER
+                    && table.getEditingCell() != null
+                    && table.getEditingCell().getTableColumn() != null) {
+
+                TableColumn<?, ?> editingColumn =
+                        table.getEditingCell().getTableColumn();
+
+                boolean dropdownColumn =
+                        editingColumn == sColDate
+                        || editingColumn == pColDate
+                        || editingColumn == pColSupplier;
+
+                if (dropdownColumn) {
+                    Node focusOwner = table.getScene().getFocusOwner();
+
+                    if (focusOwner instanceof ComboBox<?> combo && combo.isShowing()) {
+                        return;
+                    }
+                }
+            }
+            /*
+             * IMPORTANT:
+             * Let an open ComboBox process Enter first.
+             * Do not consume the event or navigate to another row.
+             */
+            if (code == KeyCode.ENTER && isEditingComboBoxShowing(table)) {
+                return;
+            }
+
+            List<TableColumn<T, ?>> cols = editableCols.stream()
+                    .filter(TableColumn::isVisible)
+                    .toList();
+
+            if (cols.isEmpty()) {
+                return;
+            }
+
+            // Delete the selected row when no cell is being edited.
+            if (code == KeyCode.DELETE && table.getEditingCell() == null) {
+                int selected = table.getSelectionModel().getSelectedIndex();
+
+                if (selected >= 0 && selected < rows.size()) {
+                    rows.remove(selected);
+
+                    if (!rows.isEmpty()) {
+                        table.getSelectionModel()
+                                .select(Math.min(selected, rows.size() - 1));
+                    }
+                }
+
+                ev.consume();
+                return;
+            }
+
+            /*
+             * UP / DOWN while editing a text field.
+             */
+            if ((code == KeyCode.UP || code == KeyCode.DOWN)
+                    && table.getEditingCell() != null
+                    && ev.getTarget() instanceof TextField textField) {
+
+                TablePosition<T, ?> editing = table.getEditingCell();
+                int colIndex = cols.indexOf(editing.getTableColumn());
+
+                if (colIndex >= 0) {
+                    textField.fireEvent(new ActionEvent(textField, textField));
+
+                    int targetRow = editing.getRow()
+                            + (code == KeyCode.DOWN ? 1 : -1);
+
+                    if (targetRow < 0) {
+                        targetRow = 0;
+                    }
+
+                    if (targetRow >= rows.size()) {
+                        addRow.run();
+                        targetRow = table.getSelectionModel().getSelectedIndex();
+                    }
+
+                    final int r = Math.max(targetRow, 0);
+                    final int c = colIndex;
+
+                    ev.consume();
+
+                    Platform.runLater(() -> {
+                        if (r < table.getItems().size()) {
+                            table.getSelectionModel().clearAndSelect(r);
+                            table.scrollTo(r);
+                            table.edit(r, cols.get(c));
+                        }
+                    });
+
+                    return;
+                }
+            }
+
+            // DOWN on the last row adds a row when not editing.
+            if (code == KeyCode.DOWN && table.getEditingCell() == null) {
+                int selected = table.getSelectionModel().getSelectedIndex();
+
+                if (selected == rows.size() - 1) {
+                    addRow.run();
+                    ev.consume();
+                }
+
+                return;
+            }
+
+            if (code != KeyCode.TAB && code != KeyCode.ENTER) {
+                return;
+            }
+
+            if (ev.isControlDown() || ev.isAltDown()) {
+                return;
+            }
+
+            TablePosition<T, ?> editing = table.getEditingCell();
+
+            int row = editing != null
+                    ? editing.getRow()
+                    : table.getSelectionModel().getSelectedIndex();
+
+            if (row < 0) {
+                return;
+            }
+
+            int colIndex = editing != null
+                    ? cols.indexOf(editing.getTableColumn())
+                    : -1;
+
+            // Commit text-field edits before navigating.
+            if (ev.getTarget() instanceof TextField textField) {
+                textField.fireEvent(new ActionEvent(textField, textField));
+            }
+
+            int targetRow = row;
+            int targetCol;
+
+            if (code == KeyCode.ENTER) {
+                // Enter moves down within the same column.
+                targetCol = colIndex < 0 ? 0 : colIndex;
+                targetRow = row + 1;
+
+                if (targetRow >= rows.size()) {
+                    addRow.run();
+                    targetRow = table.getSelectionModel().getSelectedIndex();
+                }
+            } else {
+                // Tab moves horizontally; Shift+Tab moves backward.
+                int step = ev.isShiftDown() ? -1 : 1;
+
+                targetCol = colIndex < 0
+                        ? (step > 0 ? 0 : cols.size() - 1)
+                        : colIndex + step;
+
+                if (targetCol >= cols.size()) {
+                    targetCol = 0;
+                    targetRow++;
+                } else if (targetCol < 0) {
+                    targetCol = cols.size() - 1;
+                    targetRow--;
+                }
+
+                if (targetRow < 0) {
+                    targetRow = 0;
+                    targetCol = 0;
+                }
+
+                if (targetRow >= rows.size()) {
+                    addRow.run();
+                    targetRow = table.getSelectionModel().getSelectedIndex();
+                    targetCol = 0;
+                }
+            }
+
+            if (targetRow < 0 || targetRow >= rows.size()) {
+                return;
+            }
+
+            final int r = targetRow;
+            final int c = Math.max(0, Math.min(targetCol, cols.size() - 1));
+
+            ev.consume();
+
+            Platform.runLater(() -> {
+                if (r < table.getItems().size()) {
+                    table.getSelectionModel().clearAndSelect(r);
+                    table.scrollTo(r);
+                    table.edit(r, cols.get(c));
+                }
+            });
+        });
+    }
 
     // ---------- Row creation: guarded, no duplicate blank rows, always at the bottom ----------
 
     private void onAddRowShortcut(ActionEvent e) {
         boolean isSaleTab = tabPane.getSelectionModel().getSelectedIndex() == 0;
-        addPurchaseOrSaleRow(isSaleTab);
+
+        if (isSaleTab) {
+            moveDownOrAddRow(sTable, saleRows, () -> addPurchaseOrSaleRow(true));
+        } else {
+            moveDownOrAddRow(pTable, purchaseRows, () -> addPurchaseOrSaleRow(false));
+        }
+    }
+    private <T> void moveDownOrAddRow(
+            TableView<T> table,
+            ObservableList<T> rows,
+            Runnable addRow) {
+
+        int selectedRow = table.getSelectionModel().getSelectedIndex();
+
+        if (selectedRow < 0) {
+            if (rows.isEmpty()) {
+                addRow.run();
+            } else {
+                table.getSelectionModel().select(0);
+                table.scrollTo(0);
+            }
+            return;
+        }
+
+        if (selectedRow >= rows.size() - 1) {
+            addRow.run();
+            return;
+        }
+
+        int nextRow = selectedRow + 1;
+
+        table.getSelectionModel().clearAndSelect(nextRow);
+        table.scrollTo(nextRow);
     }
 
     private void addPurchaseOrSaleRow(boolean isSale) {
@@ -605,6 +925,8 @@ public class SlspManagerController {
                 return;
             }
             SaleRow row = new SaleRow();
+            int prevDay = saleRows.isEmpty() ? 1 : saleRows.get(saleRows.size() - 1).dayProperty().get();
+            row.dayProperty().set(Math.max(1, prevDay));
             saleRows.add(row);
             selectSaleRow(row);
         } else {
@@ -614,6 +936,13 @@ public class SlspManagerController {
                 return;
             }
             PurchaseRow row = new PurchaseRow();
+            if (purchaseRows.isEmpty()) {
+                row.dayProperty().set(1);
+            } else {
+                PurchaseRow prev = purchaseRows.get(purchaseRows.size() - 1);
+                row.dayProperty().set(Math.max(1, prev.dayProperty().get()));
+                row.supplierProperty().set(prev.supplierProperty().get());
+            }
             purchaseRows.add(row);
             selectPurchaseRow(row);
         }
@@ -634,10 +963,10 @@ public class SlspManagerController {
     // ---------- Undo (Ctrl+Z) ----------
 
     private record SaleState(int day, String invoice, BigDecimal exempt,
-                             BigDecimal zeroRated, BigDecimal taxable) {}
+                             BigDecimal zeroRated, BigDecimal gross) {}
 
     private record PurchaseState(int day, Supplier supplier, String invoice, BigDecimal exempt,
-                                 BigDecimal zeroRated, BigDecimal taxable) {}
+                                 BigDecimal zeroRated, BigDecimal gross) {}
 
     private record Snapshot(Integer year, int monthIndex,
                             List<SaleState> sales, List<PurchaseState> purchases) {}
@@ -662,17 +991,20 @@ public class SlspManagerController {
         List<SaleState> sales = new java.util.ArrayList<>();
         for (SaleRow r : saleRows) {
             sales.add(new SaleState(r.dayProperty().get(), r.invoiceNoProperty().get(),
-                    r.exemptProperty().get(), r.zeroRatedProperty().get(), r.taxableProperty().get()));
+                    r.exemptProperty().get(), r.zeroRatedProperty().get(), r.grossInputProperty().get()));
         }
         List<PurchaseState> purchases = new java.util.ArrayList<>();
         for (PurchaseRow r : purchaseRows) {
             purchases.add(new PurchaseState(r.dayProperty().get(), r.supplierProperty().get(),
                     r.invoiceNoProperty().get(), r.exemptProperty().get(),
-                    r.zeroRatedProperty().get(), r.taxableProperty().get()));
+                    r.zeroRatedProperty().get(), r.grossInputProperty().get()));
         }
         return new Snapshot(years.getValue(), months.getSelectionModel().getSelectedIndex(), sales, purchases);
     }
-
+    private static String displayMoney(BigDecimal v) {
+        return MONEY_FORMAT.format(nz(v).setScale(2, RoundingMode.HALF_UP));
+    }
+    
     /** Called after every change: pushes the previous state onto the undo stack. */
     private void recordHistory() {
         if (loading || historyPaused || lastSnapshot == null) return;
@@ -728,7 +1060,7 @@ public class SlspManagerController {
                 r.invoiceNoProperty().set(st.invoice());
                 r.exemptProperty().set(st.exempt());
                 r.zeroRatedProperty().set(st.zeroRated());
-                r.taxableProperty().set(st.taxable());
+                r.grossInputProperty().set(st.gross());   // last: recalculates taxable
                 sales.add(r);
             }
             List<PurchaseRow> purchases = new java.util.ArrayList<>();
@@ -739,7 +1071,7 @@ public class SlspManagerController {
                 r.invoiceNoProperty().set(st.invoice());
                 r.exemptProperty().set(st.exempt());
                 r.zeroRatedProperty().set(st.zeroRated());
-                r.taxableProperty().set(st.taxable());
+                r.grossInputProperty().set(st.gross());   // last: recalculates taxable
                 purchases.add(r);
             }
             saleRows.setAll(sales);
@@ -808,6 +1140,7 @@ public class SlspManagerController {
             String period = buildPeriod();
             YearMonth ym = YearMonth.parse(period);
 
+            // Stored values are unchanged: exempt, zero-rated and taxable (taxable is computed from the gross input)
             List<Sale> sales = new java.util.ArrayList<>();
             for (SaleRow row : saleRows) {
                 if (row.isEmpty()) continue;
@@ -816,7 +1149,7 @@ public class SlspManagerController {
                 sale.setSiNum(row.invoiceNoProperty().get());
                 sale.setExemptAmount(row.exemptProperty().get());
                 sale.setZeroRatedAmount(row.zeroRatedProperty().get());
-                sale.setTaxableAmount(row.taxableProperty().get());
+                sale.setGrossAmount(row.grossProperty().get()); 
                 sales.add(sale);
             }
 
@@ -834,7 +1167,7 @@ public class SlspManagerController {
                 purchase.setInvoiceNum(row.invoiceNoProperty().get());
                 purchase.setExemptAmount(row.exemptProperty().get());
                 purchase.setZeroRatedAmount(row.zeroRatedProperty().get());
-                purchase.setTaxableAmount(row.taxableProperty().get());
+                purchase.setGrossAmount(row.grossProperty().get());
                 purchases.add(purchase);
             }
 
@@ -866,36 +1199,46 @@ public class SlspManagerController {
 
     // ---------- sum calculator (unchanged) ----------
 
-    private void setUpNumberTextField(TextField t) {
-        t.textProperty().addListener((_, old, newVal) -> {
-            if (!newVal.matches("^-?\\d*(\\.\\d{0,2})?$")) t.setText(old);
-        });
-    }
 
     @FXML
     public void sumInput(ActionEvent e) {
         String input = sumInput.getText();
-        if (input == null || input.isBlank()) return;
-        BigDecimal inputAmount = new BigDecimal(input);
+
+        if (input == null || input.isBlank()) {
+            return;
+        }
+
+        BigDecimal inputAmount = parsePeso(input);
         total.add(inputAmount);
+
         BigDecimal sum = BigDecimal.ZERO;
         sumContainer.getChildren().clear();
+
         for (BigDecimal amount : total) {
-            TextField newTextField = new TextField("" + amount);
+            TextField newTextField = new TextField(
+                    "₱ " + String.format("%,.2f", amount)
+            );
+
             newTextField.setEditable(false);
             newTextField.setStyle("""
-                    -fx-background-color: none;
+                    -fx-background-color: transparent;
                     -fx-background-insets: 0;
                     -fx-background-radius: 0;
                     -fx-padding: 0;
-                    -fx-text-fill:black;
-                    -fx-alignment:center;
+                    -fx-text-fill: black;
+                    -fx-alignment: center;
                     """);
-            newTextField.addEventHandler(MouseEvent.MOUSE_CLICKED, _ -> deleteTextField(amount, newTextField, e));
+
+            newTextField.addEventHandler(
+                    MouseEvent.MOUSE_CLICKED,
+                    _ -> deleteTextField(amount, newTextField, e)
+            );
+
             sum = sum.add(amount);
             sumContainer.getChildren().add(newTextField);
         }
-        totalSum.setText("Total: " + sum);
+
+        totalSum.setText("Total: ₱ " + String.format("%,.2f", sum));
         sumInput.setText("");
     }
 
@@ -932,6 +1275,7 @@ public class SlspManagerController {
         markClean();
         editingSlsp = null;
     }
+
     private void sortRows() {
         // Commit/cancel any in-progress cell edit so the sort doesn't fight it
         sTable.edit(-1, null);
@@ -949,6 +1293,7 @@ public class SlspManagerController {
         sTable.refresh();                   // refreshes the # column
         pTable.refresh();
     }
+
     @FXML
     public void DeleteSlsp(ActionEvent e) {
         if (!vm.isExisting()) return;
@@ -973,15 +1318,124 @@ public class SlspManagerController {
         }
     }
 
-    @FXML
-    public void PrintSlsp(ActionEvent e) {
-        if (!confirmLeave()) return;
-        Pages.change(e,Pages.SLSP_PRINT);
-    }
 
     @FXML
     public void Supplier(ActionEvent e) {
         if (!confirmLeave()) return;
         Pages.change(e, Pages.SUPPLIER);
     }
+    private static class MoneyCell<T> extends TextFieldTableCell<T, BigDecimal> {
+        MoneyCell() {
+            super(MONEY_CONVERTER);
+            setAlignment(Pos.CENTER_RIGHT);
+        }
+        @Override public void startEdit() {
+            super.startEdit();
+            if (isEditing() && getGraphic() instanceof TextField tf) {
+                tf.setText(nz(getItem()).setScale(2, RoundingMode.HALF_UP).toPlainString());
+                tf.selectAll();
+            }
+        }
+    }
+    private static class MoneyDisplayCell<T> extends TableCell<T, BigDecimal> {
+        MoneyDisplayCell() {
+            setAlignment(Pos.CENTER_RIGHT);
+            // a selected row keeps the normal selection colors, so re-apply the style when selection changes
+            selectedProperty().addListener(_ -> applyCalcStyle());
+        }
+
+        @Override protected void updateItem(BigDecimal v, boolean empty) {
+            super.updateItem(v, empty);
+            setText(empty || v == null ? null : displayMoney(v));
+            applyCalcStyle();
+        }
+
+        private void applyCalcStyle() {
+            setStyle(isEmpty() || isSelected() ? "" : CALC_CELL_STYLE);
+        }
+    }
+    private void styleCalculatedFooter(TextField... fields) {
+        for (TextField f : fields) f.setStyle(CALC_FOOTER_STYLE);
+    }
+    private <T> void wireMoneyColumn(TableColumn<T, BigDecimal> col, Function<T, Property<BigDecimal>> extractor) {
+        col.setEditable(true);
+        col.setCellValueFactory(cd -> extractor.apply(cd.getValue()));
+        col.setCellFactory(_ -> new MoneyCell<>());
+        col.setOnEditCommit(ev -> extractor.apply(ev.getRowValue()).setValue(ev.getNewValue()));
+    }
+
+	private static Observable[] saleDeps(SaleRow r) {
+		return new Observable[] { r.exemptProperty(), r.zeroRatedProperty(), r.grossProperty(), r.taxableProperty() };
+	}
+
+	private static Observable[] purchaseDeps(PurchaseRow r) {
+		return new Observable[] { r.exemptProperty(), r.zeroRatedProperty(), r.grossProperty(), r.taxableProperty() };
+	}
+	private void alignFooter(GridPane footer, TableView<?> table) {
+	    footer.setHgap(0);
+	    var constraints = footer.getColumnConstraints();
+	    for (int i = 0; i < constraints.size() && i < table.getColumns().size(); i++) {
+	        TableColumn<?, ?> col = table.getColumns().get(i);
+	        ColumnConstraints cc = constraints.get(i);
+	        var width = Bindings.when(col.visibleProperty()).then(col.widthProperty()).otherwise(0);
+	        cc.minWidthProperty().bind(width);
+	        cc.prefWidthProperty().bind(width);
+	        cc.maxWidthProperty().bind(width);
+	    }
+	    for (Node n : footer.getChildren()) {
+	        if (n instanceof TextField) GridPane.setMargin(n, new Insets(0, 3, 0, 3));
+	    }
+	}
+	private void formatPesoField(TextField field) {
+	    field.setOnAction(_ -> formatPesoFieldDisplay(field));
+
+	    field.focusedProperty().addListener((_, _, isFocused) -> {
+	        if (isFocused) {
+	            field.setText(field.getText()
+	                    .replace("₱", "")
+	                    .replace(",", "")
+	                    .trim());
+	        } else {
+	            formatPesoFieldDisplay(field);
+	        }
+	    });
+
+	    formatPesoFieldDisplay(field);
+	}
+
+	private void formatPesoFieldDisplay(TextField field) {
+	    try {
+	        String text = field.getText()
+	                .replace("₱", "")
+	                .replace(",", "")
+	                .trim();
+
+	        BigDecimal amount = new BigDecimal(text.isEmpty() ? "0" : text);
+	        field.setText("₱ " + String.format("%,.2f", amount));
+	    } catch (NumberFormatException ex) {
+	        field.setText("₱ 0.00");
+	    }
+	}
+
+	private BigDecimal parsePeso(String text) {
+	    return new BigDecimal(
+	            text.replace("₱", "").replace(",", "").trim()
+	    );
+	}
+	private StringConverter<Supplier> supplierConverter() {
+	    return new StringConverter<>() {
+	        @Override public String toString(Supplier s) {
+	            if (s == null) return "";
+	            String name = s.getTradeName() == null ? "" : s.getTradeName();
+	            String tin = s.getTinNum() == null ? "" : s.getTinNum();
+	            return name + ": " + tin;
+	        }
+	        @Override public Supplier fromString(String text) {
+	            // only used if the combo is ever made editable: match back to a real supplier
+	            return suppliers.stream()
+	                    .filter(s -> toString(s).equals(text))
+	                    .findFirst().orElse(null);
+	        }
+	    };
+	}
 }

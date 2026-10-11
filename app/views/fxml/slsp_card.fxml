@@ -13,26 +13,49 @@
    <children>
       <GridPane hgap="10.0" maxWidth="Infinity">
          <columnConstraints>
-            <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" minWidth="0.0" percentWidth="20.0" />
-            <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" minWidth="0.0" percentWidth="20.0" />
-            <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" minWidth="0.0" percentWidth="20.0" />
-            <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" minWidth="0.0" percentWidth="20.0" />
-            <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" minWidth="0.0" percentWidth="20.0" />
-         </columnConstraints>
+		    <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" minWidth="0.0" percentWidth="16.67" />
+		    <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" minWidth="0.0" percentWidth="16.67" />
+		    <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" minWidth="0.0" percentWidth="16.67" />
+		    <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" minWidth="0.0" percentWidth="16.67" />
+		    <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" minWidth="0.0" percentWidth="16.67" />
+		    <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" minWidth="0.0" percentWidth="16.65" />
+		</columnConstraints>
          <rowConstraints>
             <RowConstraints />
          </rowConstraints>
          <children>
-            <Text fx:id="period" strokeType="OUTSIDE" strokeWidth="0.0" text="January 2026" GridPane.columnIndex="0">
-               <font>
-                  <Font name="System Bold" size="14.0" />
-               </font>
-            </Text>
-            <Text fx:id="salesRow" strokeType="OUTSIDE" strokeWidth="0.0" text="0" GridPane.columnIndex="1" />
-            <Text fx:id="purchasesRow" strokeType="OUTSIDE" strokeWidth="0.0" text="0" GridPane.columnIndex="2" />
-            <Text fx:id="outputVat" strokeType="OUTSIDE" strokeWidth="0.0" text="₱ 0" GridPane.columnIndex="3" />
-            <Text fx:id="inputVat" strokeType="OUTSIDE" strokeWidth="0.0" text="₱ 0" GridPane.columnIndex="4" />
-         </children>
+		    <Text fx:id="period"
+		          text="January 2026"
+		          GridPane.columnIndex="0">
+		        <font>
+		            <Font name="System Bold" size="14.0" />
+		        </font>
+		    </Text>
+		
+		    <Text fx:id="salesRow"
+		          text="0"
+		          GridPane.columnIndex="1" />
+		
+		    <Text fx:id="purchasesRow"
+		          text="0"
+		          GridPane.columnIndex="2" />
+		
+		    <Text fx:id="outputVat"
+		          text="₱ 0.00"
+		          GridPane.columnIndex="3" />
+		
+		    <Text fx:id="inputVat"
+		          text="₱ 0.00"
+		          GridPane.columnIndex="4" />
+		
+		    <Text fx:id="taxDue"
+		          text="₱ 0.00"
+		          GridPane.columnIndex="5">
+		        <font>
+		            <Font name="System Bold" size="14.0" />
+		        </font>
+		    </Text>
+		</children>
       </GridPane>
       <HBox alignment="CENTER_RIGHT" spacing="50.0">
          <children>
