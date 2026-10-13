@@ -30,6 +30,18 @@ public class DeleteTaxpayer extends VBox {
                 }
             }
         });
+        this.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (event.getCode() == KeyCode.ESCAPE) {
+                closeWindow();
+                event.consume();
+            } else if (event.getCode() == KeyCode.ENTER) {
+                // BUG FIX: Only close if the button is NOT disabled, or let 'delete' handle it.
+                if (!delButton.isDisable()) {
+                    delete(null); 
+                }
+                event.consume();
+            }
+        });
         try {
             this.vm = new TaxpayerViewModel();
             this.id = id;

@@ -42,7 +42,6 @@ public class SlspCard extends VBox {
 
     public SlspCard(SLSP slsp, Consumer<ActionEvent> onOpen) {
         Pages.child(Pages.SLSP_CARD, this, SlspCard.class);
-
         period.setText(slsp.getTitle());
         salesRow.setText(String.valueOf(slsp.getSales().size()));
         purchasesRow.setText(String.valueOf(slsp.getPurchases().size()));
