@@ -14,6 +14,9 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javafx.scene.control.TableCell;
 import app.models.Purchase;
 import app.models.SLSP;
@@ -29,6 +32,7 @@ import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -61,9 +65,14 @@ public class SlspManagerController {
     @FXML private Button delBtn;
     @FXML private TextField sumInput;
     @FXML private TextField totalSum;
+    @FXML private TextField saleSearchField; //add this feature per type
+    @FXML private TextField purchaseSearchField; //also this
+    private FilteredList<SaleRow> filteredSaleRows;
+    private FilteredList<PurchaseRow> filteredPurchaseRows;
     @FXML private VBox sumContainer;
     @FXML private TabPane tabPane;
     @FXML private Text tradeNameText;
+    
 
     // Sale table
     @FXML private TableView<SaleRow> sTable;
@@ -109,11 +118,80 @@ public class SlspManagerController {
     @FXML private TextField purchaseGross;
     @FXML private TextField purchaseTotalAmt;
     @FXML private CheckBox pHideExempt, pHideZero, pHideTotalAmt;
-
+    private static final Pattern INVOICE_PATTERN =
+            Pattern.compile("^(.*?)(\\d+)$");
     private final ObservableList<SaleRow> saleRows = FXCollections.observableArrayList(
             r -> new Observable[] { r.dayProperty(), r.invoiceNoProperty(),
                     r.exemptProperty(), r.zeroRatedProperty(), r.grossInputProperty() });
+    private String generateNextInvoiceNumber(
+            ObservableList<String> existingNumbers) {
 
+        String latest = null;
+        long highest = -1;
+
+        String prefix = "";
+        int digitWidth = 0;
+
+        for (String invoice : existingNumbers) {
+            if (invoice == null || invoice.isBlank()) {
+                continue;
+            }
+
+            Matcher matcher = INVOICE_PATTERN.matcher(invoice.trim());
+
+            if (!matcher.matches()) {
+                continue;
+            }
+
+            try {
+                long number = Long.parseLong(matcher.group(2));
+
+                if (number > highest) {
+                    highest = number;
+                    latest = invoice.trim();
+                    prefix = matcher.group(1);
+                    digitWidth = matcher.group(2).length();
+                }
+            } catch (NumberFormatException ignored) {
+                // Ignore invoice numbers whose numeric suffix exceeds long.
+            }
+        }
+
+        if (latest == null) {
+            return "000001";
+        }
+
+        if (highest == Long.MAX_VALUE) {
+            throw new IllegalStateException(
+                    "Cannot generate another invoice number: numeric limit reached.");
+        }
+
+        long next = highest + 1;
+
+        return prefix + String.format(
+                java.util.Locale.ROOT,
+                "%0" + digitWidth + "d",
+                next
+        );
+    }
+    private String nextSaleInvoiceNumber() {
+        ObservableList<String> numbers = FXCollections.observableArrayList();
+
+        for (SaleRow row : saleRows) {
+            numbers.add(row.invoiceNoProperty().get());
+        }
+
+        return generateNextInvoiceNumber(numbers);
+    }
+    private String nextPurchaseInvoiceNumber() {
+        ObservableList<String> numbers = FXCollections.observableArrayList();
+
+        for (PurchaseRow row : purchaseRows) {
+            numbers.add(row.invoiceNoProperty().get());
+        }
+
+        return generateNextInvoiceNumber(numbers);
+    }
     private final ObservableList<PurchaseRow> purchaseRows = FXCollections.observableArrayList(
             r -> new Observable[] { r.dayProperty(), r.supplierProperty(), r.invoiceNoProperty(),
                     r.exemptProperty(), r.zeroRatedProperty(), r.grossInputProperty() });
@@ -185,8 +263,9 @@ public class SlspManagerController {
         Pages.bindShortcut(root, "Ctrl+E", sumInput);
         Pages.bindShortcut(root, "Ctrl+B", this::Supplier);
         Pages.bindShortcut(root, "Ctrl+Enter", this::onAddRowShortcut);
+        Pages.bindShortcut(root, "Ctrl+F", this::focusSearchField);
         bindUndoShortcut();
-
+        
         baseTitle = "SLSP : " + Taxpayer.getTaxpayer().getTradeName();
         tradeNameText.setText(baseTitle);
 
@@ -246,6 +325,22 @@ public class SlspManagerController {
         });
         years.valueProperty().addListener((_, _, _) -> onPeriodChanged());
         months.valueProperty().addListener((_, _, _) -> onPeriodChanged());
+    }
+    @FXML
+    private void focusSearchField(ActionEvent event) {
+        boolean isSaleTab =
+                tabPane.getSelectionModel().getSelectedIndex() == 0;
+
+        TextField searchField = isSaleTab
+                ? saleSearchField
+                : purchaseSearchField;
+
+        if (searchField == null) {
+            return;
+        }
+
+        searchField.requestFocus();
+        searchField.selectAll();
     }
 
     private void bindHide(CheckBox box, TableColumn<?, ?> col, TextField footer) {
@@ -537,7 +632,15 @@ public class SlspManagerController {
     // ---------- Sale table setup ----------
 
     private void setupSaleTable() {
-        sTable.setItems(saleRows);
+    	filteredSaleRows = new FilteredList<>(saleRows, _ -> true);
+    	sTable.setItems(filteredSaleRows);
+
+    	if (saleSearchField != null) {
+    	    saleSearchField.textProperty().addListener(
+    	            (_, _, newValue) ->
+    	                    filterSales(newValue)
+    	    );
+    	}
         setupColumnWidths(sTable, sColNum, sColDelete);
         wireDeleteColumn(sColDelete, sTable, saleRows);
         wireRowNumberColumn(sColNum);
@@ -563,7 +666,17 @@ public class SlspManagerController {
     // ---------- Purchase table setup ----------
 
     private void setupPurchaseTable() {
-        pTable.setItems(purchaseRows);
+    	filteredPurchaseRows =
+    	        new FilteredList<>(purchaseRows, _ -> true);
+
+    	pTable.setItems(filteredPurchaseRows);
+
+    	if (purchaseSearchField != null) {
+    	    purchaseSearchField.textProperty().addListener(
+    	            (_, _, newValue) ->
+    	                    filterPurchases(newValue)
+    	    );
+    	}
 
         // Fixed-width row number and delete columns.
         setupColumnWidths(pTable, pColNum, pColDelete);
@@ -671,6 +784,105 @@ public class SlspManagerController {
                 purchaseRows,
                 () -> addPurchaseOrSaleRow(false)
         );
+    }
+    private void filterSales(String query) {
+        String search = normalizeSearch(query);
+
+        filteredSaleRows.setPredicate(row -> {
+            if (search.isEmpty()) {
+                return true;
+            }
+
+            return contains(row.invoiceNoProperty().get(), search)
+                    || matchesDate(row.dayProperty().get(), search)
+                    || matchesAmount(row.exemptProperty().get(), search)
+                    || matchesAmount(row.zeroRatedProperty().get(), search)
+                    || matchesAmount(row.taxableProperty().get(), search)
+                    || matchesAmount(row.getOutputVat(), search)
+                    || matchesAmount(row.grossProperty().get(), search);
+        });
+    }
+
+    private void filterPurchases(String query) {
+        String search = normalizeSearch(query);
+
+        filteredPurchaseRows.setPredicate(row -> {
+            if (search.isEmpty()) {
+                return true;
+            }
+
+            Supplier supplier = row.supplierProperty().get();
+
+            String supplierName = supplier == null
+                    ? ""
+                    : supplier.getTradeName();
+
+            String supplierTin = supplier == null
+                    ? ""
+                    : supplier.getTinNum();
+
+            return contains(row.invoiceNoProperty().get(), search)
+                    || matchesDate(row.dayProperty().get(), search)
+                    || contains(supplierName, search)
+                    || contains(supplierTin, search)
+                    || matchesAmount(row.exemptProperty().get(), search)
+                    || matchesAmount(row.zeroRatedProperty().get(), search)
+                    || matchesAmount(row.taxableProperty().get(), search)
+                    || matchesAmount(row.getInputVat(), search)
+                    || matchesAmount(row.grossProperty().get(), search)
+                    || matchesAmount(row.getTotalAmount(), search);
+        });
+    }
+    private String normalizeSearch(String query) {
+        return query == null
+                ? ""
+                : query.trim().toLowerCase(java.util.Locale.ROOT);
+    }
+
+    private boolean contains(String value, String search) {
+        return value != null
+                && value.toLowerCase(java.util.Locale.ROOT).contains(search);
+    }
+    private boolean matchesDate(Integer day, String search) {
+        if (day == null || years.getValue() == null) {
+            return false;
+        }
+
+        int monthIndex = months.getSelectionModel().getSelectedIndex();
+
+        if (monthIndex < 0) {
+            return false;
+        }
+
+        String date = String.format(
+                java.util.Locale.ROOT,
+                "%02d/%02d/%04d",
+                monthIndex + 1,
+                day,
+                years.getValue()
+        );
+
+        return date.contains(search);
+    }
+    private boolean matchesAmount(BigDecimal amount, String search) {
+        if (amount == null || search == null || search.isBlank()) {
+            return false;
+        }
+
+        BigDecimal normalizedAmount =
+                amount.setScale(2, java.math.RoundingMode.HALF_UP);
+
+        String plain = normalizedAmount.toPlainString();
+
+        String formatted = MONEY_FORMAT.format(normalizedAmount);
+
+        String numericSearch = search
+                .replace("₱", "")
+                .replace(",", "")
+                .trim();
+
+        return contains(plain, numericSearch)
+                || contains(formatted, search);
     }
 
     // ---------- Keyboard navigation: Enter = new bottom row, Tab / Shift+Tab = next / previous cell ----------
@@ -967,30 +1179,57 @@ public class SlspManagerController {
 
     private void addPurchaseOrSaleRow(boolean isSale) {
         if (isSale) {
-            SaleRow existingBlank = saleRows.stream().filter(SaleRow::isEmpty).findFirst().orElse(null);
+            SaleRow existingBlank = saleRows.stream()
+                    .filter(SaleRow::isEmpty)
+                    .findFirst()
+                    .orElse(null);
+
             if (existingBlank != null) {
                 selectSaleRow(existingBlank);
                 return;
             }
+
             SaleRow row = new SaleRow();
-            int prevDay = saleRows.isEmpty() ? 1 : saleRows.get(saleRows.size() - 1).dayProperty().get();
+
+            int prevDay = saleRows.isEmpty()
+                    ? 1
+                    : saleRows.get(saleRows.size() - 1)
+                            .dayProperty().get();
+
             row.dayProperty().set(Math.max(1, prevDay));
+            row.invoiceNoProperty().set(nextSaleInvoiceNumber());
+
             saleRows.add(row);
             selectSaleRow(row);
+
         } else {
-            PurchaseRow existingBlank = purchaseRows.stream().filter(PurchaseRow::isEmpty).findFirst().orElse(null);
+            PurchaseRow existingBlank = purchaseRows.stream()
+                    .filter(PurchaseRow::isEmpty)
+                    .findFirst()
+                    .orElse(null);
+
             if (existingBlank != null) {
                 selectPurchaseRow(existingBlank);
                 return;
             }
+
             PurchaseRow row = new PurchaseRow();
+
             if (purchaseRows.isEmpty()) {
                 row.dayProperty().set(1);
             } else {
-                PurchaseRow prev = purchaseRows.get(purchaseRows.size() - 1);
-                row.dayProperty().set(Math.max(1, prev.dayProperty().get()));
-                row.supplierProperty().set(prev.supplierProperty().get());
+                PurchaseRow prev =
+                        purchaseRows.get(purchaseRows.size() - 1);
+
+                row.dayProperty().set(
+                        Math.max(1, prev.dayProperty().get()));
+
+                row.supplierProperty().set(
+                        prev.supplierProperty().get());
             }
+
+            row.invoiceNoProperty().set(nextPurchaseInvoiceNumber());
+
             purchaseRows.add(row);
             selectPurchaseRow(row);
         }
