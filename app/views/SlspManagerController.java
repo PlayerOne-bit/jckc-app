@@ -41,7 +41,6 @@ import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -73,6 +72,7 @@ public class SlspManagerController {
     @FXML private TabPane tabPane;
     @FXML private Text tradeNameText;
     
+    
 
     // Sale table
     @FXML private TableView<SaleRow> sTable;
@@ -94,7 +94,9 @@ public class SlspManagerController {
     @FXML private TextField saleGross;
     @FXML private CheckBox sHideExempt, sHideZero;
     @FXML private GridPane saleFooter, purchaseFooter;
-
+    @FXML private Button saleUndoBtn;
+    @FXML private Button saleRedoBtn;
+    
     // Purchase table
     @FXML private TableView<PurchaseRow> pTable;
     @FXML private TableColumn<PurchaseRow, Integer> pColNum;
@@ -108,7 +110,6 @@ public class SlspManagerController {
     @FXML private TableColumn<PurchaseRow, BigDecimal> pColGross;
     @FXML private TableColumn<PurchaseRow, BigDecimal> pColTotalAmt;
     @FXML private TableColumn<PurchaseRow, BigDecimal> pColDelete;
-
     @FXML private Button pAddBtn;
     @FXML private Text purchaseTotalRows;
     @FXML private TextField purchaseExempt;
@@ -118,6 +119,8 @@ public class SlspManagerController {
     @FXML private TextField purchaseGross;
     @FXML private TextField purchaseTotalAmt;
     @FXML private CheckBox pHideExempt, pHideZero, pHideTotalAmt;
+    @FXML private Button purchaseUndoBtn;
+    @FXML private Button purchaseRedoBtn;
     private static final Pattern INVOICE_PATTERN =
             Pattern.compile("^(.*?)(\\d+)$");
     private final ObservableList<SaleRow> saleRows = FXCollections.observableArrayList(
@@ -264,11 +267,12 @@ public class SlspManagerController {
         Pages.bindShortcut(root, "Ctrl+B", this::Supplier);
         Pages.bindShortcut(root, "Ctrl+Enter", this::onAddRowShortcut);
         Pages.bindShortcut(root, "Ctrl+F", this::focusSearchField);
-        bindUndoShortcut();
+        Pages.bindShortcut(root,"Ctrl+Z",this::undo);
+        Pages.bindShortcut(root,"Ctrl+Y",this::redo);
         
         baseTitle = "SLSP : " + Taxpayer.getTaxpayer().getTradeName();
         tradeNameText.setText(baseTitle);
-
+        setUndoAndRedoButton();
         vm = new SlspManagerViewModel();
 
         years.setItems(FXCollections.observableArrayList(LocalDate.now().getYear(), LocalDate.now().getYear() - 1));
@@ -510,10 +514,11 @@ public class SlspManagerController {
                 btn.setGraphic(icon);
                 btn.setFocusTraversable(false);
                 btn.setOnAction(_ -> {
-                    int i = getIndex();
-                    if (i >= 0 && i < rows.size()) {
+                    T row = getTableRow().getItem();
+
+                    if (row != null) {
                         table.edit(-1, null);
-                        rows.remove(i);
+                        rows.remove(row);
                     }
                 });
                 setAlignment(Pos.CENTER);
@@ -929,18 +934,16 @@ public class SlspManagerController {
             Runnable addRow) {
 
         table.setEditable(true);
-
+        commitTextFieldOnFocusLoss(table);
         table.addEventFilter(KeyEvent.KEY_PRESSED, ev -> {
             KeyCode code = ev.getCode();
             if (ev.isControlDown() && ev.getCode() == KeyCode.W) {
                 ev.consume();
-
-                int selectedIndex = table.getSelectionModel().getSelectedIndex();
-
-                if (selectedIndex >= 0) {
-                    table.getItems().remove(selectedIndex);
+                T selectedItem = table.getSelectionModel().getSelectedItem();
+                if (selectedItem != null) {
+                    table.edit(-1, null);
+                    rows.remove(selectedItem);
                 }
-
                 return;
             }
             // Allow the ComboBox to handle Enter before table navigation.
@@ -986,7 +989,11 @@ public class SlspManagerController {
                 int selected = table.getSelectionModel().getSelectedIndex();
 
                 if (selected >= 0 && selected < rows.size()) {
-                    rows.remove(selected);
+                	T selectedItem = table.getSelectionModel().getSelectedItem();
+
+                	if (selectedItem != null) {
+                	    rows.remove(selectedItem);
+                	}
 
                     if (!rows.isEmpty()) {
                         table.getSelectionModel()
@@ -1042,12 +1049,13 @@ public class SlspManagerController {
 
             // DOWN on the last row adds a row when not editing.
             if (code == KeyCode.DOWN && table.getEditingCell() == null) {
-                int selected = table.getSelectionModel().getSelectedIndex();
+                ev.consume();
 
-                if (selected == rows.size() - 1) {
-                    addRow.run();
-                    ev.consume();
-                }
+                moveDownOrAddRow(
+                        table,
+                        rows,
+                        addRow
+                );
 
                 return;
             }
@@ -1140,13 +1148,15 @@ public class SlspManagerController {
 
     // ---------- Row creation: guarded, no duplicate blank rows, always at the bottom ----------
 
+    @FXML
     private void onAddRowShortcut(ActionEvent e) {
-        boolean isSaleTab = tabPane.getSelectionModel().getSelectedIndex() == 0;
+        boolean isSaleTab =
+                tabPane.getSelectionModel().getSelectedIndex() == 0;
 
         if (isSaleTab) {
-            moveDownOrAddRow(sTable, saleRows, () -> addPurchaseOrSaleRow(true));
+            sAddBtn.fire();
         } else {
-            moveDownOrAddRow(pTable, purchaseRows, () -> addPurchaseOrSaleRow(false));
+            pAddBtn.fire();
         }
     }
     private <T> void moveDownOrAddRow(
@@ -1258,21 +1268,6 @@ public class SlspManagerController {
     private record Snapshot(Integer year, int monthIndex,
                             List<SaleState> sales, List<PurchaseState> purchases) {}
 
-    private void bindUndoShortcut() {
-        KeyCombination undoKeys = KeyCombination.valueOf("Ctrl+Z");
-        KeyCombination redoKeys = KeyCombination.valueOf("Ctrl+Y");
-        KeyCombination redoAltKeys = KeyCombination.valueOf("Ctrl+Shift+Z");
-        root.addEventFilter(KeyEvent.KEY_PRESSED, ev -> {
-            boolean isUndo = undoKeys.match(ev);
-            boolean isRedo = redoKeys.match(ev) || redoAltKeys.match(ev);
-            if (!isUndo && !isRedo) return;
-            Node focused = root.getScene() == null ? null : root.getScene().getFocusOwner();
-            // While typing in a text field, let it undo/redo its own text
-            if (focused instanceof TextInputControl) return;
-            if (isUndo) undo(); else redo();
-            ev.consume();
-        });
-    }
 
     private Snapshot captureSnapshot() {
         List<SaleState> sales = new java.util.ArrayList<>();
@@ -1294,13 +1289,14 @@ public class SlspManagerController {
     
     /** Called after every change: pushes the previous state onto the undo stack. */
     private void recordHistory() {
-        if (loading || historyPaused || lastSnapshot == null) return;
+        if (loading || historyPaused || lastSnapshot == null)  return;
         Snapshot now = captureSnapshot();
-        if (now.equals(lastSnapshot)) return;   // nothing actually changed
+        if (now.equals(lastSnapshot))  return;
         undoStack.push(lastSnapshot);
-        if (undoStack.size() > MAX_HISTORY) undoStack.removeLast();
-        redoStack.clear();      // a new change invalidates the redo history
+        if (undoStack.size() > MAX_HISTORY)  undoStack.removeLast();
+        redoStack.clear();
         lastSnapshot = now;
+        setUndoAndRedoButton();
     }
 
     private void onPeriodChanged() {
@@ -1316,21 +1312,33 @@ public class SlspManagerController {
         pTable.refresh();
         recordHistory();        // year/month change + any clamped days = one undo step
     }
-
-    private void undo() {
+    @FXML
+    public void undo(ActionEvent e) {
         if (undoStack.isEmpty()) return;
         sTable.edit(-1, null);  // cancel any in-progress cell edit
         pTable.edit(-1, null);
         redoStack.push(lastSnapshot);
         restoreSnapshot(undoStack.pop());
+        setUndoAndRedoButton();
     }
-
-    private void redo() {
+    @FXML
+    public void redo(ActionEvent e) {
         if (redoStack.isEmpty()) return;
         sTable.edit(-1, null);
         pTable.edit(-1, null);
         undoStack.push(lastSnapshot);
         restoreSnapshot(redoStack.pop());
+        setUndoAndRedoButton();
+    }
+    private void setUndoAndRedoButton() {
+        boolean canUndo = !undoStack.isEmpty();
+        boolean canRedo = !redoStack.isEmpty();
+
+        saleUndoBtn.setDisable(!canUndo);
+        purchaseUndoBtn.setDisable(!canUndo);
+
+        saleRedoBtn.setDisable(!canRedo);
+        purchaseRedoBtn.setDisable(!canRedo);
     }
 
     private void restoreSnapshot(Snapshot s) {
@@ -1372,6 +1380,7 @@ public class SlspManagerController {
             historyPaused = false;
         }
         lastSnapshot = s;
+        setUndoAndRedoButton();
     }
 
     // ---------- Unsaved-changes tracking ----------
@@ -1544,7 +1553,32 @@ public class SlspManagerController {
         totalSum.setText("Total: ₱ " + String.format("%,.2f", sum));
         sumInput.setText("");
     }
+    private <T> void commitTextFieldOnFocusLoss(TableView<T> table) {
+        table.sceneProperty().addListener((_, _, newScene) -> {
+            if (newScene == null) return;
 
+            newScene.addEventFilter(MouseEvent.MOUSE_PRESSED, _ -> {
+                TablePosition<T, ?> editingCell = table.getEditingCell();
+
+                if (editingCell == null) return;
+
+                Node focusOwner = newScene.getFocusOwner();
+
+                if (!(focusOwner instanceof TextField tf)) return;
+
+                // Make sure the TextField belongs to this table's editor.
+                Node node = tf;
+                while (node != null && node != table) {
+                    node = node.getParent();
+                }
+
+                if (node != table) return;
+
+                // Commit the current editor before JavaFX processes the click.
+                tf.fireEvent(new ActionEvent(tf, tf));
+            });
+        });
+    }
     private void deleteTextField(BigDecimal d, TextField t, ActionEvent e) {
         if (total.size() <= 0) return;
         sumContainer.getChildren().remove(t);
@@ -1596,7 +1630,20 @@ public class SlspManagerController {
         }
 
         // Update the undo baseline after sorting.
-        lastSnapshot = captureSnapshot();
+        Snapshot sortedSnapshot = captureSnapshot();
+
+        if (!sortedSnapshot.equals(lastSnapshot)) {
+            undoStack.push(lastSnapshot);
+
+            if (undoStack.size() > MAX_HISTORY) {
+                undoStack.removeLast();
+            }
+
+            redoStack.clear();
+            lastSnapshot = sortedSnapshot;
+        }
+
+        setUndoAndRedoButton();
 
         // Refresh row numbers and displayed values.
         sTable.refresh();

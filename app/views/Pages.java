@@ -46,6 +46,7 @@ public class Pages {
     private static Stage stage;
     private static Scene scene;
     private static Parent root;
+    private static boolean announcementShownOnce = false;
     public static void bindShortcut(Node target, String shortcutStr, Consumer<ActionEvent> action) {
         KeyCombination combination = KeyCombination.valueOf(shortcutStr);
         target.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
@@ -158,7 +159,7 @@ public class Pages {
         	    "-fx-text-fill: white;"
         	);
 
-        Label version = new Label("RELEASE 1.0.0");
+        Label version = new Label("RELEASE 1.0.1");
         version.setStyle(
             "-fx-font-size: 11px;" +
             "-fx-font-weight: bold;" +
@@ -198,7 +199,51 @@ public class Pages {
 
         content.setPadding(new Insets(18));
         content.setStyle("-fx-background-color: #ffffff;");
+        Label newHeading = new Label("🆕 WHAT'S NEW IN RELEASE 1.0.1");
+        newHeading.setStyle(
+            "-fx-font-size: 12px;" +
+            "-fx-font-weight: bold;" +
+            "-fx-text-fill: #E75480;"
+        );
+        content.getChildren().add(newHeading);
 
+        addAnnouncementSection(
+            content,
+            "🔍 SLSP Manager: Search, Undo and Redo",
+            "Find rows faster with the new search field. Undo and redo " +
+            "buttons let you step back and forward through your changes " +
+            "without retyping."
+        );
+
+        addAnnouncementSection(
+            content,
+            "✍️ Automatic Cell Commit",
+            "A value you typed in a row is now saved automatically when " +
+            "you click away from the field, so entries are no longer " +
+            "lost when the cell loses focus."
+        );
+
+        addAnnouncementSection(
+            content,
+            "🖨️ Better SLSP Print Preview",
+            "A cleaner, page-accurate preview with toggles to hide or " +
+            "show columns, plus a new Summary page for the quarter."
+        );
+
+        addAnnouncementSection(
+            content,
+            "📊 Summary in Excel Export",
+            "Exported workbooks now include a Summary sheet with the " +
+            "quarterly income, purchases and tax due."
+        );
+
+        Label oldHeading = new Label("RELEASE 1.0.0");
+        oldHeading.setStyle(
+            "-fx-font-size: 12px;" +
+            "-fx-font-weight: bold;" +
+            "-fx-text-fill: #64748b;"
+        );
+        content.getChildren().add(oldHeading);
         addAnnouncementSection(
             content,
             "📋 Taxpayer Information Management",
@@ -349,5 +394,14 @@ public class Pages {
         announcementStage.setY(
             bounds.getMaxY() - height - margin
         );
+    }
+    public static void showAnnouncementOnce() {
+        if (announcementShownOnce) return;
+        announcementShownOnce = true;
+        showAnnouncement();
+    }
+
+    public static void hideAnnouncement() {
+        if (announcementStage != null) announcementStage.hide();
     }
 }

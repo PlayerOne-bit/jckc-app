@@ -157,6 +157,16 @@
                                        <graphic><FontIcon fill="WHITE" iconLiteral="fas-plus" /></graphic>
                                     </Button>
                                     <TextField fx:id="saleSearchField" prefWidth="220.0" promptText="Search by date, invoice, amount, etc." />
+                                    <Button fx:id="saleUndoBtn" mnemonicParsing="false" onAction="#undo">
+                                       <graphic>
+                                          <FontIcon iconLiteral="fas-undo" />
+                                       </graphic>
+                                    </Button>
+                                    <Button fx:id="saleRedoBtn" mnemonicParsing="false" onAction="#redo">
+                                       <graphic>
+                                          <FontIcon iconLiteral="fas-redo" />
+                                       </graphic>
+                                    </Button>
                                     <HBox alignment="CENTER_RIGHT" spacing="10.0" HBox.hgrow="ALWAYS">
                                        <children>
                                           <CheckBox fx:id="sHideExempt" mnemonicParsing="false" text="Hide VAT Exempt" />
@@ -241,6 +251,16 @@
                                        <graphic><FontIcon fill="WHITE" iconLiteral="fas-plus" /></graphic>
                                     </Button>
                                     <TextField fx:id="purchaseSearchField" prefWidth="220.0" promptText="Search by date, invoice, amount, etc." />
+                                    <Button fx:id="purchaseUndoBtn" mnemonicParsing="false" onAction="#undo">
+                                       <graphic>
+                                          <FontIcon iconLiteral="fas-undo" />
+                                       </graphic>
+                                    </Button>
+                                    <Button fx:id="purchaseRedoBtn" mnemonicParsing="false" onAction="#redo">
+                                       <graphic>
+                                          <FontIcon iconLiteral="fas-redo" />
+                                       </graphic>
+                                    </Button>
                                     <HBox alignment="CENTER_RIGHT" spacing="10.0" HBox.hgrow="ALWAYS">
                                        <children>
                                           <CheckBox fx:id="pHideExempt" mnemonicParsing="false" text="Hide VAT Exempt" />

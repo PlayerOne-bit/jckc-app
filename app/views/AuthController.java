@@ -1,7 +1,7 @@
 package app.views;
 
 import app.viewmodels.AuthAdmin;
-
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -22,6 +22,7 @@ public class AuthController {
     @FXML
     private void initialize() {
         Pages.bindShortcut(authField, "Enter", this::Login);
+        Platform.runLater(Pages::showAnnouncementOnce);
     }
 
     @FXML

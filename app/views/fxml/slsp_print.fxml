@@ -115,12 +115,19 @@
                                         <Font name="System Bold" size="16.0" />
                                     </font>
                                 </Text>
+                        <CheckBox fx:id="includeSummary" mnemonicParsing="false" selected="true" style="-fx-text-fill: black;" text="Summary" />
 
                                 <CheckBox fx:id="includeSales" mnemonicParsing="false" selected="true" style="-fx-text-fill: black;" text="Sales" />
 
                                 <CheckBox fx:id="includePurchases" mnemonicParsing="false" selected="true" style="-fx-text-fill: black;" text="Purchases" />
-
-                                <Separator />
+								<Text text="Columns">
+								    <font><Font name="System Bold" size="16.0" /></font>
+								</Text>
+								
+								<VBox fx:id="salesColumnBox" spacing="4.0" />
+								<VBox fx:id="purchaseColumnBox" spacing="4.0" />
+								
+								<Separator />
 
                                 <Text fx:id="coverageText" text="0 of 12 months have an SLSP" wrappingWidth="260.0" />
 
@@ -144,7 +151,7 @@
                                     </font>
                                 </Button>
 
-                                <Text text="back=Esc    Print=Ctrl+P    Zoom=Ctrl+/Ctrl-/Scroll    ZoomReset=Ctrl+Num0" wrappingWidth="260.0" />
+                                <Text text="back=Esc    Print=Ctrl+P    Page=Alt+Left/Right    Zoom=Ctrl+/Ctrl-/Scroll    ZoomReset=Ctrl+Num0" wrappingWidth="260.0" />
                             </children>
                         </VBox>
                     </content>
@@ -161,14 +168,28 @@
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
 						    <children>
 						        <Text text="Preview">
-						            <font>
-						                <Font name="System Bold" size="16.0" />
-						            </font>
-						        </Text>
-						
-						        <Text fx:id="previewSubtitle" text="" />
-						
-						        <Separator orientation="VERTICAL" />
+								    <font><Font name="System Bold" size="16.0" /></font>
+								</Text>
+								
+								<Text fx:id="previewSubtitle" text="" />
+								
+								<Separator orientation="VERTICAL" />
+								
+								<Button fx:id="prevPageBtn" mnemonicParsing="false" onAction="#prevPage" text="◀ Prev">
+								    <tooltip><Tooltip text="Previous page (Alt+Left)" /></tooltip>
+								    <cursor><Cursor fx:constant="HAND" /></cursor>
+								</Button>
+								
+								<Label fx:id="pageLabel" text="Page 0 of 0" />
+								
+								<Button fx:id="nextPageBtn" mnemonicParsing="false" onAction="#nextPage" text="Next ▶">
+								    <tooltip><Tooltip text="Next page (Alt+Right)" /></tooltip>
+								    <cursor><Cursor fx:constant="HAND" /></cursor>
+								</Button>
+								
+								<Separator orientation="VERTICAL" />
+
+<!-- existing zoomOutBtn, zoomLabel, zoomInBtn, resetZoomBtn go here unchanged -->
 						
 						        <Button fx:id="zoomOutBtn" mnemonicParsing="false" onAction="#zoomOut" text="−">
 								    <tooltip>
