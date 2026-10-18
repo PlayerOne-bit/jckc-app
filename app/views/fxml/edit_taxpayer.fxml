@@ -290,6 +290,11 @@
                                     <Font size="24.0" />
                                  </font>
                               </Text>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Residence" GridPane.rowIndex="4">
+                                 <font>
+                                    <Font size="24.0" />
+                                 </font>
+                              </Text>
                               <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Tin of Spouse" GridPane.hgrow="ALWAYS" GridPane.rowIndex="5" GridPane.vgrow="ALWAYS">
                                  <font>
                                     <Font size="24.0" />
@@ -332,6 +337,15 @@
                               <FlowPane alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="3" GridPane.vgrow="ALWAYS">
                                  <children>
                                     <ComboBox fx:id="civilStatus" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="25.0" prefWidth="200.0" promptText="Civil Status" />
+                                 </children>
+                              </FlowPane>
+                              <FlowPane alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="4">
+                                 <children>
+                                    <TextField fx:id="residence" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefWidth="750.0" promptText="Residence" style="-fx-border-radius: 10; -fx-background-radius: 10;">
+                                       <font>
+                                          <Font size="18.0" />
+                                       </font>
+                                    </TextField>
                                  </children>
                               </FlowPane>
                               <FlowPane alignment="CENTER_LEFT" columnHalignment="CENTER" hgap="10.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="5" GridPane.vgrow="ALWAYS">
@@ -388,20 +402,6 @@
                               <FlowPane alignment="CENTER_LEFT" hgap="10.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="9">
                                  <children>
                                     <TextField fx:id="cpNum" alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="39.0" prefWidth="187.0" promptText="XXXX-XXX-XXXX" style="-fx-border-radius: 10; -fx-background-radius: 10;">
-                                       <font>
-                                          <Font size="18.0" />
-                                       </font>
-                                    </TextField>
-                                 </children>
-                              </FlowPane>
-                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Residence" GridPane.rowIndex="4">
-                                 <font>
-                                    <Font size="24.0" />
-                                 </font>
-                              </Text>
-                              <FlowPane alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" GridPane.columnIndex="1" GridPane.rowIndex="4">
-                                 <children>
-                                    <TextField fx:id="residence" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefWidth="750.0" promptText="Residence" style="-fx-border-radius: 10; -fx-background-radius: 10;">
                                        <font>
                                           <Font size="18.0" />
                                        </font>

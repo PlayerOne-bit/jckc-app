@@ -93,6 +93,14 @@
                         </VBox>
                         <HBox alignment="CENTER_RIGHT" spacing="10.0" HBox.hgrow="ALWAYS">
                            <children>
+                              <Button layoutX="228.0" layoutY="29.0" mnemonicParsing="false" onAction="#ImportSlsp" text="Import">
+                                 <graphic>
+                                    <FontIcon iconLiteral="fas-file-import" iconSize="20" />
+                                 </graphic>
+                                 <font>
+                                    <Font size="18.0" />
+                                 </font>
+                              </Button>
                               <Button id="auth-button" mnemonicParsing="false" onAction="#PrintSlsp" stylesheets="@application.css" text="Print">
                                  <graphic>
                                     <FontIcon iconColor="WHITE" iconLiteral="fas-print" iconSize="20" />

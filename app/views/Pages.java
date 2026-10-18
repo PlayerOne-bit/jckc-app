@@ -40,6 +40,7 @@ public class Pages {
             SLSP_CARD = "fxml/slsp_card.fxml",
             SLSP_MANAGER="fxml/slsp_manager.fxml",
             SLSP_PRINT = "fxml/slsp_print.fxml",
+            SLSP_IMPORT="fxml/slsp_import.fxml",
             SUPPLIER = "fxml/supplier.fxml",
             SUPPLIER_CARD = "fxml/supplier_card.fxml";
     private static Stage announcementStage;

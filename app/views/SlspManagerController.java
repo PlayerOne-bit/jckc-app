@@ -72,8 +72,6 @@ public class SlspManagerController {
     @FXML private TabPane tabPane;
     @FXML private Text tradeNameText;
     
-    
-
     // Sale table
     @FXML private TableView<SaleRow> sTable;
     @FXML private TableColumn<SaleRow, Integer> sColNum;

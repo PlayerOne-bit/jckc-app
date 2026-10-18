@@ -175,6 +175,10 @@ public class SlspController {
         Pages.change(e, Pages.SLSP_MANAGER);
     }
     @FXML
+    public void ImportSlsp(ActionEvent e) {
+    	Pages.change(e,Pages.SLSP_IMPORT);
+    }
+    @FXML
     public void PrintSlsp(ActionEvent e) {
     	Pages.change(e,Pages.SLSP_PRINT);
     }
