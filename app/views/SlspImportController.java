@@ -53,8 +53,7 @@ public class SlspImportController {
     private static final Color OK_COLOR = Color.web("#16a34a");     // green
     private static final Color FAIL_COLOR = Color.web("#dc2626");   // red
 
-    private static final String ADD_CSS = "black";       // row will be added
-    private static final String REPLACE_CSS = "orange";  // row will replace an existing one
+    private static final String ADD_CSS = "black";     
 
     @FXML private TextField searchField;
     @FXML private Text tradeNameText;
