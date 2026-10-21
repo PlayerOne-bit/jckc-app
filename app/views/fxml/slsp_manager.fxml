@@ -100,13 +100,13 @@
                               <TableView fx:id="sTable" editable="true" fixedCellSize="28.0" VBox.vgrow="ALWAYS">
                                  <columns>
                                     <TableColumn fx:id="sColNum" editable="false" reorderable="false" resizable="false" sortable="false" text="#" />
-                                    <TableColumn fx:id="sColDate" editable="false" reorderable="false" resizable="false" sortable="false" text="Date" />
-                                    <TableColumn fx:id="sColInvoice" editable="false" reorderable="false" resizable="false" sortable="false" text="Sales Invoice No." />
-                                    <TableColumn fx:id="sColExempt" editable="false" reorderable="false" resizable="false" sortable="false" text="VAT Exempt" />
-                                    <TableColumn fx:id="sColZeroRated" editable="false" reorderable="false" resizable="false" sortable="false" text="Zero-rated" />
-                                    <TableColumn fx:id="sColTaxable" editable="false" reorderable="false" resizable="false" sortable="false" text="VAT Receipts (1.12)" />
-                                    <TableColumn fx:id="sColOutputVat" editable="false" reorderable="false" resizable="false" sortable="false" text="Output Tax (12%)" />
-                                    <TableColumn fx:id="sColGross" editable="false" reorderable="false" resizable="false" sortable="false" text="Total Amount" />
+                                    <TableColumn fx:id="sColDate" editable="false" reorderable="false" sortable="false" text="Date" />
+                                    <TableColumn fx:id="sColInvoice" editable="false" reorderable="false" sortable="false" text="Sales Invoice No." />
+                                    <TableColumn fx:id="sColExempt" editable="false" reorderable="false" sortable="false" text="VAT Exempt" />
+                                    <TableColumn fx:id="sColZeroRated" editable="false" reorderable="false" sortable="false" text="Zero-rated" />
+                                    <TableColumn fx:id="sColTaxable" editable="false" reorderable="false" sortable="false" text="VAT Receipts (1.12)" />
+                                    <TableColumn fx:id="sColOutputVat" editable="false" reorderable="false" sortable="false" text="Output Tax (12%)" />
+                                    <TableColumn fx:id="sColGross" editable="false" reorderable="false" sortable="false" text="Total Amount" />
                                     <TableColumn fx:id="sColDelete" editable="false" reorderable="false" resizable="false" sortable="false" />
                                  </columns>
                                  <columnResizePolicy>
@@ -187,15 +187,15 @@
                               <TableView fx:id="pTable" editable="true" fixedCellSize="28.0" VBox.vgrow="ALWAYS">
                                  <columns>
                                     <TableColumn fx:id="pColNum" editable="false" reorderable="false" resizable="false" sortable="false" text="#" />
-                                    <TableColumn fx:id="pColDate" editable="true" reorderable="false" resizable="false" sortable="false" text="Date" />
-                                    <TableColumn fx:id="pColSupplier" editable="true" reorderable="false" resizable="false" sortable="false" text="Supplier" />
-                                    <TableColumn fx:id="pColInvoice" editable="true" reorderable="false" resizable="false" sortable="false" text="Invoice No." />
-                                    <TableColumn fx:id="pColExempt" editable="false" reorderable="false" resizable="false" sortable="false" text="VAT Exempt" />
-                                    <TableColumn fx:id="pColZeroRated" editable="false" reorderable="false" resizable="false" sortable="false" text="Zero-rated" />
-                                    <TableColumn fx:id="pColTaxable" editable="false" reorderable="false" resizable="false" sortable="false" text="VAT Purchases (1.12)" />
-                                    <TableColumn fx:id="pColInputVat" editable="false" reorderable="false" resizable="false" sortable="false" text="Input Tax (12%)" />
-                                    <TableColumn fx:id="pColGross" editable="false" reorderable="false" resizable="false" sortable="false" text="Total Amt. of VAT" />
-                                    <TableColumn fx:id="pColTotalAmt" editable="false" reorderable="false" resizable="false" sortable="false" text="Total Amt. of Purch." />
+                                    <TableColumn fx:id="pColDate" editable="true" reorderable="false" sortable="false" text="Date" />
+                                    <TableColumn fx:id="pColSupplier" editable="true" reorderable="false" sortable="false" text="Supplier" />
+                                    <TableColumn fx:id="pColInvoice" editable="true" reorderable="false" sortable="false" text="Invoice No." />
+                                    <TableColumn fx:id="pColExempt" editable="false" reorderable="false" sortable="false" text="VAT Exempt" />
+                                    <TableColumn fx:id="pColZeroRated" editable="false" reorderable="false" sortable="false" text="Zero-rated" />
+                                    <TableColumn fx:id="pColTaxable" editable="false" reorderable="false" sortable="false" text="VAT Purchases (1.12)" />
+                                    <TableColumn fx:id="pColInputVat" editable="false" reorderable="false" sortable="false" text="Input Tax (12%)" />
+                                    <TableColumn fx:id="pColGross" editable="false" reorderable="false" sortable="false" text="Total Amt. of VAT" />
+                                    <TableColumn fx:id="pColTotalAmt" editable="false" reorderable="false" sortable="false" text="Total Amt. of Purch." />
                                     <TableColumn fx:id="pColDelete" editable="false" reorderable="false" resizable="false" sortable="false" />
                                  </columns>
                                  <columnResizePolicy>

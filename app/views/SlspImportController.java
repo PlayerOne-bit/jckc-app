@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -28,10 +29,9 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TableCell;
@@ -42,6 +42,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 
@@ -49,15 +50,21 @@ public class SlspImportController {
 
     private static final DecimalFormat MONEY = new DecimalFormat("#,##0.00");
 
+    private static final Color OK_COLOR = Color.web("#16a34a");     // green
+    private static final Color FAIL_COLOR = Color.web("#dc2626");   // red
+
+    private static final String ADD_CSS = "black";       // row will be added
+    private static final String REPLACE_CSS = "orange";  // row will replace an existing one
+
     @FXML private TextField searchField;
     @FXML private Text tradeNameText;
+    @FXML private Text statusText;
     @FXML private ComboBox<String> months;
     @FXML private BorderPane root;
     @FXML private ProgressBar importProgressBar;
     @FXML private Button saveBtn, clearBtn;
     @FXML private GridPane saleFooter, purchaseFooter;
 
-    private final BooleanProperty hasImport = new SimpleBooleanProperty(false);
     // ----- sales
     @FXML private Tab saleTab;
     @FXML private TableView<ImportSaleRow> sTable;
@@ -72,7 +79,7 @@ public class SlspImportController {
     @FXML private TableColumn<ImportSaleRow, Void> sColDelete;
     @FXML private Text saleTotalRows;
     @FXML private TextField saleExempt, saleZeroRated, saleTaxable, saleOutputVat, saleGross;
-    
+
     // ----- purchases
     @FXML private Tab purchaseTab;
     @FXML private TableView<ImportPurchaseRow> pTable;
@@ -104,6 +111,8 @@ public class SlspImportController {
     private SlspExcelImporter.Result parsed;
     private SlspImportViewModel.Plan plan;
 
+    private final BooleanProperty hasImport = new SimpleBooleanProperty(false);
+
     private final ObservableList<ImportSaleRow> saleRows = FXCollections.observableArrayList();
     private final ObservableList<ImportPurchaseRow> purchaseRows = FXCollections.observableArrayList();
     private final ObservableList<ImportSupplierRow> supplierRows = FXCollections.observableArrayList();
@@ -130,34 +139,34 @@ public class SlspImportController {
         Pages.bindShortcut(root, "Esc", this::back);
 
         // sales columns
-        numbering(sColNum);
-        text(sColDate, ImportSaleRow::date);
-        text(sColInvoice, ImportSaleRow::invoice);
-        money(sColExempt, r -> r.model.getExemptAmount());
-        money(sColZeroRated, r -> r.model.getZeroRatedAmount());
-        money(sColTaxable, r -> r.model.getTaxableAmount());
-        money(sColOutputVat, r -> r.model.getOutputVat());
-        money(sColGross, r -> r.model.getGrossAmount());
+        numbering(sColNum, ImportSaleRow::css);
+        textCol(sColDate, ImportSaleRow::date, ImportSaleRow::css, Pos.CENTER_LEFT);
+        textCol(sColInvoice, ImportSaleRow::invoice, ImportSaleRow::css, Pos.CENTER_LEFT);
+        moneyCol(sColExempt, r -> r.model.getExemptAmount(), ImportSaleRow::css);
+        moneyCol(sColZeroRated, r -> r.model.getZeroRatedAmount(), ImportSaleRow::css);
+        moneyCol(sColTaxable, r -> r.model.getTaxableAmount(), ImportSaleRow::css);
+        moneyCol(sColOutputVat, r -> r.model.getOutputVat(), ImportSaleRow::css);
+        moneyCol(sColGross, r -> r.model.getGrossAmount(), ImportSaleRow::css);
         deleteColumn(sColDelete, this::deleteSale);
 
         // purchase columns
-        numbering(pColNum);
-        text(pColDate, ImportPurchaseRow::date);
-        text(pColSupplier, ImportPurchaseRow::supplier);
-        text(pColInvoice, ImportPurchaseRow::invoice);
-        money(pColExempt, r -> r.model.getExemptAmount());
-        money(pColZeroRated, r -> r.model.getZeroRatedAmount());
-        money(pColTaxable, r -> r.model.getTaxableAmount());
-        money(pColInputVat, r -> r.model.getInputVat());
-        money(pColGross, ImportPurchaseRow::vatTotal);
-        money(pColTotalAmt, r -> r.model.getGrossAmount());
+        numbering(pColNum, ImportPurchaseRow::css);
+        textCol(pColDate, ImportPurchaseRow::date, ImportPurchaseRow::css, Pos.CENTER_LEFT);
+        textCol(pColSupplier, ImportPurchaseRow::supplier, ImportPurchaseRow::css, Pos.CENTER_LEFT);
+        textCol(pColInvoice, ImportPurchaseRow::invoice, ImportPurchaseRow::css, Pos.CENTER_LEFT);
+        moneyCol(pColExempt, r -> r.model.getExemptAmount(), ImportPurchaseRow::css);
+        moneyCol(pColZeroRated, r -> r.model.getZeroRatedAmount(), ImportPurchaseRow::css);
+        moneyCol(pColTaxable, r -> r.model.getTaxableAmount(), ImportPurchaseRow::css);
+        moneyCol(pColInputVat, r -> r.model.getInputVat(), ImportPurchaseRow::css);
+        moneyCol(pColGross, ImportPurchaseRow::vatTotal, ImportPurchaseRow::css);
+        moneyCol(pColTotalAmt, r -> r.model.getGrossAmount(), ImportPurchaseRow::css);
         deleteColumn(pColDelete, this::deletePurchase);
 
         // supplier columns (read-only; deleting a supplier would leave its purchases behind)
-        numbering(supplierNum);
-        text(tNum, r -> r.parsed().tin());
-        text(tName, r -> r.parsed().tradeName());
-        text(bAddress, r -> r.parsed().address());
+        numbering(supplierNum, _ -> ADD_CSS);
+        textCol(tNum, r -> r.parsed().tin(), _ -> ADD_CSS, Pos.CENTER_LEFT);
+        textCol(tName, r -> r.parsed().tradeName(), _ -> ADD_CSS, Pos.CENTER_LEFT);
+        textCol(bAddress, r -> r.parsed().address(), _ -> ADD_CSS, Pos.CENTER_LEFT);
         supplierColDelete.setVisible(false);
 
         sTable.setEditable(false);
@@ -166,32 +175,60 @@ public class SlspImportController {
         sTable.setItems(saleView);
         pTable.setItems(purchaseView);
         supplierTable.setItems(supplierView);
-        evenColumns(sTable);
-        evenColumns(pTable);
-        evenColumns(supplierTable);
+
+        evenColumns(sTable, sColNum, sColDelete);
+        evenColumns(pTable, pColNum, pColDelete);
+        evenColumns(supplierTable, supplierNum, supplierColDelete);
         alignFooter(saleFooter, sTable);
         alignFooter(purchaseFooter, pTable);
 
         saveBtn.disableProperty().bind(hasImport.not());
         clearBtn.disableProperty().bind(hasImport.not());
+
         months.getSelectionModel().selectedIndexProperty().addListener((_, _, _) -> fillRows());
         searchField.textProperty().addListener((_, _, _) -> applyFilter());
 
         importProgressBar.setProgress(0);
+        clearStatus();
         updateFooters();
     }
 
     // ---------------------------------------------------------
-    // COLUMN HELPERS
+    // STATUS
     // ---------------------------------------------------------
-    private void evenColumns(TableView<?> table) {
+
+    private void setStatus(String message, boolean success) {
+        statusText.setText(message);
+        statusText.setFill(success ? OK_COLOR : FAIL_COLOR);
+    }
+
+    private void clearStatus() {
+        statusText.setText("");
+    }
+
+    // ---------------------------------------------------------
+    // COLUMN LAYOUT
+    // ---------------------------------------------------------
+
+    /** Every column starts with the same width; the constrained policy keeps them even as the table resizes. */
+    private void evenColumns(TableView<?> table, TableColumn<?, ?>... fixed) {
+        List<TableColumn<?, ?>> fixedCols = List.of(fixed);
+
         for (TableColumn<?, ?> c : table.getColumns()) {
-            c.setResizable(true);
-            c.setMinWidth(40);
-            c.setPrefWidth(100);
-            c.setMaxWidth(Double.MAX_VALUE);
+            if (fixedCols.contains(c)) {
+                c.setResizable(false);
+                c.minWidthProperty().bind(table.widthProperty().multiply(0.010));
+                c.prefWidthProperty().bind(table.widthProperty().multiply(0.010));
+                c.maxWidthProperty().bind(table.widthProperty().multiply(0.010));
+            } else {
+                c.setResizable(true);
+                c.setMinWidth(40);
+                c.setPrefWidth(100);
+                c.setMaxWidth(Double.MAX_VALUE);
+            }
         }
     }
+    /** Each footer column is bound to the width of the matching table column, so the totals line up. */
     private void alignFooter(GridPane footer, TableView<?> table) {
         footer.getColumnConstraints().clear();
         footer.setHgap(0);
@@ -207,35 +244,91 @@ public class SlspImportController {
             if (n instanceof Region r) r.setMaxWidth(Double.MAX_VALUE);
         }
     }
-    private <S> void numbering(TableColumn<S, Integer> col) {
+
+    // ---------------------------------------------------------
+    // COLUMN HELPERS (read-only, copyable text fields)
+    // ---------------------------------------------------------
+
+    private static final String COPY_STYLE =
+            "-fx-background-color: none; -fx-background-insets: 0; "
+            + "-fx-background-radius: 0; -fx-padding: 0;";
+
+    /** A non-editable text field: it can be selected and copied, but not changed. */
+    private TextField newCopyField(Pos align) {
+        TextField tf = new TextField();
+        tf.setEditable(false);
+        tf.setAlignment(align);
+        tf.getStyleClass().add("copy-edit-text");
+        URL css = getClass().getResource("/app/views/fxml/application.css");
+        if (css != null) tf.getStylesheets().add(css.toExternalForm());
+        return tf;
+    }
+
+    private static String fieldStyle(String color) {
+        return COPY_STYLE + " -fx-text-fill: " + color + ";";
+    }
+
+    private <S> void numbering(TableColumn<S, Integer> col, Function<S, String> color) {
         col.setCellValueFactory(_ -> new ReadOnlyObjectWrapper<>(0));
-        col.setCellFactory(_ -> new TableCell<>() {
+        col.setCellFactory(_ -> new TableCell<S, Integer>() {
+            private final TextField field = newCopyField(Pos.CENTER_LEFT);
+            {
+                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+                field.prefWidthProperty().bind(widthProperty());
+            }
             @Override protected void updateItem(Integer v, boolean empty) {
                 super.updateItem(v, empty);
-                setText(empty ? null : String.valueOf(getIndex() + 1));
+                if (empty) {
+                    setGraphic(null);
+                    return;
+                }
+                S row = getTableRow() == null ? null : getTableRow().getItem();
+                field.setText(String.valueOf(getIndex() + 1));
+                field.setStyle(fieldStyle(row == null ? ADD_CSS : color.apply(row)));
+                setGraphic(field);
             }
         });
     }
 
-    private <S> void text(TableColumn<S, String> col, Function<S, String> f) {
-        col.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(f.apply(c.getValue())));
-    }
-
-    private <S> void money(TableColumn<S, BigDecimal> col, Function<S, BigDecimal> f) {
-        col.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(f.apply(c.getValue())));
-        col.setCellFactory(_ -> new TableCell<>() {
-            @Override protected void updateItem(BigDecimal v, boolean empty) {
+    private <S, T> void copyCells(TableColumn<S, T> col, Function<T, String> fmt,
+                                  Function<S, String> color, Pos align) {
+        col.setCellFactory(_ -> new TableCell<S, T>() {
+            private final TextField field = newCopyField(align);
+            {
+                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+                field.prefWidthProperty().bind(widthProperty());
+            }
+            @Override protected void updateItem(T v, boolean empty) {
                 super.updateItem(v, empty);
-                setText(empty || v == null ? null : MONEY.format(v));
-                setAlignment(Pos.CENTER_RIGHT);
+                if (empty) {
+                    setGraphic(null);
+                    return;
+                }
+                S row = getTableRow() == null ? null : getTableRow().getItem();
+                field.setText(fmt.apply(v));
+                field.setStyle(fieldStyle(row == null ? ADD_CSS : color.apply(row)));
+                setGraphic(field);
             }
         });
+    }
+
+    private <S> void textCol(TableColumn<S, String> col, Function<S, String> f,
+                             Function<S, String> color, Pos align) {
+        col.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(f.apply(c.getValue())));
+        copyCells(col, v -> v == null ? "" : v, color, align);
+    }
+
+    private <S> void moneyCol(TableColumn<S, BigDecimal> col, Function<S, BigDecimal> f,
+                              Function<S, String> color) {
+        col.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(f.apply(c.getValue())));
+        copyCells(col, v -> v == null ? "" : MONEY.format(v), color, Pos.CENTER_RIGHT);
     }
 
     private <S> void deleteColumn(TableColumn<S, Void> col, Consumer<S> action) {
         col.setCellFactory(_ -> new TableCell<>() {
             private final Button button = new Button("\u2715");
             {
+            	button.setId("red-button");
                 button.setOnAction(_ -> action.accept(getTableView().getItems().get(getIndex())));
             }
             @Override protected void updateItem(Void v, boolean empty) {
@@ -252,6 +345,7 @@ public class SlspImportController {
     private void showParsed(Loaded loaded) {
         parsed = loaded.parsed();
         plan = loaded.plan();
+        hasImport.set(!parsed.months().isEmpty());
 
         List<String> labels = new ArrayList<>();
         labels.add("All months");
@@ -264,15 +358,21 @@ public class SlspImportController {
         months.getSelectionModel().select(0);
         fillRows();
 
-        if (parsed.months().isEmpty() || !parsed.warnings().isEmpty()) {
-            StringBuilder sb = new StringBuilder();
-            if (parsed.months().isEmpty()) sb.append("No SLSP data was found in this file.\n\n");
-            if (!parsed.warnings().isEmpty()) {
-                sb.append(parsed.warnings().size()).append(" warning(s):\n");
-                sb.append(String.join("\n", parsed.warnings().stream().limit(10).toList()));
-            }
-            new Alert(Alert.AlertType.WARNING, sb.toString().trim()).showAndWait();
+        String extra = parsed.warnings().isEmpty() ? ""
+                : "  " + parsed.warnings().size() + " warning(s): " + parsed.warnings().get(0);
+
+        if (parsed.months().isEmpty()) {
+            setStatus("Import failed: no SLSP data found in this file." + extra, false);
+            return;
         }
+
+        int sales = parsed.months().stream().mapToInt(x -> x.sales().size()).sum();
+        int purchases = parsed.months().stream().mapToInt(x -> x.purchases().size()).sum();
+        int replacing = plan.replaceSales().size() + plan.replacePurchases().size();
+        setStatus("Import complete: " + parsed.months().size() + " month(s), " + sales + " sale(s), "
+                + purchases + " purchase(s) loaded"
+                + (replacing > 0 ? ", " + replacing + " will replace existing rows" : "")
+                + "." + extra, true);
     }
 
     private void fillRows() {
@@ -284,8 +384,12 @@ public class SlspImportController {
             for (int i = 0; i < parsed.months().size(); i++) {
                 if (selected > 0 && i != selected - 1) continue;
                 var m = parsed.months().get(i);
-                for (var s : m.sales()) sales.add(new ImportSaleRow(m, s));
-                for (var p : m.purchases()) purchases.add(new ImportPurchaseRow(m, p));
+                for (var s : m.sales()) {
+                    sales.add(new ImportSaleRow(m, s, plan != null && plan.replaceSales().contains(s)));
+                }
+                for (var p : m.purchases()) {
+                    purchases.add(new ImportPurchaseRow(m, p, plan != null && plan.replacePurchases().contains(p)));
+                }
             }
         }
         saleRows.setAll(sales);
@@ -369,9 +473,22 @@ public class SlspImportController {
         importProgressBar.setProgress(progress);
     }
 
-    private void error(String title, Throwable ex) {
-        ex.printStackTrace();
-        new Alert(Alert.AlertType.ERROR, title + "\n\n" + ex.getMessage()).showAndWait();
+    private static String reason(Throwable ex) {
+        if (ex == null) return "unknown error";
+        return ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
+    }
+
+    /** Clears the tables and the loaded data, but leaves the status message alone. */
+    private void resetData() {
+        parsed = null;
+        plan = null;
+        hasImport.set(false);
+        months.getItems().clear();
+        saleRows.clear();
+        purchaseRows.clear();
+        supplierRows.clear();
+        searchField.clear();
+        updateFooters();
     }
 
     @FXML
@@ -394,11 +511,12 @@ public class SlspImportController {
         };
         task.setOnSucceeded(_ -> {
             idle(1);
-            showParsed(task.getValue());
+            showParsed(task.getValue());   // sets the status (green, or red if nothing was found)
         });
         task.setOnFailed(_ -> {
             idle(0);
-            error("Could not read the file.", task.getException());
+            task.getException().printStackTrace();
+            setStatus("Import failed: " + reason(task.getException()), false);
         });
         busy(task);
     }
@@ -408,58 +526,39 @@ public class SlspImportController {
         boolean hasRows = parsed != null && parsed.months().stream()
                 .anyMatch(m -> !m.sales().isEmpty() || !m.purchases().isEmpty());
         if (!hasRows) {
-            new Alert(Alert.AlertType.WARNING, "Import an Excel file with at least one row first.").showAndWait();
+            setStatus("Save failed: import an Excel file with at least one row first.", false);
             return;
         }
 
-        SlspImportViewModel.Mode mode = SlspImportViewModel.Mode.MERGE;
-        if (plan != null && plan.months().stream().anyMatch(SlspImportViewModel.MonthPlan::exists)) {
-            ChoiceDialog<SlspImportViewModel.Mode> d =
-                    new ChoiceDialog<>(mode, SlspImportViewModel.Mode.values());
-            d.setTitle("Months already exist");
-            d.setHeaderText("MERGE adds new rows only, REPLACE overwrites the month, SKIP leaves it alone.");
-            var choice = d.showAndWait();
-            if (choice.isEmpty()) return;
-            mode = choice.get();
-        }
-
-        final SlspImportViewModel.Mode chosen = mode;
         final SlspExcelImporter.Result toSave = parsed;
 
         Task<SlspImportViewModel.Summary> task = new Task<>() {
             @Override protected SlspImportViewModel.Summary call() throws Exception {
-                return new SlspImportViewModel().save(toSave, chosen);
+                // MERGE: new rows are added, rows with the same date + invoice replace the existing ones
+                return new SlspImportViewModel().save(toSave, SlspImportViewModel.Mode.MERGE);
             }
         };
         task.setOnSucceeded(_ -> {
             idle(1);
             var s = task.getValue();
-            new Alert(Alert.AlertType.INFORMATION,
-                    s.monthsCreated() + " month(s) created, " + s.monthsUpdated() + " updated, "
-                            + s.monthsSkipped() + " skipped.\n" + s.salesAdded() + " sale(s) and "
-                            + s.purchasesAdded() + " purchase(s) added, " + s.duplicatesSkipped()
-                            + " duplicate(s) skipped, " + s.suppliersCreated()
-                            + " supplier(s) created.").showAndWait();
-            Pages.change(e, Pages.SLSP);
+            resetData();
+            setStatus("Save complete: " + s.salesAdded() + " sale(s) and " + s.purchasesAdded()
+                    + " purchase(s) added, " + s.duplicatesReplaced() + " duplicate(s) replaced, "
+                    + s.suppliersCreated() + " supplier(s) created.", true);
         });
         task.setOnFailed(_ -> {
             idle(0);
-            error("Import failed.", task.getException());
+            task.getException().printStackTrace();
+            setStatus("Save failed: " + reason(task.getException()), false);
         });
         busy(task);
     }
 
     @FXML
     public void ClearSlsp(ActionEvent e) {
-        parsed = null;
-        plan = null;
-        months.getItems().clear();
-        saleRows.clear();
-        purchaseRows.clear();
-        supplierRows.clear();
-        searchField.clear();
+        resetData();
         idle(0);
-        updateFooters();
+        clearStatus();
     }
 
     @FXML
@@ -477,11 +576,13 @@ class ImportSaleRow {
 
     private final SlspExcelImporter.ParsedMonth month;
     private final SlspExcelImporter.ParsedSale parsed;
-    final Sale model = new Sale();   // reused for the VAT maths, so the screen matches the saved data
+    private final boolean replace;                 // true = replaces an existing row when saved
+    final Sale model = new Sale();                 // reused for the VAT maths, so the screen matches the saved data
 
-    ImportSaleRow(SlspExcelImporter.ParsedMonth month, SlspExcelImporter.ParsedSale parsed) {
+    ImportSaleRow(SlspExcelImporter.ParsedMonth month, SlspExcelImporter.ParsedSale parsed, boolean replace) {
         this.month = month;
         this.parsed = parsed;
+        this.replace = replace;
         model.setSaleDate(parsed.date().toString());
         model.setSiNum(parsed.invoiceNo());
         model.setExemptAmount(parsed.exempt());
@@ -491,6 +592,7 @@ class ImportSaleRow {
 
     SlspExcelImporter.ParsedMonth month() { return month; }
     SlspExcelImporter.ParsedSale parsed() { return parsed; }
+    String css() { return replace ? "orange" : "black"; }
     String date() { return DATE.format(parsed.date()); }
     String invoice() { return parsed.invoiceNo(); }
 
@@ -506,11 +608,14 @@ class ImportPurchaseRow {
 
     private final SlspExcelImporter.ParsedMonth month;
     private final SlspExcelImporter.ParsedPurchase parsed;
+    private final boolean replace;
     final Purchase model = new Purchase();
 
-    ImportPurchaseRow(SlspExcelImporter.ParsedMonth month, SlspExcelImporter.ParsedPurchase parsed) {
+    ImportPurchaseRow(SlspExcelImporter.ParsedMonth month, SlspExcelImporter.ParsedPurchase parsed,
+                      boolean replace) {
         this.month = month;
         this.parsed = parsed;
+        this.replace = replace;
         model.setPurchaseDate(parsed.date().toString());
         model.setInvoiceNum(parsed.invoiceNo());
         model.setExemptAmount(parsed.exempt());
@@ -520,6 +625,7 @@ class ImportPurchaseRow {
 
     SlspExcelImporter.ParsedMonth month() { return month; }
     SlspExcelImporter.ParsedPurchase parsed() { return parsed; }
+    String css() { return replace ? "orange" : "black"; }
     String date() { return DATE.format(parsed.date()); }
     String invoice() { return parsed.invoiceNo(); }
 

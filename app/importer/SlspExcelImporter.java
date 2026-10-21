@@ -10,6 +10,7 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -38,6 +39,10 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
  *   Purchase : date, invoice no., VAT exempt, zero-rated, gross, plus the supplier
  *              (TIN, trade name, address)
  * Derived columns (VAT Purchases, Input Tax, Output Tax...) are ignored; the app recomputes them.
+ *
+ * A worksheet is skipped (silently by default) when its header area does not contain the
+ * expected columns: a "Date" column and a total-amount column, plus any requireColumns(...) names.
+ *
  * Not thread-safe: use one instance per import.
  */
 public final class SlspExcelImporter {
@@ -94,6 +99,32 @@ public final class SlspExcelImporter {
     private final DataFormatter formatter = new DataFormatter(Locale.ENGLISH);
     private FormulaEvaluator evaluator;
 
+    private boolean warnOnSkipped = false;                       // false = skip silently
+    private final Set<String> requiredColumns = new HashSet<>();
+
+    // ---------------------------------------------------------
+    // OPTIONS
+    // ---------------------------------------------------------
+
+    /** true = add a warning for every worksheet that is skipped; false (default) = skip silently. */
+    public SlspExcelImporter warnOnSkippedSheets(boolean warn) {
+        this.warnOnSkipped = warn;
+        return this;
+    }
+
+    /** Extra columns that must ALL be on the header row, or the worksheet is skipped. */
+    public SlspExcelImporter requireColumns(String... headers) {
+        for (String h : headers) {
+            String n = norm(h);
+            if (!n.isEmpty()) requiredColumns.add(n);
+        }
+        return this;
+    }
+
+    private void skipped(List<String> warnings, String message) {
+        if (warnOnSkipped) warnings.add(message);
+    }
+
     // ---------------------------------------------------------
     // ENTRY POINT
     // ---------------------------------------------------------
@@ -127,7 +158,7 @@ public final class SlspExcelImporter {
 
         int headerRow = findHeaderRow(sheet);
         if (headerRow < 0) {
-            warnings.add("Sheet \"" + sheetName + "\" skipped: no header row with a \"Date\" column.");
+            skipped(warnings, "Sheet \"" + sheetName + "\" skipped: required columns not found.");
             return;
         }
 
@@ -164,7 +195,7 @@ public final class SlspExcelImporter {
         if (sales) {
             int cGross = find(cols, SALES_GROSS);
             if (cGross < 0) {
-                warnings.add("Sheet \"" + sheetName + "\" skipped: no \"Total Amount\" column.");
+                skipped(warnings, "Sheet \"" + sheetName + "\" skipped: no \"Total Amount\" column.");
                 return;
             }
             readSales(sheet, headerRow, period, months, warnings, sheetName,
@@ -176,11 +207,11 @@ public final class SlspExcelImporter {
             int cName = find(cols, NAME);
             int cAddress = find(cols, ADDRESS);
             if (cGross < 0 && cVat < 0) {
-                warnings.add("Sheet \"" + sheetName + "\" skipped: no \"Total Amount of Purchases\" column.");
+                skipped(warnings, "Sheet \"" + sheetName + "\" skipped: no \"Total Amount of Purchases\" column.");
                 return;
             }
             if (cTin < 0 && cName < 0) {
-                warnings.add("Sheet \"" + sheetName + "\" skipped: no supplier (Trade Name / TIN) column.");
+                skipped(warnings, "Sheet \"" + sheetName + "\" skipped: no supplier (Trade Name / TIN) column.");
                 return;
             }
             readPurchases(sheet, headerRow, period, months, suppliers, warnings, sheetName,
@@ -288,14 +319,27 @@ public final class SlspExcelImporter {
     // SHEET STRUCTURE
     // ---------------------------------------------------------
 
+    /**
+     * The header row must contain a "Date" column, a total-amount column and every
+     * requireColumns(...) name. Returns -1 (sheet is skipped) if no row qualifies.
+     */
     private int findHeaderRow(Sheet sheet) {
         int last = Math.min(sheet.getLastRowNum(), HEADER_SEARCH_ROWS);
         for (int r = 0; r <= last; r++) {
             Row row = sheet.getRow(r);
             if (row == null) continue;
+
+            Set<String> names = new HashSet<>();
             for (Cell c : row) {
-                if (DATE.contains(norm(text(c)))) return r;
+                String n = norm(text(c));
+                if (!n.isEmpty()) names.add(n);
             }
+
+            boolean hasDate = names.stream().anyMatch(DATE::contains);
+            boolean hasAmount = names.stream().anyMatch(n ->
+                    SALES_GROSS.contains(n) || PURCHASE_GROSS.contains(n) || PURCHASE_VAT.contains(n));
+
+            if (hasDate && hasAmount && names.containsAll(requiredColumns)) return r;
         }
         return -1;
     }

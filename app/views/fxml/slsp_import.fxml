@@ -49,7 +49,7 @@
                   </Text>
                   <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
                      <children>
-                        <ComboBox fx:id="months" prefWidth="200.0" promptText="00 - Month" />
+                        <ComboBox fx:id="months" prefWidth="200.0" />
                      </children>
                   </HBox>
                </children>
@@ -278,11 +278,12 @@
                         </Button>
                      </children>
                   </HBox>
-                  <ProgressBar fx:id="importProgressBar" prefHeight="18.0" prefWidth="1100.0" progress="0.0">
-                     <VBox.margin>
-                        <Insets top="10.0" />
-                     </VBox.margin>
-                  </ProgressBar>
+                  <VBox alignment="CENTER">
+                     <children>
+                        <Text fx:id="statusText" strokeType="OUTSIDE" strokeWidth="0.0" />
+                        <ProgressBar fx:id="importProgressBar" maxWidth="1.7976931348623157E308" progress="0.0" />
+                     </children>
+                  </VBox>
                </children>
             </VBox>
          </bottom>
